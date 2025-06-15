@@ -1,8 +1,10 @@
-import React, { useRef, useCallback } from "react";
+
+import React, { useRef, useCallback, useState } from "react";
 import { useD3GraphState } from "@/hooks/useD3GraphState";
 import GraphD3Toolbar from "./GraphD3Toolbar";
 import GraphD3SvgLayer from "./GraphD3SvgLayer";
 import GraphTooltipManager from "./GraphTooltipManager";
+import EdgeContextMenu from "./EdgeContextMenu";
 
 /**
  * This D3 graph canvas component now composes specialized pieces for simulation and rendering.
@@ -27,6 +29,9 @@ const GraphD3Canvas: React.FC = () => {
   const [contextNodeId, setContextNodeId] = React.useState<string | null>(null);
   const [dragging, setDragging] = React.useState<null | { id: string; offsetX: number; offsetY: number }>(null);
   const [hiddenNodeIds, setHiddenNodeIds] = React.useState<Set<string>>(new Set());
+
+  // NEW: Edge context menu state
+  const [edgeMenu, setEdgeMenu] = useState<{ edgeId: string; x: number; y: number } | null>(null);
 
   // Positions ref for D3 force/visible nodes
   const lastSimPositionsRef = useRef<Record<string, { x: number; y: number }>>({});
@@ -73,13 +78,14 @@ const GraphD3Canvas: React.FC = () => {
 
   React.useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && contextNodeId) {
+      if (e.key === "Escape" && (contextNodeId || edgeMenu)) {
         setContextNodeId(null);
+        setEdgeMenu(null);
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [contextNodeId]);
+  }, [contextNodeId, edgeMenu]);
 
   // Enhanced mode switching with position preservation
   const handleSetLayoutMode = useCallback(
@@ -115,6 +121,18 @@ const GraphD3Canvas: React.FC = () => {
     return result;
   }, [filteredNodes]);
 
+  // Edge context menu handler
+  const handleEdgeContextMenu = useCallback(
+    (edgeId: string, event: React.MouseEvent | MouseEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+      let clientX = (event as MouseEvent).clientX;
+      let clientY = (event as MouseEvent).clientY;
+      setEdgeMenu({ edgeId, x: clientX, y: clientY });
+    },
+    []
+  );
+
   return (
     <div className="relative w-full h-full flex-1 bg-background border rounded-lg overflow-hidden shadow-lg p-0 m-0" style={{ minHeight: 0, minWidth: 0 }}>
       <GraphD3Toolbar
@@ -138,8 +156,18 @@ const GraphD3Canvas: React.FC = () => {
           setDragging={setDragging}
           captureSimulationPositions={handleCaptureSimulationPositions}
           initialPositions={layoutMode === "force" ? d3InitialPositions : undefined}
+          // Pass edge context menu handler
+          onEdgeContextMenu={handleEdgeContextMenu}
         />
       </div>
+      {edgeMenu && (
+        <EdgeContextMenu
+          edgeId={edgeMenu.edgeId}
+          x={edgeMenu.x}
+          y={edgeMenu.y}
+          onClose={() => setEdgeMenu(null)}
+        />
+      )}
       {contextNodeId && (
         <div className="fixed z-50 left-36 top-32 pointer-events-none"></div>
       )}
@@ -149,3 +177,4 @@ const GraphD3Canvas: React.FC = () => {
 };
 
 export default GraphD3Canvas;
+
