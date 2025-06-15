@@ -61,6 +61,9 @@ export default function NodeSettingsForm({ node, onSaveSuccess }: { node: GraphN
   // Icon Picker
   const iconRegistry = useIconRegistry();
   const iconKeys = Object.keys(iconRegistry);
+  // NEW: import DraggableIcon
+  // Put this at the top with other imports:
+  // import DraggableIcon from "./DraggableIcon";
 
   function IconPicker({ value, onChange }: { value?: string; onChange: (v: string) => void }) {
     return (
@@ -68,17 +71,15 @@ export default function NodeSettingsForm({ node, onSaveSuccess }: { node: GraphN
         {iconKeys.map((k) => {
           const Icon = iconRegistry[k];
           return (
-            <button
-              type="button"
+            <DraggableIcon
               key={k}
-              onClick={() => onChange(k)}
-              className={`flex items-center justify-center rounded border-2 p-2 ${
-                value === k ? "border-primary" : "border-muted"
-              } bg-background hover:bg-accent`}
+              Icon={Icon}
+              filled={value === k}
               aria-label={k}
-            >
-              <Icon className="w-7 h-7" filled={value === k} />
-            </button>
+              selected={value === k}
+              onSelect={() => onChange(k)}
+              // more drag props can be added as needed (currently for future extensibility)
+            />
           );
         })}
       </div>
