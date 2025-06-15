@@ -1,5 +1,6 @@
+
 import React from "react";
-import { GraphNode } from "@/state/useGraphStore";
+import type { GraphNode } from "@/types/graph";
 import { useIconRegistry } from "./IconRegistry";
 import { useGraphStore } from "@/state/useGraphStore";
 import { resolveLabel } from "@/utils/labelJoin";

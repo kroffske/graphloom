@@ -44,4 +44,3 @@ export type EdgeTypeAppearanceSettingsProps = {
   setSelectedType: (type: string) => void;
   allTypes: string[];
 };
-

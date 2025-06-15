@@ -1,15 +1,12 @@
 import React, { useState, useMemo } from "react";
-import { useGraphStore, GraphEdge } from "@/state/useGraphStore";
+import { useGraphStore } from "@/state/useGraphStore";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-
-type Props = {
-  edge: GraphEdge;
-};
+import type { EdgeSettingsFormProps } from "@/types/forms";
 
 const COLORS = [
   "#64748b", // default (slate)
@@ -21,13 +18,16 @@ const COLORS = [
   "#a21caf", // purple
 ];
 
-function getAttributeValue(attributes: Record<string, any> | undefined, key: string | undefined): string {
+function getAttributeValue(
+  attributes: Record<string, any> | undefined,
+  key: string | undefined
+): string {
   if (!attributes || !key) return "";
   const val = attributes[key];
   return val !== undefined && val !== null ? String(val) : "";
 }
 
-export default function EdgeSettingsForm({ edge }: Props) {
+export default function EdgeSettingsForm({ edge }: EdgeSettingsFormProps) {
   const {
     edgeAppearances,
     setEdgeAppearance,
