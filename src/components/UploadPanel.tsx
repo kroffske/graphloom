@@ -1,4 +1,3 @@
-
 import React from "react";
 import * as Papa from "papaparse";
 import { useGraphStore } from "@/state/useGraphStore";
@@ -92,17 +91,17 @@ const UploadPanel = () => {
   };
 
   // --- Show Upload/Examples and Settings SIDE BY SIDE, responsive layout ---
-  // Added ScrollArea to both columns for independent scrolling, max height responsive to viewport
+  // Updated to allow main div to use full available size
   return (
-    <div className="w-full flex flex-col gap-8 md:gap-10 md:flex-row justify-center items-stretch">
+    <div className="flex flex-col gap-8 md:gap-10 md:flex-row flex-1 items-stretch h-full">
       {/* Upload & Examples section */}
-      <div className="flex-shrink-0 w-full md:w-[420px] max-w-full">
+      <div className="flex-shrink-0 w-full md:w-[420px]">
         <ScrollArea className="h-[340px] md:h-[calc(80vh-60px)]">
           <UploadCsvSection onExample={handleFillExample} />
         </ScrollArea>
       </div>
       {/* Main Settings section */}
-      <div className="flex-1 min-w-[340px] max-w-4xl">
+      <div className="flex-1">
         <ScrollArea className="h-[340px] md:h-[calc(80vh-60px)]">
           <MainSettingsSection onFillExample={handleFillExample} />
         </ScrollArea>
@@ -112,4 +111,3 @@ const UploadPanel = () => {
 };
 
 export default UploadPanel;
-
