@@ -9,7 +9,261 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      chat_messages: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_user: boolean
+          message: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_user: boolean
+          message: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_user?: boolean
+          message?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      daily_goals: {
+        Row: {
+          calorie_goal: number | null
+          carbs_goal: number | null
+          created_at: string | null
+          fat_goal: number | null
+          id: string
+          protein_goal: number | null
+          updated_at: string | null
+          user_id: string
+          water_goal: number | null
+          workout_goal: number | null
+        }
+        Insert: {
+          calorie_goal?: number | null
+          carbs_goal?: number | null
+          created_at?: string | null
+          fat_goal?: number | null
+          id?: string
+          protein_goal?: number | null
+          updated_at?: string | null
+          user_id: string
+          water_goal?: number | null
+          workout_goal?: number | null
+        }
+        Update: {
+          calorie_goal?: number | null
+          carbs_goal?: number | null
+          created_at?: string | null
+          fat_goal?: number | null
+          id?: string
+          protein_goal?: number | null
+          updated_at?: string | null
+          user_id?: string
+          water_goal?: number | null
+          workout_goal?: number | null
+        }
+        Relationships: []
+      }
+      daily_usage: {
+        Row: {
+          chat_messages_count: number | null
+          created_at: string | null
+          food_entries_count: number | null
+          id: string
+          updated_at: string | null
+          usage_date: string | null
+          user_id: string
+          workout_entries_count: number | null
+        }
+        Insert: {
+          chat_messages_count?: number | null
+          created_at?: string | null
+          food_entries_count?: number | null
+          id?: string
+          updated_at?: string | null
+          usage_date?: string | null
+          user_id: string
+          workout_entries_count?: number | null
+        }
+        Update: {
+          chat_messages_count?: number | null
+          created_at?: string | null
+          food_entries_count?: number | null
+          id?: string
+          updated_at?: string | null
+          usage_date?: string | null
+          user_id?: string
+          workout_entries_count?: number | null
+        }
+        Relationships: []
+      }
+      food_entries: {
+        Row: {
+          calories: number
+          carbs: number | null
+          created_at: string | null
+          fat: number | null
+          id: string
+          logged_date: string | null
+          meal_type: string | null
+          name: string
+          protein: number | null
+          serving_size: string | null
+          user_id: string
+        }
+        Insert: {
+          calories?: number
+          carbs?: number | null
+          created_at?: string | null
+          fat?: number | null
+          id?: string
+          logged_date?: string | null
+          meal_type?: string | null
+          name: string
+          protein?: number | null
+          serving_size?: string | null
+          user_id: string
+        }
+        Update: {
+          calories?: number
+          carbs?: number | null
+          created_at?: string | null
+          fat?: number | null
+          id?: string
+          logged_date?: string | null
+          meal_type?: string | null
+          name?: string
+          protein?: number | null
+          serving_size?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          activity_level: string | null
+          age: number | null
+          created_at: string | null
+          first_name: string | null
+          gender: string | null
+          height: number | null
+          id: string
+          last_name: string | null
+          updated_at: string | null
+          weight: number | null
+        }
+        Insert: {
+          activity_level?: string | null
+          age?: number | null
+          created_at?: string | null
+          first_name?: string | null
+          gender?: string | null
+          height?: number | null
+          id: string
+          last_name?: string | null
+          updated_at?: string | null
+          weight?: number | null
+        }
+        Update: {
+          activity_level?: string | null
+          age?: number | null
+          created_at?: string | null
+          first_name?: string | null
+          gender?: string | null
+          height?: number | null
+          id?: string
+          last_name?: string | null
+          updated_at?: string | null
+          weight?: number | null
+        }
+        Relationships: []
+      }
+      subscribers: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          stripe_customer_id: string | null
+          subscribed: boolean | null
+          subscription_end: string | null
+          subscription_tier: string | null
+          trial_end: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: string
+          stripe_customer_id?: string | null
+          subscribed?: boolean | null
+          subscription_end?: string | null
+          subscription_tier?: string | null
+          trial_end?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          stripe_customer_id?: string | null
+          subscribed?: boolean | null
+          subscription_end?: string | null
+          subscription_tier?: string | null
+          trial_end?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      workout_entries: {
+        Row: {
+          calories_burned: number | null
+          category: string | null
+          created_at: string | null
+          duration: number
+          id: string
+          intensity: string | null
+          logged_date: string | null
+          name: string
+          notes: string | null
+          user_id: string
+        }
+        Insert: {
+          calories_burned?: number | null
+          category?: string | null
+          created_at?: string | null
+          duration?: number
+          id?: string
+          intensity?: string | null
+          logged_date?: string | null
+          name: string
+          notes?: string | null
+          user_id: string
+        }
+        Update: {
+          calories_burned?: number | null
+          category?: string | null
+          created_at?: string | null
+          duration?: number
+          id?: string
+          intensity?: string | null
+          logged_date?: string | null
+          name?: string
+          notes?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
