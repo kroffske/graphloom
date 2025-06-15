@@ -14,7 +14,7 @@ export type NodeTypeAppearanceFormProps = {
   onSave: (type: string, appearance: NodeTypeAppearance) => void;
   onReset: (type: string) => void;
   selectedType: string;
-  setSelectedType: (type: string) => void;
+  onSelectedTypeChange: (type: string) => void;
   appearance: NodeTypeAppearance;
   nodeTypeKeys: string[];
   nodeTypeLabels: Record<string, string>;
@@ -24,7 +24,7 @@ export type NodeTypeAppearanceSettingsProps = {
   onSave: (type: string, appearance: NodeTypeAppearance) => void;
   onReset: (type: string) => void;
   selectedType: string;
-  setSelectedType: (type: string) => void;
+  onSelectedTypeChange: (type: string) => void;
   appearance: NodeTypeAppearance;
   nodeTypeKeys: string[];
   nodeTypeLabels: Record<string, string>;
