@@ -10,6 +10,10 @@ import { appearancePresets } from "@/data/appearancePresets";
 import AppearancePresetDropdown from "./AppearancePresetDropdown";
 // Add:
 import EdgeTypeAppearanceSettings from "@/components/EdgeTypeAppearanceSettings";
+import { useAppearancePresets } from "./GlobalSettings/useAppearancePresets";
+import AppearanceImportExport from "./GlobalSettings/AppearanceImportExport";
+import AppearanceSettingsColumns from "./GlobalSettings/AppearanceSettingsColumns";
+import PresetJsonConfigTextarea from "./GlobalSettings/PresetJsonConfigTextarea";
 
 // Node type labels for all built-in types (should match those in NodeTypeAppearanceSettings)
 const NODE_TYPE_LABELS: Record<string, string> = {
@@ -76,307 +80,88 @@ function persistSelectedPresetKey(selectedKey: string) {
     localStorage.setItem(SELECTED_PRESET_LOCAL_KEY, selectedKey);
   } catch {}
 }
-const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
-  const importInputRef = useRef<HTMLInputElement>(null);
+
+const GlobalSettingsSection: React.FC<{ onFillExample: () => void }> = () => {
   const {
-    setNodes,
-    setEdges,
-    nodes,
-    edges,
-    manualPositions,
-    nodeTypeAppearances,
-    setNodeTypeAppearance
-  } = useGraphStore();
-  const [customPreset, setCustomPreset] = useState<CustomPreset | null>(() => getPersistedCustomPreset());
-  const [selectedPresetKey, setSelectedPresetKey] = useState<string | undefined>(undefined);
+    completePresetObject,
+    displayedPresets,
+    selectedPresetKey,
+    setSelectedPresetKey,
+    selectedPresetObj,
+    handlePresetSaveFromJson,
+    handlePresetSelect,
+  } = useAppearancePresets();
 
-  // --- Always show ALL node types (with custom, else defaults) in preset JSON ---
-  const completePresetObject = useMemo(() => {
-    // Get all known types (union of built-in and any custom appearances)
-    const typeKeys = [...new Set([...Object.keys(NODE_TYPE_LABELS), ...Object.keys(nodeTypeAppearances ?? {})])];
-    // Compose full object with user config overriding defaults
-    const result: Record<string, any> = {};
-    for (const type of typeKeys) {
-      // If type config exists, merge over the default
-      const config = nodeTypeAppearances?.[type] || {};
-      result[type] = {
-        ...DEFAULTS,
-        icon: config.icon ?? type,
-        // If unset, default the icon to type name
-        ...config
-      };
-    }
-    return result;
-  }, [nodeTypeAppearances]);
-
-  // New: Edge Type global appearance (for JSON config/presets)
-  const {
-    edgeTypeAppearances,
-    setEdgeTypeAppearance
-  } = useGraphStore();
-  const allEdgeTypes = useMemo(() => Object.keys(edgeTypeAppearances ?? {}), [edgeTypeAppearances]);
-  const completeEdgeTypeAppearance = edgeTypeAppearances ?? {};
-
-  // --- Augment list to include a 'custom' preset if it exists ---
-  const displayedPresets = useMemo(() => {
-    const presets = [...appearancePresets];
-    if (customPreset) {
-      return [customPreset, ...presets];
-    }
-    return presets;
-  }, [customPreset]);
-
-  // Ensure selectedPresetKey has a value on mount and after preset changes.
-  useEffect(() => {
-    // Only set from persisted value on initial mount (not on every change)
-    if (selectedPresetKey === undefined) {
-      const persistedKey = getPersistedSelectedPresetKey();
-      const hasPersisted = persistedKey && displayedPresets.find(p => p.key === persistedKey);
-      if (hasPersisted) {
-        setSelectedPresetKey(persistedKey);
-      } else if (displayedPresets.length > 0) {
-        setSelectedPresetKey(displayedPresets[0].key);
-        persistSelectedPresetKey(displayedPresets[0].key);
-      }
-    } else {
-      // If selected key no longer exists (e.g., preset deleted), switch to first available
-      const found = displayedPresets.find(p => p.key === selectedPresetKey);
-      if (!found && displayedPresets.length > 0) {
-        setSelectedPresetKey(displayedPresets[0].key);
-        persistSelectedPresetKey(displayedPresets[0].key);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [displayedPresets]);
-
-  // If user changed preset, persist the key.
-  useEffect(() => {
-    if (selectedPresetKey && displayedPresets.some(p => p.key === selectedPresetKey)) {
-      persistSelectedPresetKey(selectedPresetKey);
-    }
-  }, [selectedPresetKey, displayedPresets]);
-
-  // Find selected preset object by key; fallback to null
-  const selectedPresetObj = useMemo(() => {
-    if (!selectedPresetKey) return null;
-    return displayedPresets.find(p => p.key === selectedPresetKey) || null;
-  }, [selectedPresetKey, displayedPresets]);
-
-  // === Helper: sync appearances into all nodes ===
-  const updateAllNodeAppearances = useCallback((appearanceMap: Record<string, any>) => {
-    setNodes(nodes.map(n => ({
-      ...n,
-      appearance: appearanceMap[n.type] ? {
-        ...appearanceMap[n.type]
-      } : {}
-    })));
-  }, [nodes, setNodes]);
-
-  // Export current graph state as JSON
-  function handleExport() {
-    const payload = {
-      nodes,
-      edges,
-      manualPositions,
-      timestamp: Date.now()
-    };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], {
-      type: "application/json"
-    });
-    const url = URL.createObjectURL(blob);
-    const tempLink = document.createElement("a");
-    tempLink.href = url;
-    tempLink.download = "graph-export.json";
-    document.body.appendChild(tempLink);
-    tempLink.click();
-    document.body.removeChild(tempLink);
-    URL.revokeObjectURL(url);
-    toast.success("Exported graph data as JSON.");
-  }
-
-  // Import graph state from JSON
-  function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = evt => {
-      try {
-        const data = JSON.parse(String(evt.target?.result));
-        if (data.nodes && data.edges) {
-          setNodes(data.nodes);
-          setEdges(data.edges);
-          toast.success("Imported graph data!");
-        } else {
-          toast.error("Invalid file format: Missing nodes or edges.");
-        }
-      } catch (err) {
-        toast.error("Failed to import file.");
-      }
-    };
-    reader.readAsText(file);
-    e.target.value = "";
-  }
+  // JSON textarea state/dirty logic
   const [editableJson, setEditableJson] = useState<string>(JSON.stringify(completePresetObject, null, 2));
   const [isDirty, setIsDirty] = useState(false);
+
+  // Sync text with presets if not dirty
   useEffect(() => {
     if (!isDirty) {
       setEditableJson(JSON.stringify(completePresetObject, null, 2));
     }
   }, [completePresetObject, isDirty]);
-  function handleCopyPreset() {
-    try {
-      navigator.clipboard.writeText(editableJson);
-      toast.success("Appearance preset JSON copied!");
-    } catch {
-      toast.error("Unable to copy JSON!");
-    }
-  }
-  function handleJsonChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
-    setEditableJson(e.target.value);
-    setIsDirty(true);
-  }
 
-  // -- Save preset handler updated to allow edgeTypes config in JSON --
-  const handlePresetSave = useCallback(() => {
-    try {
-      const data = JSON.parse(editableJson);
-      // Old format: all node types at root. New: { nodeTypes: {...}, edgeTypes: {...} }
-      let nodeTypes = data.nodeTypes || {};
-      let edgeTypes = data.edgeTypes || {};
-      if (!data.nodeTypes && !data.edgeTypes) {
-        // fallback to old format (assume node types at root)
-        nodeTypes = data;
-        edgeTypes = {};
-      }
-      if (typeof nodeTypes !== "object" || typeof edgeTypes !== "object") throw new Error();
-      // Update node types
-      Object.entries(nodeTypes).forEach(([type, config]) => {
-        setNodeTypeAppearance(type, config);
-      });
-      // Update edge types
-      Object.entries(edgeTypes).forEach(([type, config]) => {
-        setEdgeTypeAppearance(type, config as any);
-      });
-      persistCustomPreset({
-        nodeTypes,
-        edgeTypes
-      });
-      setCustomPreset({
-        name: "Custom",
-        key: CUSTOM_PRESET_KEY,
-        config: {
-          nodeTypes,
-          edgeTypes
-        }
-      });
-      updateAllNodeAppearances(nodeTypes);
-      toast.success("Preset JSON saved!");
-      setIsDirty(false);
-      setSelectedPresetKey(CUSTOM_PRESET_KEY);
-      persistSelectedPresetKey(CUSTOM_PRESET_KEY);
-    } catch (err) {
-      toast.error("Invalid JSON format or content.");
-    }
-    // Dependencies updated for persistSelectedPresetKey
-  }, [editableJson, setNodeTypeAppearance, setEdgeTypeAppearance, setCustomPreset, setIsDirty, setSelectedPresetKey, updateAllNodeAppearances]);
-
-  // -- handlePresetSelect updated to sync both node and edge appearance --
-  function handlePresetSelect(presetConfig: Record<string, any>, presetKey: string) {
-    // Accept old/object or new { nodeTypes, edgeTypes }
-    let nodeTypes = presetConfig.nodeTypes || {};
-    let edgeTypes = presetConfig.edgeTypes || {};
-    if (!presetConfig.nodeTypes && !presetConfig.edgeTypes) {
-      nodeTypes = presetConfig;
-      edgeTypes = {};
-    }
-    Object.entries(nodeTypes).forEach(([type, config]) => {
-      setNodeTypeAppearance(type, config);
-    });
-    Object.entries(edgeTypes).forEach(([type, config]) => {
-      setEdgeTypeAppearance(type, config as any);
-    });
-    updateAllNodeAppearances(nodeTypes);
-    toast.success("Preset loaded!");
-    setEditableJson(JSON.stringify({
-      nodeTypes,
-      edgeTypes
-    }, null, 2));
-    setIsDirty(false);
-    setSelectedPresetKey(presetKey);
-    persistSelectedPresetKey(presetKey);
-  }
+  // Dropdown handler
   function handlePresetKeyDropdownChange(presetKey: string) {
     if (presetKey === selectedPresetKey) return;
-    const preset = displayedPresets.find(p => p.key === presetKey);
+    const preset = displayedPresets.find((p) => p.key === presetKey);
     if (preset) {
-      handlePresetSelect(preset.config, preset.key);
+      handlePresetSelect(preset.config, preset.key, (nodeTypes, edgeTypes) => {
+        setEditableJson(JSON.stringify({ nodeTypes, edgeTypes }, null, 2));
+        setIsDirty(false);
+      });
     }
   }
-  useEffect(() => {
-    const loaded = getPersistedCustomPreset();
-    if (loaded) setCustomPreset(loaded);
-    // Don't set initial preset key here; handled above
-  }, []);
-  return <div className="w-full md:w-[850px] min-w-[340px] mt-0 flex flex-col gap-5 px-1 max-w-5xl">
-    <section className="border border-border rounded-lg bg-card/80 shadow p-8 flex flex-col gap-6 w-full max-w-5xl min-w-[380px]">
-      <div className="flex flex-row items-center gap-2 mb-1">
-        <Settings className="w-5 h-5 text-muted-foreground" />
-        <span className="font-semibold text-xl">Apearence</span>
-      </div>
-      <div className="flex flex-row items-center gap-3 mb-2">
-        <AppearancePresetDropdown presets={displayedPresets} selectedKey={selectedPresetKey} onSelect={handlePresetKeyDropdownChange} />
-        <span className="inline-flex items-center rounded bg-primary/10 text-primary font-semibold px-3 py-0.5 text-sm">
-          {selectedPresetObj?.name ?? "—"}
-        </span>
-      </div>
-      <div className="flex flex-col gap-3">
-        <span className="font-semibold text-base mt-1 mb-0.5">Appearance Presets</span>
-        <AppearancePresetsSection onPresetSelect={handlePresetSelect} selectedPresetKey={selectedPresetKey} appearancePresets={displayedPresets} />
-      </div>
-      {/* Move Export/Import buttons here, right below AppearancePresetsSection */}
-      <div className="flex flex-row items-center gap-3 mb-2 mt-1">
-        <Button variant="outline" size="sm" onClick={handleExport}>
-          Export JSON
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => importInputRef.current?.click()}>
-          <Import className="w-4 h-4 mr-1" /> Import JSON
-        </Button>
-        <input ref={importInputRef} type="file" accept="application/json" className="hidden" onChange={handleImportFile} />
-      </div>
-      <div className="w-full flex flex-col md:flex-row gap-6 mt-2">
-        {/* NodeType appearance settings */}
-        <div className="w-full md:w-1/2 flex-shrink-0">
-          <NodeTypeAppearanceSettings onSaveCustomPresetFromJson={handlePresetSave} />
+
+  return (
+    <div className="w-full md:w-[850px] min-w-[340px] mt-0 flex flex-col gap-5 px-1 max-w-5xl">
+      <section className="border border-border rounded-lg bg-card/80 shadow p-8 flex flex-col gap-6 w-full max-w-5xl min-w-[380px]">
+        <div className="flex flex-row items-center gap-2 mb-1">
+          <Settings className="w-5 h-5 text-muted-foreground" />
+          <span className="font-semibold text-xl">Apearence</span>
         </div>
-        {/* EdgeType appearance settings - NEW */}
-        <div className="w-full md:w-1/2 flex flex-col min-w-[240px] max-w-[520px]">
-          <div className="font-semibold text-base mb-1">Edge Type Appearance</div>
-          <EdgeTypeAppearanceSettings />
+        <div className="flex flex-row items-center gap-3 mb-2">
+          <AppearancePresetDropdown
+            presets={displayedPresets}
+            selectedKey={selectedPresetKey}
+            onSelect={handlePresetKeyDropdownChange}
+          />
+          <span className="inline-flex items-center rounded bg-primary/10 text-primary font-semibold px-3 py-0.5 text-sm">
+            {selectedPresetObj?.name ?? "—"}
+          </span>
         </div>
-      </div>
-      {/* Preset JSON config textarea */}
-      <div className="flex flex-col mt-4">
-        <div className="mb-2">
-          <span className="font-semibold text-base">Preset JSON Config</span>
+        <div className="flex flex-col gap-3">
+          <span className="font-semibold text-base mt-1 mb-0.5">Appearance Presets</span>
+          <AppearancePresetsSection
+            onPresetSelect={(config, key) => handlePresetSelect(config, key, (nodeTypes, edgeTypes) => {
+              setEditableJson(JSON.stringify({ nodeTypes, edgeTypes }, null, 2));
+              setIsDirty(false);
+            })}
+            selectedPresetKey={selectedPresetKey}
+            appearancePresets={displayedPresets}
+          />
         </div>
-        <Textarea value={editableJson} onChange={handleJsonChange} className="bg-muted resize-none font-mono text-xs min-h-[300px] max-h-[600px] h-full" style={{
-          minWidth: "170px"
-        }} spellCheck={false} />
-        {/* Move Copy/Save below textarea */}
-        <div className="flex items-center justify-end gap-2 mt-2">
-          <Button variant="outline" size="sm" onClick={handleCopyPreset} type="button">Copy</Button>
-          <Button variant="outline" size="sm" onClick={handlePresetSave} type="button">
-            <Save className="w-4 h-4 mr-1" /> Save
-          </Button>
-        </div>
-      </div>
-      <p className="text-xs text-muted-foreground">
-        Export/import includes nodes, edges, and manual positions. Presets are experimental. Now includes global edge appearance!
-      </p>
-    </section>
-  </div>;
+        <AppearanceImportExport />
+        <AppearanceSettingsColumns onSaveCustomPresetFromJson={() => handlePresetSaveFromJson(editableJson, () => setIsDirty(false))} />
+        <PresetJsonConfigTextarea
+          editableJson={editableJson}
+          setEditableJson={setEditableJson}
+          isDirty={isDirty}
+          setIsDirty={setIsDirty}
+          completePresetObject={completePresetObject}
+          onSaveCustomPresetFromJson={(jsonStr) => handlePresetSaveFromJson(jsonStr, () => setIsDirty(false))}
+        />
+        <p className="text-xs text-muted-foreground">
+          Export/import includes nodes, edges, and manual positions. Presets are experimental. Now includes global edge appearance!
+        </p>
+      </section>
+    </div>
+  );
 };
+
 export default GlobalSettingsSection;
 
-// NOTE: This file is getting too long (now over 400 lines).
-// Please consider asking me to refactor it into smaller files for easier maintenance.
+// NOTE: This file was refactored and is now much smaller.
+// Please continue breaking down other large files to increase maintainability!
