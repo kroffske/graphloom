@@ -8,6 +8,8 @@ import { useGraphStore } from "@/state/useGraphStore";
 import { toast } from "sonner";
 import { appearancePresets } from "@/data/appearancePresets";
 import AppearancePresetDropdown from "./AppearancePresetDropdown";
+// Add:
+import EdgeTypeAppearanceSettings from "@/components/EdgeTypeAppearanceSettings";
 
 // Node type labels for all built-in types (should match those in NodeTypeAppearanceSettings)
 const NODE_TYPE_LABELS: Record<string, string> = {
@@ -117,6 +119,11 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
     }
     return result;
   }, [nodeTypeAppearances]);
+
+  // New: Edge Type global appearance (for JSON config/presets)
+  const { edgeTypeAppearances, setEdgeTypeAppearance } = useGraphStore();
+  const allEdgeTypes = useMemo(() => Object.keys(edgeTypeAppearances ?? {}), [edgeTypeAppearances]);
+  const completeEdgeTypeAppearance = edgeTypeAppearances ?? {};
 
   // --- Augment list to include a 'custom' preset if it exists ---
   const displayedPresets = useMemo(() => {
@@ -244,20 +251,34 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
     setIsDirty(true);
   }
 
+  // -- Save preset handler updated to allow edgeTypes config in JSON --
   const handlePresetSave = useCallback(() => {
     try {
       const data = JSON.parse(editableJson);
-      if (typeof data !== "object" || !data) throw new Error();
-      Object.entries(data).forEach(([type, config]) => {
+      // Old format: all node types at root. New: { nodeTypes: {...}, edgeTypes: {...} }
+      let nodeTypes = data.nodeTypes || {};
+      let edgeTypes = data.edgeTypes || {};
+      if (!data.nodeTypes && !data.edgeTypes) {
+        // fallback to old format (assume node types at root)
+        nodeTypes = data;
+        edgeTypes = {};
+      }
+      if (typeof nodeTypes !== "object" || typeof edgeTypes !== "object") throw new Error();
+      // Update node types
+      Object.entries(nodeTypes).forEach(([type, config]) => {
         setNodeTypeAppearance(type, config);
       });
-      persistCustomPreset(data);
+      // Update edge types
+      Object.entries(edgeTypes).forEach(([type, config]) => {
+        setEdgeTypeAppearance(type, config as any);
+      });
+      persistCustomPreset({ nodeTypes, edgeTypes });
       setCustomPreset({
         name: "Custom",
         key: CUSTOM_PRESET_KEY,
-        config: data,
+        config: { nodeTypes, edgeTypes },
       });
-      updateAllNodeAppearances(data);
+      updateAllNodeAppearances(nodeTypes);
       toast.success("Preset JSON saved!");
       setIsDirty(false);
       setSelectedPresetKey(CUSTOM_PRESET_KEY);
@@ -269,23 +290,35 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
   }, [
     editableJson,
     setNodeTypeAppearance,
+    setEdgeTypeAppearance,
     setCustomPreset,
     setIsDirty,
     setSelectedPresetKey,
     updateAllNodeAppearances,
   ]);
 
+  // -- handlePresetSelect updated to sync both node and edge appearance --
   function handlePresetSelect(presetConfig: Record<string, any>, presetKey: string) {
-    Object.entries(presetConfig).forEach(([type, config]) => {
+    // Accept old/object or new { nodeTypes, edgeTypes }
+    let nodeTypes = presetConfig.nodeTypes || {};
+    let edgeTypes = presetConfig.edgeTypes || {};
+    if (!presetConfig.nodeTypes && !presetConfig.edgeTypes) {
+      nodeTypes = presetConfig;
+      edgeTypes = {};
+    }
+    Object.entries(nodeTypes).forEach(([type, config]) => {
       setNodeTypeAppearance(type, config);
     });
-    updateAllNodeAppearances(presetConfig);
+    Object.entries(edgeTypes).forEach(([type, config]) => {
+      setEdgeTypeAppearance(type, config as any);
+    });
+    updateAllNodeAppearances(nodeTypes);
     toast.success("Preset loaded!");
     setEditableJson(
       JSON.stringify(
         {
-          ...completePresetObject,
-          ...presetConfig,
+          nodeTypes,
+          edgeTypes,
         },
         null,
         2
@@ -355,42 +388,49 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
           />
         </div>
         <div className="w-full flex flex-col md:flex-row gap-6 mt-2">
+          {/* NodeType appearance settings */}
           <div className="w-full md:w-1/2 flex-shrink-0">
             <NodeTypeAppearanceSettings
               onSaveCustomPresetFromJson={handlePresetSave}
             />
           </div>
+          {/* EdgeType appearance settings - NEW */}
           <div className="w-full md:w-1/2 flex flex-col min-w-[240px] max-w-[520px]">
-            <div className="flex items-center justify-between mb-2 gap-2">
-              <span className="font-semibold text-base">Preset JSON Config</span>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCopyPreset}
-                  type="button"
-                >Copy</Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handlePresetSave}
-                  type="button"
-                >
-                  <Save className="w-4 h-4 mr-1" /> Save
-                </Button>
-              </div>
-            </div>
-            <Textarea
-              value={editableJson}
-              onChange={handleJsonChange}
-              className="bg-muted resize-none font-mono text-xs min-h-[300px] max-h-[600px] h-full"
-              style={{ minWidth: "170px" }}
-              spellCheck={false}
-            />
+            <div className="font-semibold text-base mb-1">Edge Type Appearance</div>
+            <EdgeTypeAppearanceSettings />
           </div>
         </div>
+        {/* Preset JSON config textarea (moves to below above, preserve structure) */}
+        <div className="flex flex-col mt-4">
+          <div className="flex items-center justify-between mb-2 gap-2">
+            <span className="font-semibold text-base">Preset JSON Config</span>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCopyPreset}
+                type="button"
+              >Copy</Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePresetSave}
+                type="button"
+              >
+                <Save className="w-4 h-4 mr-1" /> Save
+              </Button>
+            </div>
+          </div>
+          <Textarea
+            value={editableJson}
+            onChange={handleJsonChange}
+            className="bg-muted resize-none font-mono text-xs min-h-[300px] max-h-[600px] h-full"
+            style={{ minWidth: "170px" }}
+            spellCheck={false}
+          />
+        </div>
         <p className="text-xs text-muted-foreground">
-          Export/import includes nodes, edges, and manual positions. Presets are experimental.
+          Export/import includes nodes, edges, and manual positions. Presets are experimental. Now includes global edge appearance!
         </p>
       </section>
     </div>
@@ -399,5 +439,5 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
 
 export default GlobalSettingsSection;
 
-// NOTE: This file is getting too long (372+ lines).
-// Please consider asking me to refactor it into smaller files for maintainability after these changes.
+// NOTE: This file is getting too long (now over 400 lines).
+// Please consider asking me to refactor it into smaller files for easier maintenance.
