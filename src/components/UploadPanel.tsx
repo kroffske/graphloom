@@ -1,4 +1,3 @@
-
 import React, { useCallback, useRef, useEffect } from "react";
 import * as Papa from "papaparse";
 import { toast } from "sonner";
@@ -66,16 +65,16 @@ const UploadPanel = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { setNodes, setEdges, nodes, edges } = useGraphStore();
 
-  // Populate default test data on mount only if empty
+  // Always fill Example data on mount
   useEffect(() => {
-    if (nodes.length === 0 && edges.length === 0) {
-      const { nodes: defaultNodes, edges: defaultEdges } = parseCsvData(
-        SAMPLE_TAB_CSVS.example.nodes,
-        SAMPLE_TAB_CSVS.example.edges
-      );
-      setNodes(defaultNodes);
-      setEdges(defaultEdges);
-    }
+    const { nodes: defaultNodes, edges: defaultEdges } = parseCsvData(
+      SAMPLE_TAB_CSVS.example.nodes,
+      SAMPLE_TAB_CSVS.example.edges
+    );
+    setNodes(defaultNodes);
+    setEdges(defaultEdges);
+    // Don't show a toast here, since it's the default load
+    // Optionally you could add: toast.info("Loaded example data!");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
