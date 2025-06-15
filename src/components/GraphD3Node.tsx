@@ -43,8 +43,8 @@ const GraphD3Node = ({
 
   return (
     <div
-      className={`flex flex-col items-center px-3 py-2 rounded-lg shadow-md cursor-pointer outline-none border-2 
-      ${selected ? "border-primary ring-2 ring-blue-300" : "border-transparent"}
+      className={`flex flex-col items-center px-3 py-2 rounded-lg shadow-md cursor-pointer outline-none border-2
+        ${selected ? "border-primary ring-2 ring-blue-300" : "border-transparent"}
       `}
       tabIndex={0}
       role="button"
@@ -60,7 +60,7 @@ const GraphD3Node = ({
         minHeight: nodeSize,
         outline: "none",
         pointerEvents: "all",
-        background: backgroundColor,
+        background: showIconCircle ? "transparent" : backgroundColor,
         borderColor: borderColor,
         borderRadius: 16,
         display: "flex",
@@ -82,6 +82,8 @@ const GraphD3Node = ({
                 boxShadow: selected ? "0 0 0 2px #93c5fd" : undefined,
                 marginRight: 0,
                 marginLeft: 0,
+                // Ensure all outside is transparent
+                boxSizing: "border-box",
               }}
             >
               <Icon
@@ -106,3 +108,4 @@ const GraphD3Node = ({
 };
 
 export default GraphD3Node;
+
