@@ -8,6 +8,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 import { useGraphStore } from "@/state/useGraphStore";
 import { NodeSettingsSidebar } from "@/components/NodeSettingsSidebar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 const Index = () => {
   const { selectedNodeId } = useGraphStore();
@@ -45,24 +46,27 @@ const Index = () => {
               Graph
             </TabsTrigger>
           </TabsList>
-          <div className="flex-1 flex flex-row w-full min-h-0 max-h-[calc(100vh-70px)] overflow-hidden">
-            {/* Main Section (Tab content) */}
-            <main className="flex-1 flex flex-col pl-7 pr-2 pt-6 pb-0 max-w-[calc(100vw-370px)]">
-              <TabsContent value="upload" className="p-0 h-full w-full">
-                <UploadPanel />
-              </TabsContent>
-              <TabsContent value="graph" className="p-0 h-full w-full">
-                {/* SWAP: Old GraphCanvas -> New GraphD3Canvas */}
-                <GraphD3Canvas />
-              </TabsContent>
-            </main>
-            {/* Inspector Panel and Sidebar stay always visible */}
-            <InspectorPanel />
-            <NodeSettingsSidebar
-              open={Boolean(selectedNodeId && settingsSidebarOpen)}
-              onClose={() => setSettingsSidebarOpen(false)}
-            />
-          </div>
+          {/* Wrap this row in SidebarProvider so all sidebar children work */}
+          <SidebarProvider>
+            <div className="flex-1 flex flex-row w-full min-h-0 max-h-[calc(100vh-70px)] overflow-hidden">
+              {/* Main Section (Tab content) */}
+              <main className="flex-1 flex flex-col pl-7 pr-2 pt-6 pb-0 max-w-[calc(100vw-370px)]">
+                <TabsContent value="upload" className="p-0 h-full w-full">
+                  <UploadPanel />
+                </TabsContent>
+                <TabsContent value="graph" className="p-0 h-full w-full">
+                  {/* SWAP: Old GraphCanvas -> New GraphD3Canvas */}
+                  <GraphD3Canvas />
+                </TabsContent>
+              </main>
+              {/* Inspector Panel and Sidebar stay always visible */}
+              <InspectorPanel />
+              <NodeSettingsSidebar
+                open={Boolean(selectedNodeId && settingsSidebarOpen)}
+                onClose={() => setSettingsSidebarOpen(false)}
+              />
+            </div>
+          </SidebarProvider>
         </Tabs>
       </div>
     </IconRegistryProvider>
