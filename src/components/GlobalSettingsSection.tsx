@@ -65,13 +65,34 @@ function persistCustomPreset(config: Record<string, any>) {
 
 const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
   const importInputRef = useRef<HTMLInputElement>(null);
-  const { setNodes, setEdges, nodes, edges, manualPositions, nodeTypeAppearances, setNodeTypeAppearance } = useGraphStore();
+  const {
+    setNodes,
+    setEdges,
+    nodes,
+    edges,
+    manualPositions,
+    nodeTypeAppearances,
+    setNodeTypeAppearance,
+  } = useGraphStore();
 
   // --- Appearance Preset Selection State ---
   // Augment list to include a 'custom' preset if it exists
   const [customPreset, setCustomPreset] = useState<CustomPreset | null>(() => getPersistedCustomPreset());
   // selectedPresetKey points to Preset key, can be any preset or "custom"
   const [selectedPresetKey, setSelectedPresetKey] = useState<string | undefined>(undefined);
+
+  // === Helper: sync appearances into all nodes ===
+  const updateAllNodeAppearances = useCallback(
+    (appearanceMap: Record<string, any>) => {
+      setNodes(
+        nodes.map((n) => ({
+          ...n,
+          appearance: appearanceMap[n.type] ? { ...appearanceMap[n.type] } : {},
+        }))
+      );
+    },
+    [nodes, setNodes]
+  );
 
   // Export current graph state as JSON
   function handleExport() {
@@ -181,28 +202,44 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
         key: CUSTOM_PRESET_KEY,
         config: data,
       });
+      // --- NEW: Apply to all nodes for immediate update ---
+      updateAllNodeAppearances(data);
+
       toast.success("Preset JSON saved!");
       setIsDirty(false);
       setSelectedPresetKey(CUSTOM_PRESET_KEY);
     } catch (err) {
       toast.error("Invalid JSON format or content.");
     }
-  }, [editableJson, setNodeTypeAppearance, setCustomPreset, setIsDirty, setSelectedPresetKey]);
+  }, [
+    editableJson,
+    setNodeTypeAppearance,
+    setCustomPreset,
+    setIsDirty,
+    setSelectedPresetKey,
+    updateAllNodeAppearances,
+  ]);
 
   // Handler to load a selected preset
   function handlePresetSelect(presetConfig: Record<string, any>, presetKey: string) {
-    // Overwrite nodeTypeAppearances for every type in presetConfig
     Object.entries(presetConfig).forEach(([type, config]) => {
       setNodeTypeAppearance(type, config);
     });
-    toast.success("Preset loaded!");
-    setEditableJson(JSON.stringify({
-      ...completePresetObject,
-      ...presetConfig
-    }, null, 2));
-    setIsDirty(false);
+    // --- NEW: Apply to all nodes for immediate update ---
+    updateAllNodeAppearances(presetConfig);
 
-    // If a user loads "Custom", ensure it's tracked in memory as last custom
+    toast.success("Preset loaded!");
+    setEditableJson(
+      JSON.stringify(
+        {
+          ...completePresetObject,
+          ...presetConfig,
+        },
+        null,
+        2
+      )
+    );
+    setIsDirty(false);
     if (presetKey === CUSTOM_PRESET_KEY) {
       setSelectedPresetKey(CUSTOM_PRESET_KEY);
     } else {
