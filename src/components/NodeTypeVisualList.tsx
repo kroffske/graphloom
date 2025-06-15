@@ -1,22 +1,18 @@
 
 import React from 'react';
 import { NodeTypeAppearanceMap } from '@/types/appearance';
-import NodeTypePreview from './NodeTypePreview';
+import NodeTypeDisplay from './NodeTypeDisplay';
 
 type NodeTypeVisualListProps = {
   nodeTypeKeys: string[];
   nodeTypeLabels: Record<string, string>;
   nodeTypeAppearances: NodeTypeAppearanceMap;
-  selectedNodeType: string;
-  onSelectedNodeTypeChange: (type: string) => void;
 };
 
 const NodeTypeVisualList: React.FC<NodeTypeVisualListProps> = ({
   nodeTypeKeys,
   nodeTypeLabels,
   nodeTypeAppearances,
-  selectedNodeType,
-  onSelectedNodeTypeChange,
 }) => {
   return (
     <div className="flex flex-col gap-3">
@@ -25,13 +21,11 @@ const NodeTypeVisualList: React.FC<NodeTypeVisualListProps> = ({
       </span>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 p-2 rounded-lg bg-background border">
         {nodeTypeKeys.map((typeKey) => (
-          <NodeTypePreview
+          <NodeTypeDisplay
             key={typeKey}
             nodeType={typeKey}
             label={nodeTypeLabels[typeKey] || typeKey}
             appearance={nodeTypeAppearances[typeKey] || {}}
-            isSelected={selectedNodeType === typeKey}
-            onClick={onSelectedNodeTypeChange}
           />
         ))}
       </div>

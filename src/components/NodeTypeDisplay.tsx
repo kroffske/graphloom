@@ -2,22 +2,17 @@
 import React from "react";
 import { useIconRegistry } from "./IconRegistry";
 import { NodeTypeAppearance } from "@/types/appearance";
-import { cn } from "@/lib/utils";
 
-type NodeTypePreviewProps = {
+type NodeTypeDisplayProps = {
   nodeType: string;
   label: string;
   appearance: NodeTypeAppearance;
-  isSelected: boolean;
-  onClick: (nodeType: string) => void;
 };
 
-const NodeTypePreview: React.FC<NodeTypePreviewProps> = ({
+const NodeTypeDisplay: React.FC<NodeTypeDisplayProps> = ({
   nodeType,
   label,
   appearance,
-  isSelected,
-  onClick,
 }) => {
   const iconRegistry = useIconRegistry();
   const iconName = appearance.icon || nodeType;
@@ -29,7 +24,7 @@ const NodeTypePreview: React.FC<NodeTypePreviewProps> = ({
   const nodeStyles: React.CSSProperties = {
     width: `${size}px`,
     height: `${size}px`,
-    backgroundColor: appearance.backgroundColor || "#ffffff",
+    backgroundColor: appearance.backgroundColor || "transparent",
     borderStyle: 'solid',
     borderColor: appearance.borderEnabled ? (appearance.borderColor || appearance.lineColor || "#000000") : "transparent",
     borderWidth: appearance.borderEnabled ? `${appearance.borderWidth || 1}px` : "0px",
@@ -37,8 +32,7 @@ const NodeTypePreview: React.FC<NodeTypePreviewProps> = ({
   
   return (
     <div 
-        className={cn("flex flex-col items-center justify-between p-2 rounded-lg cursor-pointer border-2 hover:border-primary/50 transition-colors", isSelected ? "border-primary bg-primary/10" : "border-transparent bg-muted/30")}
-        onClick={() => onClick(nodeType)}
+        className="flex flex-col items-center justify-between p-2 rounded-lg bg-muted/30"
         style={{width: 120, height: 130}}
     >
       <div
@@ -63,4 +57,4 @@ const NodeTypePreview: React.FC<NodeTypePreviewProps> = ({
   );
 };
 
-export default NodeTypePreview;
+export default NodeTypeDisplay;
