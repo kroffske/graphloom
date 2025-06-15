@@ -7,7 +7,7 @@ import {
   Background,
 } from "@xyflow/react";
 import { getNodeColor, getNodeTypes } from "./GraphConfig";
-import { useGraphStore } from "@/state/useGraphStore";
+import { useGraphStore, GraphStore } from "@/state/useGraphStore";
 import { shallow } from "zustand/shallow";
 
 type GraphRendererProps = {
@@ -32,7 +32,7 @@ const GraphRenderer: React.FC<GraphRendererProps> = ({
   setHoveredNodeId,
 }) => {
   const { nodes: storeNodes, selectNode } = useGraphStore(
-    (state) => ({
+    (state: GraphStore) => ({
       nodes: state.nodes,
       selectNode: state.selectNode,
     }),

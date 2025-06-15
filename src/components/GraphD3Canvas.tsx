@@ -5,7 +5,7 @@ import GraphD3Toolbar from "./GraphD3Toolbar";
 import GraphD3SvgLayer from "./GraphD3SvgLayer";
 import GraphTooltipManager from "./GraphTooltipManager";
 import EdgeContextMenu from "./EdgeContextMenu";
-import { useGraphStore } from "@/state/useGraphStore";
+import { useGraphStore, GraphStore } from "@/state/useGraphStore";
 import TimeRangeSlider from "./TimeRangeSlider";
 import { shallow } from "zustand/shallow";
 
@@ -33,7 +33,7 @@ const GraphD3Canvas: React.FC = () => {
   const [dragging, setDragging] = React.useState<null | { id: string; offsetX: number; offsetY: number }>(null);
   const [hiddenNodeIds, setHiddenNodeIds] = React.useState<Set<string>>(new Set());
   const { timeRange, setTimeRange, hoveredEdgeId, setHoveredEdgeId, selectEdge } = useGraphStore(
-    (state) => ({
+    (state: GraphStore) => ({
       timeRange: state.timeRange,
       setTimeRange: state.setTimeRange,
       hoveredEdgeId: state.hoveredEdgeId,
