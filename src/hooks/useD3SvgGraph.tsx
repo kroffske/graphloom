@@ -34,6 +34,9 @@ type UseD3SvgGraphProps = {
    * You can plug in a UI or logic to display/hide a menu.
    */
   onEdgeContextMenu?: (edgeId: string, event: MouseEvent) => void;
+  simulation?: any;
+  simNodes: any[];
+  simEdges: any[];
 };
 
 function getEdgeLabel(

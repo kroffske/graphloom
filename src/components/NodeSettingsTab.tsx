@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from "react";
 import { useGraphStore } from "@/state/useGraphStore";
 import type { GraphNode } from "@/types/graph";
@@ -186,20 +185,6 @@ export default function NodeSettingsTab() {
                       setAppearance((p) => ({ ...p, size }))
                     }
                     className="w-full"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="appearance-label-field">Label Field</Label>
-                  <Input
-                    id="appearance-label-field"
-                    value={appearance.labelField || "label"}
-                    onChange={(e) =>
-                      setAppearance((p) => ({
-                        ...p,
-                        labelField: e.target.value,
-                      }))
-                    }
-                    placeholder='e.g. "label", "name", "attribute"'
                   />
                 </div>
                 <Button type="submit" className="mt-2 w-fit">Save</Button>
