@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useGraphStore } from "@/state/useGraphStore";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -50,6 +49,9 @@ export default function EdgeTypeAppearanceForm({
   const [width, setWidth] = useState(existing.width ?? 2);
   const [labelField, setLabelField] = useState(existing.labelField ?? "");
 
+  const isInitialMount = useRef(true);
+  const prevType = useRef(type);
+
   // Keep local state in sync with changes to the selected type, so changing type resets values
   useEffect(() => {
     setColor(edgeTypeAppearances[type]?.color ?? "#64748b");
@@ -58,15 +60,23 @@ export default function EdgeTypeAppearanceForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [type, edgeTypeAppearances]);
 
-  function handleSave(e?: React.FormEvent) {
-    if (e) e.preventDefault();
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      prevType.current = type;
+      return;
+    }
+    if (prevType.current !== type) {
+      prevType.current = type;
+      return;
+    }
     onSave(type, {
       color,
       width,
       labelField: labelField.trim() || undefined,
     });
-    toast.success(`Saved edge appearance for "${type}"`);
-  }
+  }, [color, width, labelField, onSave, type]);
+
   function handleReset() {
     onReset(type);
     // Reset UI to default values
@@ -77,7 +87,7 @@ export default function EdgeTypeAppearanceForm({
   }
 
   return (
-    <form className="flex flex-col gap-5" onSubmit={handleSave}>
+    <form className="flex flex-col gap-5" onSubmit={(e) => e.preventDefault()}>
       {/* Type selector dropdown, if using in global settings; matches node type UI */}
       {allTypes && onTypeChange && (
         <div>
@@ -154,9 +164,6 @@ export default function EdgeTypeAppearanceForm({
       </div>
       {/* Unified button layout */}
       <div className="flex gap-2 mt-4">
-        <Button type="submit" className="w-fit" size="sm">
-          Update edge style
-        </Button>
         <Button
           type="button"
           variant="outline"

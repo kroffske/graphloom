@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+
+import React, { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useIconRegistry } from "./IconRegistry";
@@ -29,7 +30,6 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
   const iconRegistry = useIconRegistry();
   const iconKeys = Object.keys(iconRegistry);
 
-  // Now with explicit fields for NEW settings
   const [icon, setIcon] = useState<string>(appearance.icon || selectedType);
   const [iconColor, setIconColor] = useState<string>(
     appearance.iconColor || "#222"
@@ -55,6 +55,9 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
   );
   const [iconOrder, setIconOrder] = useState<string[]>(iconKeys);
 
+  const isInitialMount = useRef(true);
+  const prevSelectedType = useRef(selectedType);
+
   useEffect(() => {
     setIcon(appearance.icon || selectedType);
     setIconColor(appearance.iconColor || "#222");
@@ -72,8 +75,16 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
     });
   }, [selectedType, appearance, iconKeys.join(",")]);
 
-  function handleSave(e?: React.FormEvent) {
-    if (e) e.preventDefault();
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      prevSelectedType.current = selectedType;
+      return;
+    }
+    if (prevSelectedType.current !== selectedType) {
+      prevSelectedType.current = selectedType;
+      return;
+    }
     const newAppearance = {
       icon,
       iconColor,
@@ -87,7 +98,21 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
       iconOrder,
     };
     onSave(selectedType, newAppearance);
-  }
+  }, [
+    icon,
+    iconColor,
+    borderColor,
+    borderEnabled,
+    borderWidth,
+    backgroundColor,
+    lineColor,
+    size,
+    labelField,
+    iconOrder,
+    onSave,
+    selectedType,
+  ]);
+
   function handleReset() {
     onReset(selectedType);
     toast("Reset to default");
@@ -126,7 +151,7 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
           </span>
         )}
       </div>
-      <form className="flex flex-col gap-2" onSubmit={handleSave}>
+      <div className="flex flex-col gap-2">
         {/* Type selector */}
         <div>
           <select
@@ -169,9 +194,6 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
           setLabelField={setLabelField}
         />
         <div className="flex gap-2 mt-4">
-          <Button type="submit" className="w-fit">
-            Update node style
-          </Button>
           <Button
             type="button"
             variant="outline"
@@ -181,7 +203,7 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
             Reset to Default
           </Button>
         </div>
-      </form>
+      </div>
       <p className="text-xs text-muted-foreground mt-2">
         These settings affect all nodes of this type. You can still override
         them for individual nodes.
