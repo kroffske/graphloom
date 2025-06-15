@@ -1,9 +1,7 @@
-
 import React, { useEffect, useRef } from "react";
 import * as d3 from "d3";
 import GraphD3Node from "./GraphD3Node";
 import GraphNodeContextMenu from "./GraphNodeContextMenu";
-import { useD3ZoomAndPan } from "@/hooks/useD3ZoomAndPan";
 import { useD3DragNodes } from "@/hooks/useD3DragNodes";
 import { useSimLayoutCapture } from "@/hooks/useSimLayoutCapture";
 
@@ -46,7 +44,6 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
   const { capturePositions } = useSimLayoutCapture();
   const lastSimPositionsRef = useRef<Record<string, { x: number; y: number }>>({});
 
-  // Main D3 draw/logic
   useEffect(() => {
     if (!svgRef.current || !nodes.length) return;
 
@@ -76,10 +73,27 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
 
+    // ---- Imperative D3 Zoom & Pan ----
     // Create group for zoom/pan
     const svgGroup = svg.append("g");
-    // Zoom/pan hook
-    useD3ZoomAndPan({ svgRef, svgGroup });
+
+    // Set up d3-zoom behavior imperatively here (not using a hook)
+    const zoom = d3
+      .zoom<SVGSVGElement, unknown>()
+      .scaleExtent([0.25, 1.75])
+      .on("zoom", (event) => {
+        svgGroup.attr("transform", event.transform);
+      });
+    svg.call(zoom as any);
+    // cleanup
+    const currentSvg = svgRef.current;
+    return () => {
+      if (currentSvg) {
+        d3.select(currentSvg).on(".zoom", null);
+      }
+      simulation.stop();
+    };
+    // ---- End D3 Zoom & Pan ----
 
     // Edges
     const link = svgGroup
@@ -208,9 +222,14 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
       nodeG.attr("transform", (d: any) => `translate(${d.x},${d.y})`);
     });
 
+    // Cleanup: remove listeners and stop simulation
     return () => {
+      if (currentSvg) {
+        d3.select(currentSvg).on(".zoom", null);
+      }
       simulation.stop();
     };
+
   }, [
     nodes,
     edges,
