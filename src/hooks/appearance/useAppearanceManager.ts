@@ -71,6 +71,11 @@ export function useAppearanceManager() {
     resetNodeTypeAppearance,
     resetEdgeTypeAppearance,
     setNodes,
+    // NEW from store
+    selectedNodeType,
+    setSelectedNodeType,
+    selectedEdgeType,
+    setSelectedEdgeType,
   } = useGraphStore();
 
   const {
@@ -106,15 +111,14 @@ export function useAppearanceManager() {
     return labels;
   }, [nodeTypeKeys]);
 
-  const [selectedNodeType, setSelectedNodeType] = useState<string>("");
   useEffect(() => {
-    if (!selectedNodeType || !nodeTypeKeys.includes(selectedNodeType)) {
-      setSelectedNodeType(nodeTypeKeys[0] || "");
+    if ((!selectedNodeType || !nodeTypeKeys.includes(selectedNodeType)) && nodeTypeKeys.length > 0) {
+      setSelectedNodeType(nodeTypeKeys[0]);
     }
-  }, [selectedNodeType, nodeTypeKeys]);
+  }, [selectedNodeType, nodeTypeKeys, setSelectedNodeType]);
 
   const selectedNodeTypeAppearance = useMemo(
-    () => nodeTypeAppearances?.[selectedNodeType] || {},
+    () => (selectedNodeType ? nodeTypeAppearances?.[selectedNodeType] : {}) || {},
     [nodeTypeAppearances, selectedNodeType]
   );
 
@@ -127,12 +131,12 @@ export function useAppearanceManager() {
     },
     [edges, edgeTypeAppearances]
   );
-  const [selectedEdgeType, setSelectedEdgeType] = useState<string>("");
+
   useEffect(() => {
-    if (!selectedEdgeType || !edgeTypeKeys.includes(selectedEdgeType)) {
-      setSelectedEdgeType(edgeTypeKeys[0] || "");
+    if ((!selectedEdgeType || !edgeTypeKeys.includes(selectedEdgeType)) && edgeTypeKeys.length > 0) {
+      setSelectedEdgeType(edgeTypeKeys[0]);
     }
-  }, [selectedEdgeType, edgeTypeKeys]);
+  }, [selectedEdgeType, edgeTypeKeys, setSelectedEdgeType]);
 
   // --- Preset Logic ---
   const completePresetObject = useMemo(() => {

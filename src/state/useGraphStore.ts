@@ -45,6 +45,12 @@ type GraphStore = {
   setNodeFilename: (filename: string | null) => void;
   edgeFilename: string | null;
   setEdgeFilename: (filename: string | null) => void;
+
+  // NEW: selected appearance types
+  selectedNodeType: string | null;
+  setSelectedNodeType: (type: string | null) => void;
+  selectedEdgeType: string | null;
+  setSelectedEdgeType: (type: string | null) => void;
 };
 
 export const useGraphStore = create<GraphStore>((set, get) => ({
@@ -147,4 +153,10 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   edgeFilename: null,
   setNodeFilename: (filename) => set({ nodeFilename: filename }),
   setEdgeFilename: (filename) => set({ edgeFilename: filename }),
+
+  // NEW: selected appearance types state
+  selectedNodeType: null,
+  setSelectedNodeType: (type) => set({ selectedNodeType: type }),
+  selectedEdgeType: null,
+  setSelectedEdgeType: (type) => set({ selectedEdgeType: type }),
 }));
