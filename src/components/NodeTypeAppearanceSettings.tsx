@@ -2,7 +2,6 @@
 import React from "react";
 import NodeTypeAppearanceForm from "./NodeTypeAppearanceForm";
 
-// Add prop for saving custom preset
 type NodeTypeAppearanceSettingsProps = {
   onSaveCustomPresetFromJson?: () => void;
 };
