@@ -134,7 +134,7 @@ const GlobalSettingsSection: React.FC<{ onFillExample: () => void }> = () => {
           setIsDirty={setIsPresetDirty}
           completePresetObject={completePresetObject}
           onSaveCustomPresetFromJson={(jsonStr) =>
-            handlePresetSaveFromJson(jsonStr, () => setIsPresetDirty(false))
+            handlePresetSaveFromJson(jsonStr)
           }
         />
         <p className="text-xs text-muted-foreground">

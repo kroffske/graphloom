@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -11,7 +10,7 @@ type Props = {
   isDirty: boolean;
   setIsDirty: (v: boolean) => void;
   completePresetObject: Record<string, any>;
-  onSaveCustomPresetFromJson: (jsonStr: string) => void;
+  onSaveCustomPresetFromJson: (jsonStr: string) => boolean;
 };
 
 export default function PresetJsonConfigTextarea({
@@ -37,13 +36,13 @@ export default function PresetJsonConfigTextarea({
       toast.error("Unable to copy JSON!");
     }
   }
+
   function handleJsonChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
     setEditableJson(e.target.value);
     setIsDirty(true);
   }
   function handleSavePreset() {
     onSaveCustomPresetFromJson(editableJson);
-    setIsDirty(false);
   }
 
   return (
