@@ -1,4 +1,3 @@
-
 import { create } from "zustand";
 
 // Graph Node & Edge structures (loosely modeled)
@@ -42,6 +41,9 @@ type GraphStore = {
   showNode: (id: string) => void;
   showAllHiddenNodes: () => void;
   setManualPosition: (id: string, pos: { x: number; y: number }) => void;
+  // Add these lines:
+  incrementalUpdateNodes: (changedNodes: GraphNode[]) => void;
+  incrementalUpdateEdges: (changedEdges: GraphEdge[]) => void;
 };
 
 export const useGraphStore = create<GraphStore>((set, get) => ({
@@ -102,4 +104,3 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     });
   },
 }));
-
