@@ -1,5 +1,7 @@
+
 import React, { useState, useMemo } from "react";
-import { useGraphStore, GraphNode } from "@/state/useGraphStore";
+import { useGraphStore } from "@/state/useGraphStore";
+import type { GraphNode } from "@/types/graph";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";

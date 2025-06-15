@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { useIconRegistry } from "./IconRegistry";
-import { GraphNode, useGraphStore } from "@/state/useGraphStore";
+import { useGraphStore } from "@/state/useGraphStore";
 import DraggableIcon from "./DraggableIcon";
+import type { NodeSettingsFormProps } from "@/types/forms";
 
 // Helper: Color input supporting alpha
 function ColorSwatchInput({ label, value, onChange, id, allowAlpha = false }: { label: string, value: string, onChange: (v: string) => void, id: string, allowAlpha?: boolean }) {
@@ -48,7 +48,11 @@ function reorder<T>(list: T[], startIndex: number, endIndex: number): T[] {
   return result;
 }
 
-export default function NodeSettingsForm({ node, onSaveSuccess }: { node: GraphNode; onSaveSuccess?: () => void }) {
+
+export default function NodeSettingsForm({
+  node,
+  onSaveSuccess,
+}: NodeSettingsFormProps) {
   const { nodes, setNodes } = useGraphStore();
   const [tab, setTab] = useState("general");
 
@@ -57,9 +61,9 @@ export default function NodeSettingsForm({ node, onSaveSuccess }: { node: GraphN
   const [color, setColor] = useState(
     typeof node.attributes.color === "string" ? node.attributes.color : ""
   );
-  const [appearance, setAppearance] = useState<NonNullable<GraphNode["appearance"]>>(
-    node.appearance || {}
-  );
+  const [appearance, setAppearance] = useState<
+    NonNullable<(typeof node)["appearance"]>
+  >(node.appearance || {});
 
   React.useEffect(() => {
     setLabel(node.label ?? "");
@@ -310,5 +314,3 @@ export default function NodeSettingsForm({ node, onSaveSuccess }: { node: GraphN
     </Tabs>
   );
 }
-
-// ... done.

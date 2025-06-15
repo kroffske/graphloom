@@ -1,6 +1,7 @@
 
 import { useCallback, useRef } from "react";
-import { useGraphStore, GraphNode, GraphEdge } from "@/state/useGraphStore";
+import { useGraphStore } from "@/state/useGraphStore";
+import type { GraphNode, GraphEdge } from "@/types/graph";
 import { diffGraphNodes, diffGraphEdges } from "@/utils/graphDiffing";
 
 /**

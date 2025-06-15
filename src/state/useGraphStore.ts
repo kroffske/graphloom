@@ -1,11 +1,11 @@
-
 import { create } from "zustand";
 import { NodeTypeAppearanceMap, EdgeTypeAppearanceMap } from "@/types/appearance";
-import type { GraphNode, GraphEdge, GraphEdgeAppearance } from "@/types/graph";
-export type { GraphNode, GraphEdge, GraphEdgeAppearance };
-
-// UPDATED: include labelField here too!
-type GraphEdgeAppearanceMap = Record<string, GraphEdgeAppearance>;
+import type {
+  GraphNode,
+  GraphEdge,
+  GraphEdgeAppearance,
+  GraphEdgeAppearanceMap,
+} from "@/types/graph";
 
 type GraphStore = {
   nodes: GraphNode[];
