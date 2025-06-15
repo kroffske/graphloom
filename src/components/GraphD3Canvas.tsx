@@ -22,7 +22,8 @@ const GraphD3Canvas: React.FC = () => {
     getLastSimulationPositions,
   } = useD3GraphState();
 
-  const [layoutMode, setLayoutMode] = React.useState<"simulation" | "manual">("simulation");
+  // layoutMode now supports: "force", "circle", "hierarchy", "manual"
+  const [layoutMode, setLayoutMode] = React.useState<"force" | "circle" | "hierarchy" | "manual">("force");
   const [hoveredNodeId, setHoveredNodeId] = React.useState<string | null>(null);
   const [contextNodeId, setContextNodeId] = React.useState<string | null>(null);
   const [dragging, setDragging] = React.useState<null | { id: string; offsetX: number; offsetY: number }>(null);
@@ -63,11 +64,10 @@ const GraphD3Canvas: React.FC = () => {
 
   // Enhanced mode switching with position preservation
   const handleSetLayoutMode = useCallback(
-    (mode: "simulation" | "manual") => {
-      if (mode === "manual" && layoutMode === "simulation") {
-        // Capture current simulation positions and set them as manual positions
+    (mode: "force" | "circle" | "hierarchy" | "manual") => {
+      if (mode === "manual" && layoutMode !== "manual") {
+        // Capture current positions and set them as manual positions
         const simPositions = getLastSimulationPositions();
-        console.log("Switching to manual mode, captured positions:", simPositions);
         if (Object.keys(simPositions).length > 0) {
           setManualPositions(simPositions);
         }

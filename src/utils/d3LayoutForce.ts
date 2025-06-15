@@ -1,10 +1,9 @@
 
 import * as d3 from "d3";
 
-export function d3SetupSimulation(
+export function d3LayoutForce(
   nodes: any[],
   edges: any[],
-  layoutMode: "simulation" | "manual",
   NODE_RADIUS: number,
   WIDTH: number,
   HEIGHT: number
@@ -26,8 +25,5 @@ export function d3SetupSimulation(
     .force("center", d3.forceCenter(WIDTH / 2, HEIGHT / 2))
     .force("collision", d3.forceCollide(NODE_RADIUS + 12));
 
-  if (layoutMode === "manual") {
-    simulation.alpha(0).alphaTarget(0).stop();
-  }
   return { simulation, simNodes, simEdges };
 }

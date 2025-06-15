@@ -2,14 +2,15 @@
 import React, { useEffect, useRef } from "react";
 import * as d3 from "d3";
 import { useD3DragNodes } from "@/hooks/useD3DragNodes";
-import { d3SetupZoom } from "@/utils/d3SetupZoom";
-import { d3SetupSimulation } from "@/utils/d3SetupSimulation";
+import { d3LayoutForce } from "@/utils/d3LayoutForce";
+import { d3LayoutCircle } from "@/utils/d3LayoutCircle";
+import { d3LayoutHierarchy } from "@/utils/d3LayoutHierarchy";
 import GraphD3NodeMount from "./GraphD3NodeMount";
 
 type GraphD3SvgLayerProps = {
   nodes: any[];
   edges: any[];
-  layoutMode: "simulation" | "manual";
+  layoutMode: "force" | "circle" | "hierarchy" | "manual";
   manualPositions: Record<string, { x: number; y: number }>;
   setManualPositions: (v: any) => void;
   saveManualPosition: (id: string, pos: { x: number; y: number }) => void;
@@ -26,6 +27,35 @@ const NODE_RADIUS = 36;
 const EDGE_COLOR = "#64748b";
 const WIDTH = 900;
 const HEIGHT = 530;
+
+// Helper: choose layout
+function computeLayout(
+  mode: "force" | "circle" | "hierarchy" | "manual",
+  nodes: any[],
+  edges: any[]
+) {
+  if (mode === "force") {
+    return d3LayoutForce(nodes, edges, NODE_RADIUS, WIDTH, HEIGHT);
+  } else if (mode === "circle") {
+    return d3LayoutCircle(nodes, edges, WIDTH, HEIGHT);
+  } else if (mode === "hierarchy") {
+    return d3LayoutHierarchy(nodes, edges, WIDTH, HEIGHT);
+  } else if (mode === "manual") {
+    // just pass through, x/y comes from manualPositions
+    const simNodes = nodes.map((n) => ({
+      ...n,
+      ...(n.x !== undefined && n.y !== undefined ? { x: n.x, y: n.y } : {}),
+    }));
+    const simEdges = edges.map((e) => ({ ...e }));
+    return {
+      simulation: { on: () => {}, stop: () => {} },
+      simNodes,
+      simEdges,
+    };
+  }
+  // fallback
+  return d3LayoutForce(nodes, edges, NODE_RADIUS, WIDTH, HEIGHT);
+}
 
 const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
   nodes,
@@ -47,25 +77,15 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
   useEffect(() => {
     if (!svgRef.current || !nodes.length) return;
 
-    console.log("Setting up D3 layer with mode:", layoutMode);
-    console.log("Manual positions:", manualPositions);
-
-    // Merge manual positions when in manual mode
+    // Merge manual positions in manual mode
     const mergedNodes = nodes.map((n) =>
       layoutMode === "manual" && manualPositions[n.id]
         ? { ...n, ...manualPositions[n.id] }
         : { ...n }
     );
 
-    // Simulation + edges set up
-    const { simulation, simNodes, simEdges } = d3SetupSimulation(
-      mergedNodes,
-      edges,
-      layoutMode,
-      NODE_RADIUS,
-      WIDTH,
-      HEIGHT
-    );
+    // Pick layout function
+    const { simulation, simNodes, simEdges } = computeLayout(layoutMode, mergedNodes, edges);
 
     // D3 element selection and clearing
     const svg = d3.select(svgRef.current);
@@ -73,7 +93,18 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
 
     // Create group for zoom/pan and set up zoom
     const svgGroup = svg.append("g");
-    const cleanupZoom = d3SetupZoom(svgRef.current, svgGroup);
+    const cleanupZoom = (() => {
+      const zoom = d3
+        .zoom<SVGSVGElement, unknown>()
+        .scaleExtent([0.25, 1.75])
+        .on("zoom", (event) => {
+          svgGroup.attr("transform", event.transform);
+        });
+      svg.call(zoom as any);
+      return () => {
+        svg.on(".zoom", null);
+      };
+    })();
 
     // Draw edges
     const link = svgGroup
@@ -116,15 +147,17 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
       )
       .html((d) => `<div id="d3-node-${d.id}"></div>`);
 
-    // Drag/Manual Layout
-    useD3DragNodes({
-      nodeG,
-      link,
-      layoutMode,
-      manualPositions,
-      setDragging,
-      saveManualPosition,
-    });
+    // Drag/Manual Layout only in manual mode
+    if (layoutMode === "manual") {
+      useD3DragNodes({
+        nodeG,
+        link,
+        layoutMode,
+        manualPositions,
+        setDragging,
+        saveManualPosition,
+      });
+    }
 
     // Node interactions (hover, context menu, keyboard)
     nodeG
@@ -182,24 +215,50 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
       });
     }, 0);
 
-    // Simulation tick: layout, update pos and edges
-    simulation.on("tick", () => {
-      // Capture positions for mode switching
-      captureSimulationPositions(simNodes);
-      
+    // Only animate on "force" mode (tick for simulation)
+    if (layoutMode === "force") {
+      simulation.on("tick", () => {
+        // Capture positions for mode switching
+        captureSimulationPositions(simNodes);
+
+        link
+          .attr("x1", (d: any) => (d.source as any).x!)
+          .attr("y1", (d: any) => (d.source as any).y!)
+          .attr("x2", (d: any) => (d.target as any).x!)
+          .attr("y2", (d: any) => (d.target as any).y!);
+
+        nodeG.attr("transform", (d: any) => `translate(${d.x},${d.y})`);
+      });
+    } else {
+      // For static layouts, just position nodes/edges once
       link
-        .attr("x1", (d: any) => (d.source as any).x!)
-        .attr("y1", (d: any) => (d.source as any).y!)
-        .attr("x2", (d: any) => (d.target as any).x!)
-        .attr("y2", (d: any) => (d.target as any).y!);
+        .attr("x1", (d: any) => {
+          const s: any = typeof d.source === "object" ? d.source : simNodes.find((n: any) => n.id === d.source);
+          return s?.x ?? 0;
+        })
+        .attr("y1", (d: any) => {
+          const s: any = typeof d.source === "object" ? d.source : simNodes.find((n: any) => n.id === d.source);
+          return s?.y ?? 0;
+        })
+        .attr("x2", (d: any) => {
+          const t: any = typeof d.target === "object" ? d.target : simNodes.find((n: any) => n.id === d.target);
+          return t?.x ?? 0;
+        })
+        .attr("y2", (d: any) => {
+          const t: any = typeof d.target === "object" ? d.target : simNodes.find((n: any) => n.id === d.target);
+          return t?.y ?? 0;
+        });
 
       nodeG.attr("transform", (d: any) => `translate(${d.x},${d.y})`);
-    });
+
+      // For mode switching (e.g. manual, circle, hierarchy)
+      captureSimulationPositions(simNodes);
+    }
 
     // Cleanup: remove listeners, zoom and stop simulation
     return () => {
       cleanupZoom();
-      simulation.stop();
+      simulation.stop && simulation.stop();
     };
   }, [
     nodes,
@@ -236,3 +295,7 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
 };
 
 export default GraphD3SvgLayer;
+
+// --- 
+// This file is getting quite long (over 200 lines).
+// Consider asking Lovable to refactor it into smaller files for easier maintenance.
