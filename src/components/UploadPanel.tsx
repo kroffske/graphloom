@@ -5,6 +5,7 @@ import { useGraphStore } from "@/state/useGraphStore";
 import { SAMPLE_TAB_CSVS } from "./SampleTabs";
 import UploadCsvSection from "./UploadCsvSection";
 import MainSettingsSection from "./MainSettingsSection";
+import { ScrollArea } from "./ui/scroll-area";
 
 // --- Copy helpers from UploadCsvSection ---
 function castToSupportedType(val: unknown): string | number | boolean {
@@ -91,18 +92,24 @@ const UploadPanel = () => {
   };
 
   // --- Show Upload/Examples and Settings SIDE BY SIDE, responsive layout ---
+  // Added ScrollArea to both columns for independent scrolling, max height responsive to viewport
   return (
     <div className="w-full flex flex-col gap-8 md:gap-10 md:flex-row justify-center items-stretch">
       {/* Upload & Examples section */}
       <div className="flex-shrink-0 w-full md:w-[420px] max-w-full">
-        <UploadCsvSection onExample={handleFillExample} />
+        <ScrollArea className="h-[340px] md:h-[calc(80vh-60px)]">
+          <UploadCsvSection onExample={handleFillExample} />
+        </ScrollArea>
       </div>
       {/* Main Settings section */}
       <div className="flex-1 min-w-[340px] max-w-4xl">
-        <MainSettingsSection onFillExample={handleFillExample} />
+        <ScrollArea className="h-[340px] md:h-[calc(80vh-60px)]">
+          <MainSettingsSection onFillExample={handleFillExample} />
+        </ScrollArea>
       </div>
     </div>
   );
 };
 
 export default UploadPanel;
+
