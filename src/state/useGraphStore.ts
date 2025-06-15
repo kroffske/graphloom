@@ -1,4 +1,3 @@
-
 import { create } from "zustand";
 
 // Graph Node & Edge structures (loosely modeled)
@@ -33,6 +32,7 @@ export type GraphEdge = {
     color?: string;      // Edge color
     width?: number;      // Edge line thickness
     label?: string;      // Optional label
+    labelField?: string; // Optional label field (used for display/custom label source)
   };
 };
 
@@ -56,10 +56,12 @@ type NodeTypeAppearanceMap = Record<string, {
   iconOrder?: string[];
 }>;
 
+// UPDATED: include labelField here too!
 type EdgeAppearanceMap = Record<string, {
   color?: string;
   width?: number;
   label?: string;
+  labelField?: string; // Add this property for edge-level override
 }>;
 
 type GraphStore = {
