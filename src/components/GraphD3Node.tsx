@@ -1,5 +1,4 @@
 
-
 import React from "react";
 import { GraphNode } from "@/state/useGraphStore";
 import { useIconRegistry } from "./IconRegistry";
@@ -89,7 +88,7 @@ const GraphD3Node = ({
                 className="w-7 h-7"
                 aria-label={iconType}
                 filled={true}
-                style={{ color: "#30334a" }}
+                color="#30334a"
               />
             </span>
           ) : (
@@ -97,6 +96,7 @@ const GraphD3Node = ({
               className="w-8 h-8"
               aria-label={iconType}
               filled={true}
+              color="#30334a"
             />
           ))}
       </div>
@@ -108,4 +108,3 @@ const GraphD3Node = ({
 };
 
 export default GraphD3Node;
-
