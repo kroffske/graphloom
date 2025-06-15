@@ -64,4 +64,3 @@ export const IconRegistryProvider = ({ children }: { children: ReactNode }) => (
     {children}
   </IconRegistryContext.Provider>
 );
-

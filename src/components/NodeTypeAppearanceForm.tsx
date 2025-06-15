@@ -68,7 +68,7 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
   const [borderEnabled, setBorderEnabled] = useState<boolean>(selectedAppearance.borderEnabled ?? false);
   const [backgroundColor, setBackgroundColor] = useState<string>(selectedAppearance.backgroundColor || "");
   const [lineColor, setLineColor] = useState<string>(selectedAppearance.lineColor || "");
-  const [size, setSize] = useState<number>(selectedAppearance.size || 64);
+  const [size, setSize] = useState<number>(selectedAppearance.size ?? 64);
   const [labelField, setLabelField] = useState<string>(selectedAppearance.labelField || "label");
   const [iconOrder, setIconOrder] = useState<string[]>(iconKeys);
 

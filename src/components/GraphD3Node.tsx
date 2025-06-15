@@ -21,7 +21,9 @@ const GraphD3Node = ({
 
   // New pattern for icon color and border
   const iconColor = appearance.iconColor || "#222";
-  const borderColor = appearance.borderEnabled ? (appearance.borderColor || "#e5e7eb") : "transparent";
+  const borderColor = (typeof appearance.borderEnabled === "boolean" && !appearance.borderEnabled)
+    ? "transparent"
+    : (appearance.borderColor || "#e5e7eb");
   const nodeSize = appearance.size ?? 64;
   const labelField = appearance.labelField || "label";
   const Icon = iconRegistry[iconType];
