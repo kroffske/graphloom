@@ -6,12 +6,24 @@ import {
   ContextMenuContent,
   ContextMenuItem,
 } from "@/components/ui/context-menu";
+import { useGraphStore } from "@/state/useGraphStore";
+
+// Get all visible neighbours for a node (using edges)
+function getNeighbourNodeIds(nodeId: string, edges: { source: string; target: string }[]) {
+  const neighbours = new Set<string>();
+  edges.forEach((e) => {
+    if (e.source === nodeId) neighbours.add(e.target);
+    if (e.target === nodeId) neighbours.add(e.source);
+  });
+  return Array.from(neighbours);
+}
 
 type GraphNodeContextMenuProps = {
   nodeId: string;
   isHidden: boolean;
   onHide: () => void;
-  onExpand: () => void;
+  onUnhideNeighbours: () => void;
+  onShowDetails: () => void;
   children: React.ReactNode;
 };
 
@@ -19,7 +31,8 @@ export default function GraphNodeContextMenu({
   nodeId,
   isHidden,
   onHide,
-  onExpand,
+  onUnhideNeighbours,
+  onShowDetails,
   children,
 }: GraphNodeContextMenuProps) {
   // This wraps its children and enables right click AND Shift+F10 to open
@@ -52,12 +65,15 @@ export default function GraphNodeContextMenu({
       >
         <div style={{ display: "contents" }}>{children}</div>
       </ContextMenuTrigger>
+
       <ContextMenuContent>
         {!isHidden ? (
           <ContextMenuItem onSelect={onHide}>Hide</ContextMenuItem>
         ) : (
-          <ContextMenuItem onSelect={onExpand}>Expand</ContextMenuItem>
+          <ContextMenuItem disabled>Hidden</ContextMenuItem>
         )}
+        <ContextMenuItem onSelect={onUnhideNeighbours}>Unhide neighbours</ContextMenuItem>
+        <ContextMenuItem onSelect={onShowDetails}>Details</ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
   );
