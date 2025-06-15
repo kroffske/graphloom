@@ -11,6 +11,8 @@ type GraphD3EdgeLayerProps = {
   useDynamic: boolean;
   simulation?: any;
   linkRef: React.MutableRefObject<any>;
+  // NEW: edge context menu handler
+  onEdgeContextMenu?: (edgeId: string, event: React.MouseEvent) => void;
 };
 
 const GraphD3EdgeLayer: React.FC<GraphD3EdgeLayerProps> = ({
@@ -19,6 +21,7 @@ const GraphD3EdgeLayer: React.FC<GraphD3EdgeLayerProps> = ({
   useDynamic,
   simulation,
   linkRef,
+  onEdgeContextMenu,
 }) => {
   const { selectedEdgeId, selectEdge, edgeAppearances, showEdgeLabels } = useGraphStore();
 
@@ -43,7 +46,6 @@ const GraphD3EdgeLayer: React.FC<GraphD3EdgeLayerProps> = ({
         const midX = (s.x + t.x) / 2;
         const midY = (s.y + t.y) / 2;
 
-        // Instead of passing props to fragment, use a wrapping React.Fragment or an array.
         return (
           <g key={e.id}>
             <line
@@ -55,7 +57,7 @@ const GraphD3EdgeLayer: React.FC<GraphD3EdgeLayerProps> = ({
               strokeWidth={isSelected ? width + 2 : width}
               opacity={isSelected ? 1 : 0.7}
               style={{
-                cursor: "pointer",
+                cursor: "context-menu",
                 strokeDasharray: isSelected ? "0" : undefined,
                 transition: "stroke 0.15s, stroke-width 0.15s, opacity 0.2s",
                 filter: isSelected ? "drop-shadow(0 0 4px #60a5fa)" : undefined,
@@ -64,6 +66,12 @@ const GraphD3EdgeLayer: React.FC<GraphD3EdgeLayerProps> = ({
                 ev.stopPropagation();
                 selectEdge(isSelected ? null : e.id);
               }}
+              onContextMenu={onEdgeContextMenu
+                ? (ev) => {
+                    onEdgeContextMenu(e.id, ev);
+                  }
+                : undefined
+              }
               onMouseDown={ev => ev.stopPropagation()}
               onMouseUp={ev => ev.stopPropagation()}
               tabIndex={0}
@@ -106,4 +114,3 @@ const GraphD3EdgeLayer: React.FC<GraphD3EdgeLayerProps> = ({
 };
 
 export default GraphD3EdgeLayer;
-

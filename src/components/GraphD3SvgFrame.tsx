@@ -17,6 +17,7 @@ type GraphD3SvgFrameProps = {
   setHiddenNodeIds: (s: Set<string>) => void;
   setContextNodeId: (id: string | null) => void;
   setHoveredNodeId: (id: string | null) => void;
+  onEdgeContextMenu?: (edgeId: string, event: React.MouseEvent | MouseEvent) => void;
 };
 
 const GraphD3SvgFrame: React.FC<GraphD3SvgFrameProps> = ({
@@ -31,6 +32,7 @@ const GraphD3SvgFrame: React.FC<GraphD3SvgFrameProps> = ({
   setHiddenNodeIds,
   setContextNodeId,
   setHoveredNodeId,
+  onEdgeContextMenu,
 }) => {
   const { selectEdge } = useGraphStore();
 
@@ -66,6 +68,7 @@ const GraphD3SvgFrame: React.FC<GraphD3SvgFrameProps> = ({
         useDynamic={layoutMode === "force"}
         simulation={simulation}
         linkRef={linkRef}
+        onEdgeContextMenu={onEdgeContextMenu}
       />
       <GraphD3NodeLayer
         simNodes={simNodes}
