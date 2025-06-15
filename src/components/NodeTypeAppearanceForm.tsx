@@ -36,7 +36,8 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({ onSaveC
     return () => window.removeEventListener("lovable-preset-json-sync", handlePresetJsonSync);
   }, []);
 
-  // Appearance and relevant keys for all node types from store/hook
+  // --- FIX: Move selectedType above hook and pass to hook directly ---
+  // Get all node types from the hook to populate the dropdown
   const {
     nodeTypeKeys,
     nodeTypeLabels,
@@ -44,50 +45,64 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({ onSaveC
     setNodeTypeAppearance,
     resetNodeTypeAppearance,
   } = useNodeAppearanceSettings(
-    // Always select a type. Will be updated below.
-    useMemo(() => "", []),
-    presetJsonString
+    // We'll pass real selectedType (not a constant) here below!
+    // Place holder for now, pick first valid type once, then user changes it
+    "" /* this will be replaced below */
+    , presetJsonString
   );
 
-  // Pick type (selector)
-  const [selectedType, setSelectedType] = useState(nodeTypeKeys[0] || "");
+  // --- Actually manage selectedType in form, and provide to hook ---
+  const [selectedType, setSelectedType] = useState<string>(nodeTypeKeys[0] || "");
+  // SYNCHRONIZE selectedType if type keys change (e.g. on data load)
   useEffect(() => {
-    if (!nodeTypeKeys.includes(selectedType) && nodeTypeKeys[0]) {
+    if (!selectedType && nodeTypeKeys[0]) {
+      setSelectedType(nodeTypeKeys[0]);
+    } else if (selectedType && !nodeTypeKeys.includes(selectedType) && nodeTypeKeys.length > 0) {
       setSelectedType(nodeTypeKeys[0]);
     }
   }, [nodeTypeKeys, selectedType]);
 
+  // --- Now call useNodeAppearanceSettings AGAIN but with real selectedType ---
+  const {
+    appearance: selectedAppearance,
+    setNodeTypeAppearance: setAppearanceForType,
+    resetNodeTypeAppearance: resetAppearanceForType,
+    // pass-through for keys/labels
+    nodeTypeKeys: stableNodeTypeKeys,
+    nodeTypeLabels: stableNodeTypeLabels
+  } = useNodeAppearanceSettings(selectedType, presetJsonString);
+
   // Local form state for visuals/icons, mirror store nodeTypeAppearances shape
-  const [icon, setIcon] = useState<string>(appearance.icon || selectedType);
-  const [backgroundColor, setBackgroundColor] = useState<string>(appearance.backgroundColor || "");
-  const [lineColor, setLineColor] = useState<string>(appearance.lineColor || "");
-  const [size, setSize] = useState<number>(appearance.size || 64);
-  const [labelField, setLabelField] = useState<string>(appearance.labelField || "label");
-  const [showIconCircle, setShowIconCircle] = useState<boolean>(!!appearance.showIconCircle);
+  const [icon, setIcon] = useState<string>(selectedAppearance.icon || selectedType);
+  const [backgroundColor, setBackgroundColor] = useState<string>(selectedAppearance.backgroundColor || "");
+  const [lineColor, setLineColor] = useState<string>(selectedAppearance.lineColor || "");
+  const [size, setSize] = useState<number>(selectedAppearance.size || 64);
+  const [labelField, setLabelField] = useState<string>(selectedAppearance.labelField || "label");
+  const [showIconCircle, setShowIconCircle] = useState<boolean>(!!selectedAppearance.showIconCircle);
   const [iconCircleColor, setIconCircleColor] = useState<string>(
-    appearance.iconCircleColor || "#e9e9e9"
+    selectedAppearance.iconCircleColor || "#e9e9e9"
   );
   const [iconOrder, setIconOrder] = useState<string[]>(iconKeys);
 
   // Re-sync local state when type/appearance changes
   useEffect(() => {
-    setIcon(appearance.icon || selectedType);
-    setBackgroundColor(appearance.backgroundColor || "");
-    setLineColor(appearance.lineColor || "");
-    setSize(appearance.size ?? 64);
-    setLabelField(appearance.labelField || "label");
-    setShowIconCircle(!!appearance.showIconCircle);
-    setIconCircleColor(appearance.iconCircleColor || "#e9e9e9");
+    setIcon(selectedAppearance.icon || selectedType);
+    setBackgroundColor(selectedAppearance.backgroundColor || "");
+    setLineColor(selectedAppearance.lineColor || "");
+    setSize(selectedAppearance.size ?? 64);
+    setLabelField(selectedAppearance.labelField || "label");
+    setShowIconCircle(!!selectedAppearance.showIconCircle);
+    setIconCircleColor(selectedAppearance.iconCircleColor || "#e9e9e9");
     setIconOrder((currOrder) => {
       const currSet = new Set(currOrder);
       const toAdd = iconKeys.filter((k) => !currSet.has(k));
       return [...currOrder.filter((k) => iconKeys.includes(k)), ...toAdd];
     });
-  }, [selectedType, appearance, iconKeys.join(",")]);
+  }, [selectedType, selectedAppearance, iconKeys.join(",")]);
 
   function handleSave(e?: React.FormEvent) {
     if (e) e.preventDefault();
-    setNodeTypeAppearance(selectedType, {
+    setAppearanceForType(selectedType, {
       icon,
       backgroundColor,
       lineColor,
@@ -97,12 +112,12 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({ onSaveC
       iconCircleColor,
       iconOrder,
     });
-    toast.success(`Saved default appearance for ${nodeTypeLabels[selectedType] || selectedType}`);
+    toast.success(`Saved default appearance for ${stableNodeTypeLabels[selectedType] || selectedType}`);
     if (onSaveCustomPresetFromJson) onSaveCustomPresetFromJson();
   }
 
   function handleReset() {
-    resetNodeTypeAppearance(selectedType);
+    resetAppearanceForType(selectedType);
     toast("Reset to default");
   }
 
@@ -121,9 +136,9 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({ onSaveC
             value={selectedType}
             onChange={e => setSelectedType(e.target.value)}
           >
-            {nodeTypeKeys.map(key => (
+            {stableNodeTypeKeys.map(key => (
               <option key={key} value={key}>
-                {nodeTypeLabels[key]}
+                {stableNodeTypeLabels[key]}
               </option>
             ))}
           </select>
