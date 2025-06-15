@@ -1,6 +1,6 @@
 
 import React from "react";
-import { GraphEdge } from "@/state/useGraphStore";
+import type { GraphEdge } from "@/types/graph";
 import { useGraphStore } from "@/state/useGraphStore";
 
 type Props = {

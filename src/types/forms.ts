@@ -1,4 +1,5 @@
 import { NodeTypeAppearance, EdgeTypeAppearance } from "./appearance";
+import type { GraphNode, GraphEdge } from "./graph";
 
 export type NodeTypeVisualSettingsProps = {
   backgroundColor: string;
@@ -43,4 +44,13 @@ export type EdgeTypeAppearanceSettingsProps = {
   selectedType: string;
   setSelectedType: (type: string) => void;
   allTypes: string[];
+};
+
+export type NodeSettingsFormProps = {
+  node: GraphNode;
+  onSaveSuccess?: () => void;
+};
+
+export type EdgeSettingsFormProps = {
+  edge: GraphEdge;
 };

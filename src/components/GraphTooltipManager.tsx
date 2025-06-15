@@ -1,5 +1,6 @@
+
 import React from "react";
-import { GraphNode } from "@/state/useGraphStore";
+import type { GraphNode } from "@/types/graph";
 import AttributeTooltip from "./AttributeTooltip";
 
 type GraphTooltipManagerProps = {
