@@ -1,38 +1,48 @@
-import React, { useState, useEffect } from "react";
-import { useGraphStore } from "@/state/useGraphStore";
-import EdgeTypeAppearanceForm from "./EdgeTypeAppearanceForm";
 
-// Accept onSaveCustomPresetFromJson for future extensibility like NodeTypeAppearanceSettings
+import React, { useState, useEffect } from "react";
+import EdgeTypeAppearanceForm from "./EdgeTypeAppearanceForm";
+import { useGraphStore } from "@/state/useGraphStore";
+import { EdgeTypeAppearance } from "@/types/appearance";
+
 type EdgeTypeAppearanceSettingsProps = {
-  onSaveCustomPresetFromJson?: () => void;
+  onSave: (type: string, appearance: EdgeTypeAppearance) => void;
+  onReset: (type: string) => void;
+  selectedType: string;
+  setSelectedType: (type: string) => void;
+  allTypes: string[];
 };
 
-export default function EdgeTypeAppearanceSettings({ onSaveCustomPresetFromJson }: EdgeTypeAppearanceSettingsProps) {
+export default function EdgeTypeAppearanceSettings({
+  onSave,
+  onReset,
+  selectedType,
+  setSelectedType,
+  allTypes,
+}: EdgeTypeAppearanceSettingsProps) {
   const { edges, selectedEdgeId } = useGraphStore();
-  // Get unique edge types
-  const types = Array.from(new Set(edges.map(e => e.type || "default"))).sort();
 
   // Determine selected type based on selected edge, fallback to first type
   const selectedEdge = selectedEdgeId
-    ? edges.find(e => e.id === selectedEdgeId)
+    ? edges.find((e) => e.id === selectedEdgeId)
     : undefined;
-  const selectedEdgeType = selectedEdge ? (selectedEdge.type || "default") : (types[0] || "default");
-
-  // Track the selected type; when list of types changes, keep in sync
-  const [selected, setSelected] = useState<string>(selectedEdgeType);
+  const selectedEdgeType = selectedEdge
+    ? selectedEdge.type || "default"
+    : selectedType || allTypes[0] || "default";
 
   useEffect(() => {
     // Sync local selected type if the current selected type changes (e.g. new edge selected)
-    if (selectedEdgeType && types.includes(selectedEdgeType)) {
-      setSelected(selectedEdgeType);
-    } else if (types.length > 0) {
-      setSelected(types[0]);
+    if (selectedEdgeType && allTypes.includes(selectedEdgeType)) {
+      setSelectedType(selectedEdgeType);
+    } else if (allTypes.length > 0 && !allTypes.includes(selectedType)) {
+      setSelectedType(allTypes[0]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedEdgeType, types.join(",")]);
+  }, [selectedEdgeType, allTypes.join(","), setSelectedType]);
 
-  if (!types.length) {
-    return <div className="text-xs text-muted-foreground">No edges loaded.</div>;
+  if (!allTypes.length) {
+    return (
+      <div className="text-xs text-muted-foreground">No edges loaded.</div>
+    );
   }
 
   // Section shell, matching NodeTypeAppearanceForm
@@ -42,14 +52,15 @@ export default function EdgeTypeAppearanceSettings({ onSaveCustomPresetFromJson 
         Edge Type Appearance
       </div>
       <EdgeTypeAppearanceForm
-        type={selected}
-        allTypes={types}
-        value={selected}
-        onTypeChange={setSelected}
-        onSaveCustomPresetFromJson={onSaveCustomPresetFromJson}
+        type={selectedType}
+        allTypes={allTypes}
+        onTypeChange={setSelectedType}
+        onSave={onSave}
+        onReset={onReset}
       />
       <p className="text-xs text-muted-foreground mt-2">
-        These settings affect all edges of this type. You can still override them for individual edges.
+        These settings affect all edges of this type. You can still override
+        them for individual edges.
       </p>
     </section>
   );

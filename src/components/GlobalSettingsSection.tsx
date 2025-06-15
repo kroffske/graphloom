@@ -1,99 +1,44 @@
-import React, { useRef, useMemo, useState, useEffect, useCallback } from "react";
+
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import AppearancePresetsSection from "@/components/AppearancePresetsSection";
-import { Settings, Import, Save } from "lucide-react";
+import { Settings } from "lucide-react";
 import NodeTypeAppearanceSettings from "@/components/NodeTypeAppearanceSettings";
-import { Textarea } from "@/components/ui/textarea";
-import { useGraphStore } from "@/state/useGraphStore";
-import { toast } from "sonner";
-import { appearancePresets } from "@/data/appearancePresets";
-import AppearancePresetDropdown from "./AppearancePresetDropdown";
-// Add:
 import EdgeTypeAppearanceSettings from "@/components/EdgeTypeAppearanceSettings";
-import { useAppearancePresets } from "./GlobalSettings/useAppearancePresets";
 import AppearanceImportExport from "./GlobalSettings/AppearanceImportExport";
 import PresetJsonConfigTextarea from "./GlobalSettings/PresetJsonConfigTextarea";
-
-// Node type labels for all built-in types (should match those in NodeTypeAppearanceSettings)
-const NODE_TYPE_LABELS: Record<string, string> = {
-  entity: "Entity",
-  process: "Process",
-  "data-store": "Data Store",
-  event: "Event",
-  decision: "Decision",
-  "external-system": "External System"
-};
-// Default appearance for any type
-const DEFAULTS = {
-  icon: undefined,
-  backgroundColor: "",
-  lineColor: "",
-  size: 64,
-  labelField: "label",
-  showIconCircle: false,
-  iconCircleColor: "#e9e9e9",
-  iconOrder: undefined
-};
-type CustomPreset = {
-  name: string;
-  key: string;
-  config: Record<string, any>;
-};
-type GlobalSettingsSectionProps = {
-  onFillExample: () => void;
-};
-const CUSTOM_PRESET_KEY = "custom";
-
-// Persist the custom preset locally for current session and reloads, using localStorage.
-function getPersistedCustomPreset(): CustomPreset | null {
-  try {
-    const str = localStorage.getItem("lovable_custom_preset");
-    if (!str) return null;
-    const config = JSON.parse(str);
-    return {
-      name: "Custom",
-      key: CUSTOM_PRESET_KEY,
-      config
-    };
-  } catch {
-    return null;
-  }
-}
-function persistCustomPreset(config: Record<string, any>) {
-  try {
-    localStorage.setItem("lovable_custom_preset", JSON.stringify(config));
-  } catch {}
-}
-
-// Local storage key for selected appearance preset
-const SELECTED_PRESET_LOCAL_KEY = "lovable_selected_preset_key";
-function getPersistedSelectedPresetKey(): string | null {
-  try {
-    return localStorage.getItem(SELECTED_PRESET_LOCAL_KEY);
-  } catch {
-    return null;
-  }
-}
-function persistSelectedPresetKey(selectedKey: string) {
-  try {
-    localStorage.setItem(SELECTED_PRESET_LOCAL_KEY, selectedKey);
-  } catch {}
-}
+import { useAppearanceManager } from "@/hooks/appearance/useAppearanceManager";
+import AppearancePresetDropdown from "./AppearancePresetDropdown";
 
 const GlobalSettingsSection: React.FC<{ onFillExample: () => void }> = () => {
   const {
+    // Node
+    nodeTypeKeys,
+    nodeTypeLabels,
+    selectedNodeType,
+    setSelectedNodeType,
+    selectedNodeTypeAppearance,
+    updateNodeTypeAppearance,
+    resetNodeTypeAppearance,
+    // Edge
+    edgeTypeKeys,
+    selectedEdgeType,
+    setSelectedEdgeType,
+    updateEdgeTypeAppearance,
+    resetEdgeTypeAppearance,
+    // Presets
     completePresetObject,
     displayedPresets,
     selectedPresetKey,
-    setSelectedPresetKey,
     selectedPresetObj,
     handlePresetSaveFromJson,
     handlePresetSelect,
-    updateNodeTypeAndSave,
-  } = useAppearancePresets();
+  } = useAppearanceManager();
 
   // JSON textarea state/dirty logic
-  const [editableJson, setEditableJson] = useState<string>(JSON.stringify(completePresetObject, null, 2));
+  const [editableJson, setEditableJson] = useState<string>(
+    JSON.stringify(completePresetObject, null, 2)
+  );
   const [isDirty, setIsDirty] = useState(false);
 
   // Sync text with presets if not dirty
@@ -108,10 +53,14 @@ const GlobalSettingsSection: React.FC<{ onFillExample: () => void }> = () => {
     if (presetKey === selectedPresetKey) return;
     const preset = displayedPresets.find((p) => p.key === presetKey);
     if (preset) {
-      handlePresetSelect(preset.config, preset.key, (nodeTypes, edgeTypes) => {
-        setEditableJson(JSON.stringify({ nodeTypes, edgeTypes }, null, 2));
-        setIsDirty(false);
-      });
+      handlePresetSelect(
+        preset.config,
+        preset.key,
+        (nodeTypes, edgeTypes) => {
+          setEditableJson(JSON.stringify({ nodeTypes, edgeTypes }, null, 2));
+          setIsDirty(false);
+        }
+      );
     }
   }
 
@@ -133,20 +82,40 @@ const GlobalSettingsSection: React.FC<{ onFillExample: () => void }> = () => {
           </span>
         </div>
         <div className="flex flex-col gap-3">
-          <span className="font-semibold text-base mt-1 mb-0.5">Appearance Presets</span>
+          <span className="font-semibold text-base mt-1 mb-0.5">
+            Appearance Presets
+          </span>
           <AppearancePresetsSection
-            onPresetSelect={(config, key) => handlePresetSelect(config, key, (nodeTypes, edgeTypes) => {
-              setEditableJson(JSON.stringify({ nodeTypes, edgeTypes }, null, 2));
-              setIsDirty(false);
-            })}
+            onPresetSelect={(config, key) =>
+              handlePresetSelect(config, key, (nodeTypes, edgeTypes) => {
+                setEditableJson(
+                  JSON.stringify({ nodeTypes, edgeTypes }, null, 2)
+                );
+                setIsDirty(false);
+              })
+            }
             selectedPresetKey={selectedPresetKey}
             appearancePresets={displayedPresets}
           />
         </div>
         <AppearanceImportExport />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-4">
-          <NodeTypeAppearanceSettings onSave={updateNodeTypeAndSave} />
-          <EdgeTypeAppearanceSettings />
+          <NodeTypeAppearanceSettings
+            onSave={updateNodeTypeAppearance}
+            onReset={resetNodeTypeAppearance}
+            selectedType={selectedNodeType}
+            setSelectedType={setSelectedNodeType}
+            appearance={selectedNodeTypeAppearance}
+            nodeTypeKeys={nodeTypeKeys}
+            nodeTypeLabels={nodeTypeLabels}
+          />
+          <EdgeTypeAppearanceSettings
+            onSave={updateEdgeTypeAppearance}
+            onReset={resetEdgeTypeAppearance}
+            selectedType={selectedEdgeType}
+            setSelectedType={setSelectedEdgeType}
+            allTypes={edgeTypeKeys}
+          />
         </div>
         <PresetJsonConfigTextarea
           editableJson={editableJson}
@@ -154,10 +123,13 @@ const GlobalSettingsSection: React.FC<{ onFillExample: () => void }> = () => {
           isDirty={isDirty}
           setIsDirty={setIsDirty}
           completePresetObject={completePresetObject}
-          onSaveCustomPresetFromJson={(jsonStr) => handlePresetSaveFromJson(jsonStr, () => setIsDirty(false))}
+          onSaveCustomPresetFromJson={(jsonStr) =>
+            handlePresetSaveFromJson(jsonStr, () => setIsDirty(false))
+          }
         />
         <p className="text-xs text-muted-foreground">
-          Export/import includes nodes, edges, and manual positions. Presets are experimental. Now includes global edge appearance!
+          Export/import includes nodes, edges, and manual positions. Presets
+          are experimental. Now includes global edge appearance!
         </p>
       </section>
     </div>
