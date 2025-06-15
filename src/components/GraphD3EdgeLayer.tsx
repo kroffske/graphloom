@@ -1,8 +1,6 @@
 import React from "react";
 import { useGraphStore } from "@/state/useGraphStore";
-
-const DEFAULT_EDGE_COLOR = "#64748b";
-const DEFAULT_EDGE_WIDTH = 2;
+import { DEFAULT_EDGE_COLOR, DEFAULT_EDGE_WIDTH } from "@/config/graphConstants";
 
 type GraphD3EdgeLayerProps = {
   edges: any[];
