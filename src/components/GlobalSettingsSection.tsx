@@ -64,6 +64,22 @@ function persistCustomPreset(config: Record<string, any>) {
   } catch {}
 }
 
+// Local storage key for selected appearance preset
+const SELECTED_PRESET_LOCAL_KEY = "lovable_selected_preset_key";
+
+function getPersistedSelectedPresetKey(): string | null {
+  try {
+    return localStorage.getItem(SELECTED_PRESET_LOCAL_KEY);
+  } catch {
+    return null;
+  }
+}
+function persistSelectedPresetKey(selectedKey: string) {
+  try {
+    localStorage.setItem(SELECTED_PRESET_LOCAL_KEY, selectedKey);
+  } catch {}
+}
+
 const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
   const importInputRef = useRef<HTMLInputElement>(null);
   const {
@@ -111,20 +127,35 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
     return presets;
   }, [customPreset]);
 
-  // Ensure selectedPresetKey always has a value - choose first available if missing
+  // Ensure selectedPresetKey has a value on mount and after preset changes.
   useEffect(() => {
-    if (!selectedPresetKey) {
-      // If for any reason there's no selected preset, pick the first one
-      if (displayedPresets.length > 0) {
+    // Only set from persisted value on initial mount (not on every change)
+    if (selectedPresetKey === undefined) {
+      const persistedKey = getPersistedSelectedPresetKey();
+      const hasPersisted = persistedKey && displayedPresets.find(p => p.key === persistedKey);
+      if (hasPersisted) {
+        setSelectedPresetKey(persistedKey);
+      } else if (displayedPresets.length > 0) {
         setSelectedPresetKey(displayedPresets[0].key);
+        persistSelectedPresetKey(displayedPresets[0].key);
       }
     } else {
-      // If current selected key is not in presets (e.g. deleted), switch to first available
-      if (!displayedPresets.find(p => p.key === selectedPresetKey) && displayedPresets.length > 0) {
+      // If selected key no longer exists (e.g., preset deleted), switch to first available
+      const found = displayedPresets.find(p => p.key === selectedPresetKey);
+      if (!found && displayedPresets.length > 0) {
         setSelectedPresetKey(displayedPresets[0].key);
+        persistSelectedPresetKey(displayedPresets[0].key);
       }
     }
-  }, [displayedPresets, selectedPresetKey]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [displayedPresets]);
+
+  // If user changed preset, persist the key.
+  useEffect(() => {
+    if (selectedPresetKey && displayedPresets.some(p => p.key === selectedPresetKey)) {
+      persistSelectedPresetKey(selectedPresetKey);
+    }
+  }, [selectedPresetKey, displayedPresets]);
 
   // Find selected preset object by key; fallback to null
   const selectedPresetObj = useMemo(() => {
@@ -230,9 +261,11 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
       toast.success("Preset JSON saved!");
       setIsDirty(false);
       setSelectedPresetKey(CUSTOM_PRESET_KEY);
+      persistSelectedPresetKey(CUSTOM_PRESET_KEY);
     } catch (err) {
       toast.error("Invalid JSON format or content.");
     }
+  // Dependencies updated for persistSelectedPresetKey
   }, [
     editableJson,
     setNodeTypeAppearance,
@@ -260,6 +293,7 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
     );
     setIsDirty(false);
     setSelectedPresetKey(presetKey);
+    persistSelectedPresetKey(presetKey);
   }
 
   function handlePresetKeyDropdownChange(presetKey: string) {
@@ -273,7 +307,7 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
   useEffect(() => {
     const loaded = getPersistedCustomPreset();
     if (loaded) setCustomPreset(loaded);
-    // Don't set initial preset key here, handled by useEffect above
+    // Don't set initial preset key here; handled above
   }, []);
 
   return (
