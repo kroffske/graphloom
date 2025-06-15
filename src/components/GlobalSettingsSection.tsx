@@ -344,8 +344,8 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
   }, []);
 
   return (
-    <div className="w-full md:w-[650px] min-w-[340px] mt-0 flex flex-col gap-5 px-1 max-w-4xl">
-      <section className="border border-border rounded-lg bg-card/80 shadow p-5 flex flex-col gap-4">
+    <div className="w-full md:w-[850px] min-w-[340px] mt-0 flex flex-col gap-5 px-1 max-w-5xl">
+      <section className="border border-border rounded-lg bg-card/80 shadow p-8 flex flex-col gap-6 w-full max-w-5xl min-w-[380px]">
         <div className="flex flex-row items-center gap-2 mb-1">
           <Settings className="w-5 h-5 text-muted-foreground" />
           <span className="font-semibold text-xl">Global Settings</span>
