@@ -1,10 +1,18 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useGraphStore } from "@/state/useGraphStore";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from "sonner";
 
+// Default color choices
 const COLORS = [
   "#64748b", // default (slate)
   "#334155", // dark slate
@@ -17,36 +25,84 @@ const COLORS = [
 
 type Props = {
   type: string;
+  allTypes?: string[];
+  value?: string;
+  onTypeChange?: (t: string) => void;
+  onSaveCustomPresetFromJson?: () => void;
 };
 
-export default function EdgeTypeAppearanceForm({ type }: Props) {
-  const { edgeTypeAppearances, setEdgeTypeAppearance, resetEdgeTypeAppearance } = useGraphStore();
+/**
+ * Edge type appearance form, styled like node form.
+ * If `allTypes` and `onTypeChange` are provided, renders type dropdown at top.
+ */
+export default function EdgeTypeAppearanceForm({
+  type,
+  allTypes,
+  value,
+  onTypeChange,
+  onSaveCustomPresetFromJson
+}: Props) {
+  const {
+    edgeTypeAppearances,
+    setEdgeTypeAppearance,
+    resetEdgeTypeAppearance,
+  } = useGraphStore();
   const existing = edgeTypeAppearances[type] || {};
   const [color, setColor] = useState(existing.color ?? "#64748b");
   const [width, setWidth] = useState(existing.width ?? 2);
   const [labelField, setLabelField] = useState(existing.labelField ?? "");
 
-  function handleSave() {
+  // Keep local state in sync with changes to the selected type, so changing type resets values
+  useEffect(() => {
+    setColor(edgeTypeAppearances[type]?.color ?? "#64748b");
+    setWidth(edgeTypeAppearances[type]?.width ?? 2);
+    setLabelField(edgeTypeAppearances[type]?.labelField ?? "");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [type]);
+
+  function handleSave(e?: React.FormEvent) {
+    if (e) e.preventDefault();
     setEdgeTypeAppearance(type, {
       color,
       width,
       labelField: labelField.trim() || undefined,
     });
+    toast.success(`Saved edge appearance for "${type}"`);
+    if (onSaveCustomPresetFromJson) onSaveCustomPresetFromJson();
   }
   function handleReset() {
     resetEdgeTypeAppearance(type);
+    // Reset UI to default values
     setColor("#64748b");
     setWidth(2);
     setLabelField("");
+    toast("Reset to default");
   }
 
   return (
-    <div className="flex flex-col gap-3 py-2">
-      <div className="font-bold text-sm mb-1">Default Appearance for <span className="font-mono">{type}</span></div>
-      <div>
+    <form className="flex flex-col gap-5" onSubmit={handleSave}>
+      {/* Type selector dropdown, if using in global settings; matches node type UI */}
+      {allTypes && onTypeChange && (
+        <div>
+          <Select value={value} onValueChange={onTypeChange}>
+            <SelectTrigger className="w-full h-8 text-xs bg-muted border" id="edge-type">
+              <SelectValue placeholder="Select edge type" />
+            </SelectTrigger>
+            <SelectContent>
+              {allTypes.map(t => (
+                <SelectItem value={t} key={t} className="text-xs capitalize">
+                  {t}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+      <div className="flex flex-col gap-2">
+        {/* Color choices */}
         <label className="text-xs font-semibold mb-1 block">Color</label>
         <div className="flex gap-2 flex-wrap">
-          {COLORS.map(c => (
+          {COLORS.map((c) => (
             <button
               key={c}
               type="button"
@@ -65,7 +121,7 @@ export default function EdgeTypeAppearanceForm({ type }: Props) {
           />
         </div>
       </div>
-      <div>
+      <div className="flex flex-col gap-2">
         <label className="text-xs font-semibold mb-1 block">Width</label>
         <div className="flex items-center gap-3">
           <Slider
@@ -79,21 +135,24 @@ export default function EdgeTypeAppearanceForm({ type }: Props) {
           <span className="text-xs">{width}px</span>
         </div>
       </div>
-      <div>
+      <div className="flex flex-col gap-2">
         <label className="text-xs font-semibold mb-1 block">Label field</label>
         <Input
           value={labelField}
           onChange={e => setLabelField(e.target.value)}
           placeholder="Edge attribute to show as label"
         />
-        <span className="text-xs text-muted-foreground block mt-1">E.g. set to <span className="font-mono">cost</span> to show an attribute named <span className="font-mono">cost</span> as the label for this type of edge.</span>
+        <span className="text-xs text-muted-foreground block mt-1">
+          E.g. set to <span className="font-mono">cost</span> to show an attribute named <span className="font-mono">cost</span> as the label for this type of edge.
+        </span>
       </div>
-      <div className="flex gap-2">
-        <Button type="button" size="sm" onClick={handleSave}>Save</Button>
-        <Button type="button" size="sm" variant="ghost" onClick={handleReset}>
-          Reset to default
+      {/* Unified button layout */}
+      <div className="flex gap-2 mt-4">
+        <Button type="submit" className="w-fit" size="sm">Update edge style</Button>
+        <Button type="button" variant="outline" className="w-fit" size="sm" onClick={handleReset}>
+          Reset to Default
         </Button>
       </div>
-    </div>
+    </form>
   );
 }
