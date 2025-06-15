@@ -85,18 +85,16 @@ const GraphD3Node = ({
               }}
             >
               <Icon
-                className="w-7 h-7"
+                className="w-7 h-7 text-[#30334a]"
                 aria-label={iconType}
                 filled={true}
-                color="#30334a"
               />
             </span>
           ) : (
             <Icon
-              className="w-8 h-8"
+              className="w-8 h-8 text-[#30334a]"
               aria-label={iconType}
               filled={true}
-              color="#30334a"
             />
           ))}
       </div>
