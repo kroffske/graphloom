@@ -4,9 +4,14 @@ import React from "react";
 const ThemeToggle = () => {
   const [dark, setDark] = React.useState(() => {
     if (typeof window !== "undefined") {
+      // ENABLE dark by default (even if user hasn't set anything yet)
+      if (!document.documentElement.classList.contains("dark")) {
+        document.documentElement.classList.add("dark");
+        return true;
+      }
       return document.documentElement.classList.contains("dark");
     }
-    return false;
+    return true;
   });
 
   React.useEffect(() => {
@@ -29,3 +34,4 @@ const ThemeToggle = () => {
 };
 
 export default ThemeToggle;
+
