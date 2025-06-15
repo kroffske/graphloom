@@ -62,7 +62,7 @@ const UploadPanel = () => {
   const { setNodes, setEdges } = useGraphStore();
 
   // Always fill Example data on mount
-  useEffect(() => {
+  React.useEffect(() => {
     const { nodes: defaultNodes, edges: defaultEdges } = parseCsvData(
       SAMPLE_TAB_CSVS.example.nodes,
       SAMPLE_TAB_CSVS.example.edges
@@ -85,9 +85,9 @@ const UploadPanel = () => {
       {/* ---- LEFT COLUMN: Upload and Examples ---- */}
       <UploadCsvSection onExample={handleFillExample} />
       {/* ---- RIGHT COLUMN: Settings Sidebar ---- */}
-      {/* Replace old GlobalSettingsSection with the new sidebar */}
+      {/* Pass handleFillExample down to SettingsSidebar so it can be used by GlobalSettingsSection */}
       <div className="hidden md:block min-w-[340px] max-w-[410px] w-full h-full">
-        <SettingsSidebar />
+        <SettingsSidebar onFillExample={handleFillExample} />
       </div>
       {/* On small screens, surface settings as a button/panel modal (future improvement) */}
     </div>
