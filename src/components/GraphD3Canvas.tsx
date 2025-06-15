@@ -17,7 +17,6 @@ const WIDTH = 900;
 const HEIGHT = 530;
 
 const GraphD3Canvas: React.FC = () => {
-  // Use new stateful D3 sync hook for updates/diff/state preservation
   const {
     nodes,
     edges,
@@ -26,8 +25,10 @@ const GraphD3Canvas: React.FC = () => {
     clearManualPositions,
     saveManualPosition,
     manualPositions,
+    setManualPositions, // new
   } = useD3GraphState();
 
+  // Local layout mode
   const [layoutMode, setLayoutMode] = React.useState<"simulation" | "manual">("simulation");
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [hoveredNodeId, setHoveredNodeId] = React.useState<string | null>(null);
@@ -35,6 +36,9 @@ const GraphD3Canvas: React.FC = () => {
 
   // Local drag state for manual mode
   const [dragging, setDragging] = React.useState<null | { id: string; offsetX: number; offsetY: number }>(null);
+
+  // Manual: track last simulation node positions for preserving layout
+  const lastSimNodePositions = useRef<Record<string, { x: number; y: number }>>({});
 
   // Filtered node/edge data
   const [hiddenNodeIds, setHiddenNodeIds] = React.useState<Set<string>>(new Set());
@@ -71,12 +75,23 @@ const GraphD3Canvas: React.FC = () => {
     return () => window.removeEventListener("keydown", handler);
   }, [contextNodeId]);
 
+  // Track current node positions during simulation for transfer to manual mode
+  const captureSimulationPositions = useCallback((simNodes: any[]) => {
+    // Map every node.id to its x/y
+    const pos: Record<string, { x: number; y: number }> = {};
+    simNodes.forEach((n) => {
+      if (typeof n.x === "number" && typeof n.y === "number") {
+        pos[n.id] = { x: n.x, y: n.y };
+      }
+    });
+    lastSimNodePositions.current = pos;
+  }, []);
+
   // D3 Simulation & SVG Rendering
   useEffect(() => {
     if (!svgRef.current) return;
     if (!filteredNodes.length) return;
 
-    // Deep copy nodes, preserve manualPositions in manual mode
     const simNodes = filteredNodes.map((n) => {
       if (layoutMode === "manual" && manualPositions[n.id]) {
         return { ...n, ...manualPositions[n.id] };
@@ -241,7 +256,11 @@ const GraphD3Canvas: React.FC = () => {
       });
     }, 0);
 
+    // === Track/capture simulation node positions on every tick ===
     simulation.on("tick", () => {
+      // Capture latest simulation node positions
+      captureSimulationPositions(simNodes);
+
       link
         .attr("x1", (d: any) => (d.source as any).x!)
         .attr("y1", (d: any) => (d.source as any).y!)
@@ -266,7 +285,20 @@ const GraphD3Canvas: React.FC = () => {
     dragging,
     saveManualPosition,
     hiddenNodeIds,
+    captureSimulationPositions
   ]);
+
+  // === PRESERVE NODE POSITIONS WHEN SWITCHING FROM SIMULATION TO MANUAL ===
+  const handleSetLayoutMode = useCallback(
+    (mode: "simulation" | "manual") => {
+      if (mode === "manual" && layoutMode === "simulation") {
+        // Preserve node layout by saving the latest positions
+        setManualPositions(lastSimNodePositions.current);
+      }
+      setLayoutMode(mode);
+    },
+    [layoutMode, setLayoutMode, setManualPositions]
+  );
 
   // UI
   return (
@@ -275,14 +307,14 @@ const GraphD3Canvas: React.FC = () => {
         <Button
           size="sm"
           variant={layoutMode === "simulation" ? "default" : "outline"}
-          onClick={() => setLayoutMode("simulation")}
+          onClick={() => handleSetLayoutMode("simulation")}
         >
           Layout Mode
         </Button>
         <Button
           size="sm"
           variant={layoutMode === "manual" ? "default" : "outline"}
-          onClick={() => setLayoutMode("manual")}
+          onClick={() => handleSetLayoutMode("manual")}
         >
           Manual Mode
         </Button>
@@ -309,3 +341,4 @@ const GraphD3Canvas: React.FC = () => {
 
 export default GraphD3Canvas;
 
+// NOTE: This file is now getting quite long (>300 lines). Consider refactoring into smaller subcomponents or hooks!

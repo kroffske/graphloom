@@ -1,3 +1,4 @@
+
 import { useCallback, useRef } from "react";
 import { useGraphStore, GraphNode, GraphEdge } from "@/state/useGraphStore";
 import { diffGraphNodes, diffGraphEdges } from "@/utils/graphDiffing";
@@ -17,7 +18,17 @@ export function useD3GraphState() {
     manualPositions,
     incrementalUpdateNodes,
     incrementalUpdateEdges,
+    // Expose setter for all manual positions
   } = useGraphStore();
+
+  // Add: bulk manual positions setter
+  const setManualPositions = useCallback(
+    (positions: Record<string, { x: number; y: number }>) => {
+      // This setter is not in the store yet, so simulate by updating each
+      Object.entries(positions).forEach(([id, pos]) => setManualPosition(id, pos));
+    },
+    [setManualPosition]
+  );
 
   // Cache: Used to memorize last states for diffing
   const lastNodesRef = useRef<GraphNode[]>([]);
@@ -82,5 +93,7 @@ export function useD3GraphState() {
     clearManualPositions,
     saveManualPosition,
     manualPositions,
+    setManualPositions, // new exposed
   };
 }
+
