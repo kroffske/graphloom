@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from "react";
 import * as d3 from "d3";
 import { useD3DragNodes } from "@/hooks/useD3DragNodes";
@@ -169,7 +168,7 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
       )
       .html((d) => `<div id="d3-node-${d.id}"></div>`);
 
-    // Drag/Manual Layout only in manual mode
+    // --- Drag/Manual Layout ---
     if (layoutMode === "manual") {
       useD3DragNodes({
         nodeG,
@@ -178,6 +177,35 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
         manualPositions,
         setDragging,
         saveManualPosition,
+      });
+    } else if (layoutMode === "force") {
+      // Add D3 drag for force mode: pin nodes by setting fx/fy, and allow drag motion
+      nodeG.call(
+        d3
+          .drag<SVGGElement, any>()
+          .on("start", function (event, d) {
+            if (!event.active && simulation && simulation.alphaTarget) simulation.alphaTarget(0.3).restart();
+            // On drag start, pin node at current position
+            d.fx = d.x;
+            d.fy = d.y;
+          })
+          .on("drag", function (event, d) {
+            // Set .fx/.fy as user drags (pin to pointer)
+            d.fx = event.x;
+            d.fy = event.y;
+          })
+          .on("end", function (event, d) {
+            if (!event.active && simulation && simulation.alphaTarget) simulation.alphaTarget(0);
+            // Node remains pinned at .fx/.fy after drag ends
+            // If you want nodes to "unpin" after move, set d.fx = d.fy = null here, but default behavior is to keep pinned
+          })
+      );
+
+      // Add double-click to "unpin" (release) node
+      nodeG.on("dblclick", function (_event, d) {
+        d.fx = null;
+        d.fy = null;
+        if (simulation && simulation.alphaTarget) simulation.alphaTarget(0.3).restart();
       });
     }
 
@@ -325,4 +353,3 @@ export default GraphD3SvgLayer;
 // --- 
 // This file is getting quite long (over 200 lines).
 // Consider asking Lovable to refactor it into smaller files for easier maintenance.
-
