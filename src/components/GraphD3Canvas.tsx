@@ -35,7 +35,10 @@ const GraphD3Canvas: React.FC = () => {
   const [dragging, setDragging] = React.useState<null | { id: string; offsetX: number; offsetY: number }>(null);
 
   // Extracted layout capture logic to keep this file shorter
-  const { capturePositions, getPositions } = useSimLayoutCapture();
+  const { capturePositions } = useSimLayoutCapture();
+
+  // Ref: Always holds last sim coordinates for currently filtered nodes
+  const lastSimPositionsRef = React.useRef<Record<string, { x: number; y: number }>>({});
 
   // Node/edge hiding UI logic
   const [hiddenNodeIds, setHiddenNodeIds] = React.useState<Set<string>>(new Set());
@@ -244,6 +247,15 @@ const GraphD3Canvas: React.FC = () => {
     simulation.on("tick", () => {
       capturePositions(simNodes);
 
+      // Store last sim pos to ref (for layout mode switch)
+      const result: Record<string, { x: number; y: number }> = {};
+      simNodes.forEach((n: any) => {
+        if (typeof n.id === "string" && typeof n.x === "number" && typeof n.y === "number") {
+          result[n.id] = { x: n.x, y: n.y };
+        }
+      });
+      lastSimPositionsRef.current = result;
+
       link
         .attr("x1", (d: any) => (d.source as any).x!)
         .attr("y1", (d: any) => (d.source as any).y!)
@@ -276,13 +288,12 @@ const GraphD3Canvas: React.FC = () => {
     (mode: "simulation" | "manual") => {
       if (mode === "manual" && layoutMode === "simulation") {
         // Only set manual positions for currently visible nodes to their latest simulated positions
-        const ids = filteredNodes.map(n => n.id);
-        const simPositions = getPositions(ids);
-        setManualPositions(simPositions);
+        // Use the LAST TICK positions we've captured with our ref (up-to-date)
+        setManualPositions({ ...lastSimPositionsRef.current });
       }
       setLayoutMode(mode);
     },
-    [layoutMode, setLayoutMode, setManualPositions, filteredNodes, getPositions]
+    [layoutMode, setLayoutMode, setManualPositions]
   );
 
   return (
