@@ -228,7 +228,7 @@ const NodeTypeAppearanceForm: React.FC = () => {
           </div>
         </div>
         <div className="flex gap-2 mt-4">
-          <Button type="submit" className="w-fit">Save</Button>
+          <Button type="submit" className="w-fit">Update node style</Button>
           <Button type="button" variant="outline" className="w-fit" onClick={handleReset}>
             Reset to Default
           </Button>
