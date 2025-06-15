@@ -13,7 +13,7 @@ const GraphD3Toolbar: React.FC<GraphD3ToolbarProps> = ({
   setLayoutMode,
   onShowAllHidden,
 }) => (
-  <div className="flex flex-col gap-2 items-end px-3 py-1 absolute z-10 bg-muted right-2 top-2 rounded shadow">
+  <div className="flex flex-col gap-2 items-end px-3 py-1 absolute z-10 bg-transparent right-2 top-2 rounded shadow">
     <Button
       size="sm"
       variant={layoutMode === "force" ? "default" : "outline"}
