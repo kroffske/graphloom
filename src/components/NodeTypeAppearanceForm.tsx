@@ -36,38 +36,33 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({ onSaveC
     return () => window.removeEventListener("lovable-preset-json-sync", handlePresetJsonSync);
   }, []);
 
-  // --- FIX: Move selectedType above hook and pass to hook directly ---
-  // Get all node types from the hook to populate the dropdown
+  // Get type keys and appearance
   const {
     nodeTypeKeys,
     nodeTypeLabels,
     appearance,
     setNodeTypeAppearance,
     resetNodeTypeAppearance,
-  } = useNodeAppearanceSettings(
-    // We'll pass real selectedType (not a constant) here below!
-    // Place holder for now, pick first valid type once, then user changes it
-    "" /* this will be replaced below */
-    , presetJsonString
+  } = useNodeAppearanceSettings("", presetJsonString);
+
+  // --- Selected Type Logic (IMPROVED) ---
+  // Move selectedType to top-level and always ensure it matches an available nodeTypeKey.
+  const [selectedType, setSelectedType] = useState<string>(
+    nodeTypeKeys.length > 0 ? nodeTypeKeys[0] : ""
   );
 
-  // --- Actually manage selectedType in form, and provide to hook ---
-  const [selectedType, setSelectedType] = useState<string>(nodeTypeKeys[0] || "");
-  // SYNCHRONIZE selectedType if type keys change (e.g. on data load)
   useEffect(() => {
-    if (!selectedType && nodeTypeKeys[0]) {
-      setSelectedType(nodeTypeKeys[0]);
-    } else if (selectedType && !nodeTypeKeys.includes(selectedType) && nodeTypeKeys.length > 0) {
-      setSelectedType(nodeTypeKeys[0]);
+    // Always sync selectedType if not found in nodeTypeKeys and nodeTypeKeys is not empty
+    if (!selectedType || !nodeTypeKeys.includes(selectedType)) {
+      setSelectedType(nodeTypeKeys[0] || "");
     }
-  }, [nodeTypeKeys, selectedType]);
+  }, [selectedType, nodeTypeKeys]);
 
-  // --- Now call useNodeAppearanceSettings AGAIN but with real selectedType ---
+  // Always get the correct appearance for the selected type
   const {
     appearance: selectedAppearance,
     setNodeTypeAppearance: setAppearanceForType,
     resetNodeTypeAppearance: resetAppearanceForType,
-    // pass-through for keys/labels
     nodeTypeKeys: stableNodeTypeKeys,
     nodeTypeLabels: stableNodeTypeLabels
   } = useNodeAppearanceSettings(selectedType, presetJsonString);
@@ -84,7 +79,7 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({ onSaveC
   );
   const [iconOrder, setIconOrder] = useState<string[]>(iconKeys);
 
-  // Re-sync local state when type/appearance changes
+  // Sync local state on appearance/type change
   useEffect(() => {
     setIcon(selectedAppearance.icon || selectedType);
     setBackgroundColor(selectedAppearance.backgroundColor || "");
@@ -135,6 +130,7 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({ onSaveC
             id="node-type"
             value={selectedType}
             onChange={e => setSelectedType(e.target.value)}
+            disabled={stableNodeTypeKeys.length === 0}
           >
             {stableNodeTypeKeys.map(key => (
               <option key={key} value={key}>
@@ -143,7 +139,6 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({ onSaveC
             ))}
           </select>
         </div>
-        {/* Appearance controls */}
         <NodeTypeIconSettings
           iconRegistry={iconRegistry}
           icon={icon}
@@ -180,3 +175,4 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({ onSaveC
 };
 
 export default NodeTypeAppearanceForm;
+
