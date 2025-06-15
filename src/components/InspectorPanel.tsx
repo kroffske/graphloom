@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useGraphStore } from "@/state/useGraphStore";
 import { useIconRegistry } from "./IconRegistry";
@@ -43,7 +42,7 @@ const InspectorPanel = () => {
         <div>
           <InspectorPanelTabs
             value={tab}
-            onChange={(tab) => setTab(tab)}
+            onChange={(tab) => setTab(tab as TabKey)}
           />
         </div>
         {tab === "details" && (
@@ -89,7 +88,7 @@ const InspectorPanel = () => {
         <div>
           <InspectorPanelTabs
             value={tab}
-            onChange={(tab) => setTab(tab)}
+            onChange={(tab) => setTab(tab as TabKey)}
             extraTabs={[
               {
                 key: "type-settings",
@@ -129,4 +128,3 @@ const InspectorPanel = () => {
 };
 
 export default InspectorPanel;
-
