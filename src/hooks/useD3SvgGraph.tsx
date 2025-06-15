@@ -129,6 +129,58 @@ export function useD3SvgGraph({
         if (setEdgeMousePos) setEdgeMousePos(null);
       });
 
+    // ---- Restore NODE RENDERING (CIRCLES & foreignObject ICONS) ----
+    const nodeGroup = svgGroup.append("g").attr("class", "nodes");
+
+    // Render SVG circles for each node
+    nodeGroup.selectAll("circle")
+      .data(simNodes)
+      .enter()
+      .append("circle")
+      .attr("cx", (d: any) => d.x)
+      .attr("cy", (d: any) => d.y)
+      .attr("r", NODE_RADIUS)
+      .attr("fill", (d: any) => d.appearance?.backgroundColor || "#fff")
+      .attr("stroke", (d: any) => d.appearance?.lineColor || "#888")
+      .attr("stroke-width", (d: any) => d.id === (dragging?.id) ? 3 : 1.5)
+      .attr("opacity", (d: any) => hiddenNodeIds.has(d.id) ? 0.15 : 1)
+      .attr("pointer-events", "visiblePainted");
+
+    // Use a foreignObject for mounting React node content (for icon, etc)
+    nodeGroup.selectAll("foreignObject")
+      .data(simNodes)
+      .enter()
+      .append("foreignObject")
+      .attr("x", (d: any) => d.x - NODE_RADIUS)
+      .attr("y", (d: any) => d.y - NODE_RADIUS)
+      .attr("width", NODE_RADIUS * 2)
+      .attr("height", NODE_RADIUS * 2)
+      .attr("pointer-events", "none")
+      .attr("style", "overflow: visible; z-index: 2;")
+      .append("xhtml:div")
+      .attr("id", (d: any) => `d3-node-${d.id}`)
+      .style("width", `${NODE_RADIUS * 2}px`)
+      .style("height", `${NODE_RADIUS * 2}px`)
+      .style("display", "flex")
+      .style("justify-content", "center")
+      .style("align-items", "center")
+      .style("pointer-events", "auto");
+
+    // --- Node event handlers (hover, context menu) ---
+    nodeGroup.selectAll("circle")
+      .on("mouseenter", function (event: MouseEvent, d: any) {
+        setHoveredNodeId?.(d.id);
+      })
+      .on("mouseleave", function () {
+        setHoveredNodeId?.(null);
+      })
+      .on("contextmenu", function (event: MouseEvent, d: any) {
+        event.preventDefault();
+        event.stopPropagation();
+        setContextNodeId?.(d.id);
+      });
+
+    // UPDATE node positions on every simulation tick
     if (layoutMode === "force") {
       simulation.on("tick", () => {
         captureSimulationPositions(simNodes);
@@ -137,6 +189,13 @@ export function useD3SvgGraph({
           .attr("y1", (d: any) => (d.source as any).y!)
           .attr("x2", (d: any) => (d.target as any).x!)
           .attr("y2", (d: any) => (d.target as any).y!);
+        // Update node positions
+        nodeGroup.selectAll("circle")
+          .attr("cx", (d: any) => d.x)
+          .attr("cy", (d: any) => d.y);
+        nodeGroup.selectAll("foreignObject")
+          .attr("x", (d: any) => d.x - NODE_RADIUS)
+          .attr("y", (d: any) => d.y - NODE_RADIUS);
         link
           .attr("opacity", (d: any) => (selectedEdgeId === d.id ? 1 : 0.7))
           .attr("stroke-width", (d: any) => {
@@ -167,6 +226,14 @@ export function useD3SvgGraph({
           const t: any = typeof d.target === "object" ? d.target : simNodes.find((n: any) => n.id === d.target);
           return t?.y ?? 0;
         });
+      // Update node positions
+      nodeGroup.selectAll("circle")
+        .attr("cx", (d: any) => d.x)
+        .attr("cy", (d: any) => d.y);
+      nodeGroup.selectAll("foreignObject")
+        .attr("x", (d: any) => d.x - NODE_RADIUS)
+        .attr("y", (d: any) => d.y - NODE_RADIUS);
+
       captureSimulationPositions(simNodes);
       link
         .attr("opacity", (d: any) => (selectedEdgeId === d.id ? 1 : 0.7))
