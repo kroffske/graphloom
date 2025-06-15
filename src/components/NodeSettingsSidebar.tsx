@@ -175,21 +175,6 @@ export function NodeSettingsSidebar({ open, onClose }: { open: boolean; onClose:
                       className="w-full"
                     />
                   </div>
-                  {/* Label field */}
-                  <div>
-                    <Label htmlFor="appearance-label-field">Label Field</Label>
-                    <Input
-                      id="appearance-label-field"
-                      value={appearance.labelField || "label"}
-                      onChange={e =>
-                        setAppearance((p) => ({
-                          ...p,
-                          labelField: e.target.value,
-                        }))
-                      }
-                      placeholder='e.g. "label", "name", "attribute"'
-                    />
-                  </div>
                   <button
                     type="submit"
                     className="mt-2 bg-primary text-white rounded px-4 py-2 hover:bg-primary/80"
