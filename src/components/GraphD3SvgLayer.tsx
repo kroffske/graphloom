@@ -118,6 +118,7 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
 
     // --- Drag ---
     if (layoutMode === "manual") {
+      // Manual mode: Only one node can be dragged at a time, and node position is set strictly to cursor.
       useD3DragNodes({
         nodeG,
         link,
