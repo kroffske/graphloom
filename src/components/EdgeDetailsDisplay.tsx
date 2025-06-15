@@ -21,10 +21,10 @@ export default function EdgeDetailsDisplay({ edge }: Props) {
           <dd className="text-xs text-foreground truncate">{edge.source}</dd>
           <dt className="font-semibold text-xs text-muted-foreground">Target</dt>
           <dd className="text-xs text-foreground truncate">{edge.target}</dd>
-          {edge.label && (
+          {appearance?.label && (
             <>
               <dt className="font-semibold text-xs text-muted-foreground">Label</dt>
-              <dd className="text-xs text-foreground truncate">{edge.label}</dd>
+              <dd className="text-xs text-foreground truncate">{appearance.label}</dd>
             </>
           )}
         </dl>

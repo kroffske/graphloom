@@ -26,7 +26,9 @@ export default function EdgeSettingsForm({ edge }: Props) {
   const [tab, setTab] = useState<"general" | "appearance" | "advanced">("general");
 
   // General tab state
-  const [label, setLabel] = useState(current.label ?? edge.label ?? "");
+  const [label, setLabel] = useState(
+    current.label ?? edge.appearance?.label ?? ""
+  );
   // Appearance tab state
   const [color, setColor] = useState(current.color ?? "#64748b");
   const [width, setWidth] = useState(current.width ?? 2);
