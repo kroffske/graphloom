@@ -2,7 +2,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Settings } from "lucide-react";
-// Remove: import { appearancePresets } from "@/data/appearancePresets";
 
 type Preset = {
   name: string;
@@ -48,14 +47,6 @@ const AppearancePresetsSection: React.FC<AppearancePresetsSectionProps> = ({
             {p.name}
           </Button>
         ))}
-      </div>
-      <div className="flex flex-row gap-2 mt-1">
-        <Button variant="outline" size="sm" disabled>
-          Save Current as Preset
-        </Button>
-        <Button variant="outline" size="sm" disabled>
-          Manage
-        </Button>
       </div>
     </section>
   );
