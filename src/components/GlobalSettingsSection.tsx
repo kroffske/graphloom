@@ -1,0 +1,132 @@
+
+import React, { useRef } from "react";
+import { Button } from "@/components/ui/button";
+import AppearancePresetsSection from "@/components/AppearancePresetsSection";
+import { Settings, Import } from "lucide-react";
+import NodeTypeAppearanceSettings from "@/components/NodeTypeAppearanceSettings";
+import { Textarea } from "@/components/ui/textarea";
+import { useGraphStore } from "@/state/useGraphStore";
+import { toast } from "sonner";
+
+type GlobalSettingsSectionProps = {
+  onFillExample: () => void;
+};
+
+const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
+  const importInputRef = useRef<HTMLInputElement>(null);
+  const { setNodes, setEdges, nodes, edges, manualPositions, nodeTypeAppearances } = useGraphStore();
+
+  // Export current graph state as JSON
+  function handleExport() {
+    const payload = {
+      nodes,
+      edges,
+      manualPositions,
+      timestamp: Date.now()
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const tempLink = document.createElement("a");
+    tempLink.href = url;
+    tempLink.download = "graph-export.json";
+    document.body.appendChild(tempLink);
+    tempLink.click();
+    document.body.removeChild(tempLink);
+    URL.revokeObjectURL(url);
+    toast.success("Exported graph data as JSON.");
+  }
+
+  // Import graph state from JSON
+  function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const data = JSON.parse(String(evt.target?.result));
+        if (data.nodes && data.edges) {
+          setNodes(data.nodes);
+          setEdges(data.edges);
+          toast.success("Imported graph data!");
+        } else {
+          toast.error("Invalid file format: Missing nodes or edges.");
+        }
+      } catch (err) {
+        toast.error("Failed to import file.");
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  }
+
+  // Handler for copying JSON config
+  function handleCopyPreset() {
+    try {
+      navigator.clipboard.writeText(JSON.stringify(nodeTypeAppearances, null, 2));
+      toast.success("Appearance preset JSON copied!");
+    } catch {
+      toast.error("Unable to copy JSON!");
+    }
+  }
+
+  return (
+    <div className="w-full md:w-[650px] min-w-[340px] mt-0 flex flex-col gap-5 px-1 max-w-4xl">
+      <section className="border border-border rounded-lg bg-card/80 shadow p-5 flex flex-col gap-4">
+        <div className="flex flex-row items-center gap-2 mb-1">
+          <Settings className="w-5 h-5 text-muted-foreground" />
+          <span className="font-semibold text-xl">Global Settings</span>
+        </div>
+        <div className="flex flex-row gap-3 items-center">
+          <Button variant="outline" size="sm" onClick={handleExport}>
+            Export JSON
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => importInputRef.current?.click()}
+          >
+            <Import className="w-4 h-4 mr-1" /> Import JSON
+          </Button>
+          <input
+            ref={importInputRef}
+            type="file"
+            accept="application/json"
+            className="hidden"
+            onChange={handleImportFile}
+          />
+        </div>
+        <div className="flex flex-col gap-3">
+          <span className="font-semibold text-base mt-1 mb-0.5">Appearance Presets</span>
+          <AppearancePresetsSection />
+        </div>
+        <div className="w-full flex flex-col md:flex-row gap-6 mt-2">
+          <div className="w-full md:w-1/2 flex-shrink-0">
+            <NodeTypeAppearanceSettings />
+          </div>
+          <div className="w-full md:w-1/2 flex flex-col min-w-[240px] max-w-[520px]">
+            <div className="flex items-center justify-between mb-2">
+              <span className="font-semibold text-base">Preset JSON Config</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCopyPreset}
+                type="button"
+              >Copy</Button>
+            </div>
+            <Textarea
+              value={JSON.stringify(nodeTypeAppearances, null, 2)}
+              readOnly
+              className="bg-muted resize-none font-mono text-xs min-h-[300px] max-h-[600px] h-full"
+              style={{ minWidth: "170px" }}
+            />
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Export/import includes nodes, edges, and manual positions. Presets are experimental.
+        </p>
+      </section>
+    </div>
+  );
+};
+
+export default GlobalSettingsSection;
