@@ -9,6 +9,7 @@ type EdgeTooltipProps = {
 
 const EdgeTooltip: React.FC<EdgeTooltipProps> = ({ edge, position }) => {
   const [visible, setVisible] = React.useState(false);
+
   React.useEffect(() => {
     if (!edge || !position) {
       setVisible(false);
@@ -17,7 +18,20 @@ const EdgeTooltip: React.FC<EdgeTooltipProps> = ({ edge, position }) => {
     const timer = setTimeout(() => setVisible(true), 120);
     return () => clearTimeout(timer);
   }, [edge, position]);
+
   if (!edge || !position || !visible) return null;
+
+  // Label logic: prefer edge.appearance.label, else look for labelField, else fallback to edge.id
+  let label: string | undefined;
+  if (edge.appearance?.label) {
+    label = String(edge.appearance.label);
+  } else if (
+    edge.appearance?.labelField &&
+    edge.attributes &&
+    edge.attributes[edge.appearance.labelField] !== undefined
+  ) {
+    label = String(edge.attributes[edge.appearance.labelField]);
+  }
 
   return (
     <div
@@ -32,7 +46,7 @@ const EdgeTooltip: React.FC<EdgeTooltipProps> = ({ edge, position }) => {
       tabIndex={-1}
     >
       <div className="font-bold text-base text-foreground mb-2 truncate">
-        {edge.label || `Edge: ${edge.id}`}
+        {label || `Edge: ${edge.id}`}
       </div>
       <dl className="grid grid-cols-2 gap-x-2 gap-y-1">
         <div className="contents">
