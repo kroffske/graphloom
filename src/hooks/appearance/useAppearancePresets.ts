@@ -1,4 +1,3 @@
-
 import { useMemo, useEffect, useState } from "react";
 import { appearancePresets } from "@/data/appearancePresets";
 import { Preset, PresetConfig } from "@/types/appearance";
@@ -9,16 +8,20 @@ function getPersistedCustomPreset(): Preset | null {
   try {
     const str = localStorage.getItem("lovable_custom_preset");
     if (!str) return null;
-    const config = JSON.parse(str);
-    return { name: "Custom", key: CUSTOM_PRESET_KEY, config };
+    const preset = JSON.parse(str);
+    // For backwards compatibility, if only config is stored
+    if (!preset.key) {
+      return { name: "Custom", key: CUSTOM_PRESET_KEY, config: preset };
+    }
+    return preset;
   } catch {
     return null;
   }
 }
 
-export function persistCustomPreset(config: PresetConfig) {
+export function persistCustomPreset(preset: Preset) {
   try {
-    localStorage.setItem("lovable_custom_preset", JSON.stringify(config));
+    localStorage.setItem("lovable_custom_preset", JSON.stringify(preset));
   } catch {}
 }
 
