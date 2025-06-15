@@ -1,7 +1,6 @@
 
 import React, { useRef, useCallback } from "react";
 import { useD3GraphState } from "@/hooks/useD3GraphState";
-import { useSimLayoutCapture } from "@/hooks/useSimLayoutCapture";
 import GraphD3Toolbar from "./GraphD3Toolbar";
 import GraphD3SvgLayer from "./GraphD3SvgLayer";
 import GraphTooltipManager from "./GraphTooltipManager";
@@ -19,6 +18,8 @@ const GraphD3Canvas: React.FC = () => {
     saveManualPosition,
     manualPositions,
     setManualPositions,
+    captureSimulationPositions,
+    getLastSimulationPositions,
   } = useD3GraphState();
 
   const [layoutMode, setLayoutMode] = React.useState<"simulation" | "manual">("simulation");
@@ -60,18 +61,20 @@ const GraphD3Canvas: React.FC = () => {
     return () => window.removeEventListener("keydown", handler);
   }, [contextNodeId]);
 
-  // === PRESERVE NODE POSITIONS WHEN SWITCHING FROM SIMULATION TO MANUAL ===
-  const lastSimPositionsRef = useRef<Record<string, { x: number; y: number }>>({});
-  const { capturePositions } = useSimLayoutCapture();
-
+  // Enhanced mode switching with position preservation
   const handleSetLayoutMode = useCallback(
     (mode: "simulation" | "manual") => {
       if (mode === "manual" && layoutMode === "simulation") {
-        setManualPositions({ ...lastSimPositionsRef.current });
+        // Capture current simulation positions and set them as manual positions
+        const simPositions = getLastSimulationPositions();
+        console.log("Switching to manual mode, captured positions:", simPositions);
+        if (Object.keys(simPositions).length > 0) {
+          setManualPositions(simPositions);
+        }
       }
       setLayoutMode(mode);
     },
-    [layoutMode, setLayoutMode, setManualPositions]
+    [layoutMode, getLastSimulationPositions, setManualPositions]
   );
 
   return (
@@ -94,6 +97,7 @@ const GraphD3Canvas: React.FC = () => {
         setContextNodeId={setContextNodeId}
         dragging={dragging}
         setDragging={setDragging}
+        captureSimulationPositions={captureSimulationPositions}
       />
       {contextNodeId && (
         <div className="fixed z-50 left-36 top-32 pointer-events-none"></div>
@@ -104,5 +108,3 @@ const GraphD3Canvas: React.FC = () => {
 };
 
 export default GraphD3Canvas;
-
-// NOTE: This file has been split into focused components and hooks. It is now much shorter!
