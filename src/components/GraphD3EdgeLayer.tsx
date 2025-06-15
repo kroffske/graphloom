@@ -43,8 +43,9 @@ const GraphD3EdgeLayer: React.FC<GraphD3EdgeLayerProps> = ({
         const midX = (s.x + t.x) / 2;
         const midY = (s.y + t.y) / 2;
 
+        // Instead of passing props to fragment, use a wrapping React.Fragment or an array.
         return (
-          <React.Fragment key={e.id}>
+          <g key={e.id}>
             <line
               x1={s.x}
               y1={s.y}
@@ -97,7 +98,7 @@ const GraphD3EdgeLayer: React.FC<GraphD3EdgeLayerProps> = ({
                 </tspan>
               </text>
             )}
-          </React.Fragment>
+          </g>
         );
       })}
     </g>
@@ -105,3 +106,4 @@ const GraphD3EdgeLayer: React.FC<GraphD3EdgeLayerProps> = ({
 };
 
 export default GraphD3EdgeLayer;
+

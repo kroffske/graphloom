@@ -74,9 +74,10 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = (props) => {
     simEdges,
   });
 
-  // This layer now only wires together data/components
+  // Pass svgRef down to GraphD3SvgFrame
   return (
     <GraphD3SvgFrame
+      svgRef={svgRef}
       simEdges={simEdges}
       simNodes={simNodes}
       layoutMode={layoutMode}
@@ -92,3 +93,4 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = (props) => {
 };
 
 export default GraphD3SvgLayer;
+

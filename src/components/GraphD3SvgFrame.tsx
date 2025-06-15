@@ -1,11 +1,12 @@
 
-import React, { useRef } from "react";
+import React, { RefObject } from "react";
 import { WIDTH, HEIGHT } from "@/hooks/useD3SvgGraph";
 import GraphD3EdgeLayer from "./GraphD3EdgeLayer";
 import GraphD3NodeLayer from "./GraphD3NodeLayer";
 import { useGraphStore } from "@/state/useGraphStore";
 
 type GraphD3SvgFrameProps = {
+  svgRef: RefObject<SVGSVGElement>; // NEW
   simEdges: any[];
   simNodes: any[];
   layoutMode: "force" | "circle" | "hierarchy" | "manual";
@@ -19,6 +20,7 @@ type GraphD3SvgFrameProps = {
 };
 
 const GraphD3SvgFrame: React.FC<GraphD3SvgFrameProps> = ({
+  svgRef,
   simEdges,
   simNodes,
   layoutMode,
@@ -40,6 +42,7 @@ const GraphD3SvgFrame: React.FC<GraphD3SvgFrameProps> = ({
 
   return (
     <svg
+      ref={svgRef}
       width="100%"
       height="100%"
       viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
@@ -78,3 +81,4 @@ const GraphD3SvgFrame: React.FC<GraphD3SvgFrameProps> = ({
 };
 
 export default GraphD3SvgFrame;
+
