@@ -2,6 +2,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 
+// Support both node and edge tabs
 type Tab = "details" | "settings";
 const TABS: { key: Tab; label: string }[] = [
   { key: "details", label: "Details" },
@@ -21,7 +22,7 @@ const InspectorPanelTabs: React.FC<InspectorPanelTabsProps> = ({ value, onChange
         type="button"
         variant={value === key ? "default" : "outline"}
         size="sm"
-        className={`rounded-full px-4 py-1 text-sm capitalize transition-all ${value === key ? "" : ""}`}
+        className={`rounded-full px-4 py-1 text-sm capitalize transition-all`}
         onClick={() => onChange(key)}
       >
         {label}
