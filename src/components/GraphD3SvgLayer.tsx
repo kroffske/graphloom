@@ -55,7 +55,14 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
     manualPositions
   );
 
-  // D3 rendering and behavior
+  // -----
+  // Move the zoom-and-pan hook call OUTSIDE useEffect (to top-level)
+  // We make sure to always get latest ref for the svg group.
+  useD3ZoomAndPan({
+    svgRef,
+    svgGroup: svgGroupRef.current ? d3.select(svgGroupRef.current) : null,
+  });
+
   useEffect(() => {
     if (!svgRef.current || !simNodes.length) return;
 
@@ -67,11 +74,7 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
     const svgGroup = svg.append("g");
     svgGroupRef.current = svgGroup.node() as SVGGElement;
 
-    // Zoom behavior
-    useD3ZoomAndPan({
-      svgRef,
-      svgGroup: svgGroupRef.current ? d3.select(svgGroupRef.current) : null,
-    });
+    // (Zoom handled via the hook at the component level!)
 
     // Edges group (keep order)
     const link = svgGroup.append("g").attr("class", "edges").selectAll("line")
