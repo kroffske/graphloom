@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { IconRegistryProvider } from "@/components/IconRegistry";
 import GraphD3Canvas from "@/components/GraphD3Canvas";
@@ -8,20 +7,38 @@ import ThemeToggle from "@/components/ThemeToggle";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { SidebarProvider } from "@/components/ui/sidebar";
 // No more NodeSettingsTab import
+import GlobalSettingsPanel from "@/components/GlobalSettingsPanel";
+import { Settings } from "lucide-react";
 
 const Index = () => {
   // "mainTab" controls the main content area; remove "settings"
   const [mainTab, setMainTab] = useState<"upload" | "graph">("graph");
+  // Add: state for showing global settings panel
+  const [showSettings, setShowSettings] = useState(false);
 
   return (
     <IconRegistryProvider>
       <div className="bg-background min-h-screen w-full flex flex-col">
         {/* Header */}
-        <header className="w-full flex items-center gap-4 px-6 py-4 border-b border-border shadow-sm bg-card z-20">
+        <header className="w-full flex items-center gap-4 px-6 py-4 border-b border-border shadow-sm bg-card z-20 relative">
           <h1 className="text-2xl font-bold tracking-wide text-primary">
             Graph Visualization UI
           </h1>
           <ThemeToggle />
+          {/* Settings button, right-aligned */}
+          <button
+            className="ml-auto flex items-center gap-1 px-2 py-1 rounded hover:bg-primary/10 border border-border transition-colors"
+            aria-label="Open settings"
+            onClick={() => setShowSettings(true)}
+            title="Global Settings"
+            tabIndex={0}
+            type="button"
+          >
+            <Settings className="w-5 h-5" aria-hidden="true" />
+            <span className="sr-only">Settings</span>
+          </button>
+          {/* Global Settings Panel */}
+          <GlobalSettingsPanel open={showSettings} onOpenChange={setShowSettings} />
         </header>
         {/* Tabs for Upload & Graph Only */}
         <Tabs
