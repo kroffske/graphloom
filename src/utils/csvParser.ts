@@ -1,6 +1,6 @@
 
 import * as Papa from "papaparse";
-import { Node, Edge } from "@/types/graph";
+import { GraphNode, GraphEdge } from "@/types/graph";
 
 export function castToSupportedType(val: unknown): string | number | boolean {
   if (typeof val === "string") {
@@ -17,7 +17,7 @@ export function castToSupportedType(val: unknown): string | number | boolean {
 export function parseCsvData(
   nodesCsv: string,
   edgesCsv: string
-): { nodes: Node[]; edges: Edge[] } {
+): { nodes: GraphNode[]; edges: GraphEdge[] } {
   const resultsNodes = Papa.parse(nodesCsv.trim(), {
     header: true,
     skipEmptyLines: true,
@@ -61,5 +61,5 @@ export function parseCsvData(
     };
   });
 
-  return { nodes: nodes as Node[], edges: edges as Edge[] };
+  return { nodes: nodes as GraphNode[], edges: edges as GraphEdge[] };
 }
