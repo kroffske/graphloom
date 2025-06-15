@@ -8,7 +8,7 @@ export type GraphNode = {
   attributes: Record<string, string | number | boolean>;
   x?: number;
   y?: number;
-  // Appearance options
+  // Appearance options -- now with explicit iconColor, borderColor, borderEnabled
   appearance?: {
     icon?: string; // nodeType key
     color?: string; // legacy color/name primary
@@ -16,8 +16,12 @@ export type GraphNode = {
     labelField?: string; // key to show (else "label")
     backgroundColor?: string; // New: background color with alpha
     lineColor?: string; // New: border/line color (stroke)
-    showIconCircle?: boolean; // New: show icon in circle?
-    iconCircleColor?: string; // New: color of icon circle
+    showIconCircle?: boolean; // (legacy/unneeded)
+    iconCircleColor?: string; // (legacy/unneeded)
+    // Explicit extras:
+    iconColor?: string;
+    borderEnabled?: boolean;
+    borderColor?: string;
   };
 };
 

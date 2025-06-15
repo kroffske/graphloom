@@ -105,10 +105,6 @@ const GraphD3Node = ({
         {Icon && (
           <Icon
             className="w-8 h-8"
-            style={{
-              width: iconSize,
-              height: iconSize,
-            }}
             aria-label={iconType}
             filled={true}
             color={iconColor}
