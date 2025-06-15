@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useGraphStore } from "@/state/useGraphStore";
 import { useGraphLogic } from "@/hooks/useGraphLogic";
 import GraphRenderer from "./GraphRenderer";
@@ -20,10 +20,29 @@ const GraphCanvas = () => {
     hoveredNodeId,
     setHoveredNodeId,
   } = useGraphLogic();
-  const { nodes: storeNodes } = useGraphStore();
+  const {
+    nodes: storeNodes,
+    edges: storeEdges,
+    hoveredEdgeId,
+  } = useGraphStore();
 
-  // Find the node that is currently hovered, if any
+  const [position, setPosition] = useState<{ x: number; y: number } | null>(
+    null
+  );
+
+  useEffect(() => {
+    const handleMouseMove = (event: MouseEvent) => {
+      setPosition({ x: event.clientX, y: event.clientY });
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+    };
+  }, []);
+
+  // Find the node or edge that is currently hovered, if any
   const hoveredNode = storeNodes.find((n) => n.id === hoveredNodeId);
+  const hoveredEdge = storeEdges.find((e) => e.id === hoveredEdgeId);
 
   return (
     <div className="relative w-full h-[70vh] bg-background border rounded-lg overflow-hidden shadow-lg">
@@ -37,7 +56,11 @@ const GraphCanvas = () => {
         hoveredNodeId={hoveredNodeId}
         setHoveredNodeId={setHoveredNodeId}
       />
-      <GraphTooltipManager node={hoveredNode} />
+      <GraphTooltipManager
+        hoveredNode={hoveredNode}
+        hoveredEdge={hoveredEdge}
+        position={position}
+      />
     </div>
   );
 };
