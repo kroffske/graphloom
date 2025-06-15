@@ -1,3 +1,4 @@
+
 import { NodeTypeAppearance, EdgeTypeAppearance } from "./appearance";
 
 export type GraphNode = {
@@ -19,6 +20,7 @@ export type GraphEdge = {
   type?: string;
   attributes?: Record<string, string | number | boolean>;
   appearance?: GraphEdgeAppearance;
+  timestamp?: number;
 };
 
 export type GraphEdgeAppearanceMap = Record<string, GraphEdgeAppearance>;

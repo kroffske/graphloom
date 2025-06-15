@@ -1,4 +1,3 @@
-
 import { create } from "zustand";
 import { NodeTypeAppearanceMap, EdgeTypeAppearanceMap } from "@/types/appearance";
 import type {
@@ -39,6 +38,10 @@ type GraphStore = {
   setEdgeAppearance: (id: string, appearance: GraphEdgeAppearance) => void;
   showEdgeLabels: boolean;
   toggleEdgeLabels: () => void;
+
+  // New: time range filtering
+  timeRange: [number, number] | null;
+  setTimeRange: (range: [number, number] | null) => void;
 
   // Add: persistent uploaded file names & setters
   nodeFilename: string | null;
@@ -153,6 +156,10 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   edgeFilename: null,
   setNodeFilename: (filename) => set({ nodeFilename: filename }),
   setEdgeFilename: (filename) => set({ edgeFilename: filename }),
+
+  // NEW: time range filtering
+  timeRange: null,
+  setTimeRange: (range) => set({ timeRange: range }),
 
   // NEW: selected appearance types state
   selectedNodeType: null,

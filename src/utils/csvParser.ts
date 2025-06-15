@@ -52,12 +52,18 @@ export function parseCsvData(
     Object.entries(row).forEach(([k, v]) => {
       attributes[k] = castToSupportedType(v);
     });
+    const timestamp = row.timestamp ? Date.parse(row.timestamp) : undefined;
+    if (row.timestamp && isNaN(timestamp)) {
+        console.warn(`Invalid timestamp in edges.csv row ${i + 2}: "${row.timestamp}"`);
+    }
+
     return {
       id: `e${i + 1}`,
       source: String(row.source),
       target: String(row.target),
       type: row.edge_type ? String(row.edge_type) : "default",
       attributes: Object.keys(attributes).length ? attributes : undefined,
+      timestamp: timestamp && !isNaN(timestamp) ? timestamp : undefined,
     };
   });
 

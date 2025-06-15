@@ -5,6 +5,7 @@ import GraphD3SvgLayer from "./GraphD3SvgLayer";
 import GraphTooltipManager from "./GraphTooltipManager";
 import EdgeContextMenu from "./EdgeContextMenu";
 import { useGraphStore } from "@/state/useGraphStore";
+import TimeRangeSlider from "./TimeRangeSlider";
 
 /**
  * This D3 graph canvas component now composes specialized pieces for simulation and rendering.
@@ -29,7 +30,15 @@ const GraphD3Canvas: React.FC = () => {
   const [contextNodeId, setContextNodeId] = React.useState<string | null>(null);
   const [dragging, setDragging] = React.useState<null | { id: string; offsetX: number; offsetY: number }>(null);
   const [hiddenNodeIds, setHiddenNodeIds] = React.useState<Set<string>>(new Set());
-  const { hoveredEdgeId, setHoveredEdgeId, selectEdge } = useGraphStore();
+  const { timeRange, setTimeRange, hoveredEdgeId, setHoveredEdgeId, selectEdge } = useGraphStore(
+    (state) => ({
+      timeRange: state.timeRange,
+      setTimeRange: state.setTimeRange,
+      hoveredEdgeId: state.hoveredEdgeId,
+      setHoveredEdgeId: state.setHoveredEdgeId,
+      selectEdge: state.selectEdge,
+    })
+  );
   const [mousePosition, setMousePosition] = React.useState<{ x: number, y: number } | null>(null);
 
   // NEW: Edge context menu state
@@ -38,6 +47,21 @@ const GraphD3Canvas: React.FC = () => {
   // Positions ref for D3 force/visible nodes
   const lastSimPositionsRef = useRef<Record<string, { x: number; y: number }>>({});
 
+  // Calculate min/max timestamps from edges for the slider
+  const [minTs, maxTs] = React.useMemo(() => {
+    const timestamps = edges.map(e => e.timestamp).filter((ts): ts is number => typeof ts === 'number' && !isNaN(ts));
+    if (timestamps.length < 2) return [0, 0];
+    return [Math.min(...timestamps), Math.max(...timestamps)];
+  }, [edges]);
+
+  // Initialize time range when edges with timestamps are loaded
+  React.useEffect(() => {
+    if (minTs < maxTs && !timeRange) {
+        setTimeRange([minTs, maxTs]);
+    }
+  }, [minTs, maxTs, timeRange, setTimeRange]);
+
+
   // Filtering logic
   const filteredNodes = React.useMemo(
     () => nodes.filter((n) => !hiddenNodeIds.has(n.id)),
@@ -45,8 +69,18 @@ const GraphD3Canvas: React.FC = () => {
   );
   const filteredNodeIds = React.useMemo(() => new Set(filteredNodes.map((n) => n.id)), [filteredNodes]);
   const filteredEdges = React.useMemo(
-    () => edges.filter((e) => filteredNodeIds.has(e.source) && filteredNodeIds.has(e.target)),
-    [edges, filteredNodeIds]
+    () => {
+      const baseFiltered = edges.filter((e) => filteredNodeIds.has(e.source) && filteredNodeIds.has(e.target));
+      if (!timeRange || minTs >= maxTs) {
+          return baseFiltered;
+      }
+      return baseFiltered.filter(e => {
+          // Always show edges that don't have a timestamp
+          if (typeof e.timestamp !== 'number' || isNaN(e.timestamp)) return true;
+          return e.timestamp >= timeRange[0] && e.timestamp <= timeRange[1];
+      });
+    },
+    [edges, filteredNodeIds, timeRange, minTs, maxTs]
   );
   const hoveredNode = nodes.find((n) => n.id === hoveredNodeId);
   const hoveredEdge = edges.find((e) => e.id === hoveredEdgeId);
@@ -146,7 +180,7 @@ const GraphD3Canvas: React.FC = () => {
   );
 
   return (
-    <div className="relative w-full h-full flex-1 bg-background border rounded-lg overflow-hidden shadow-lg p-0 m-0" style={{ minHeight: 0, minWidth: 0 }} onMouseMove={handleMouseMove}>
+    <div className="relative w-full h-full flex-1 bg-background border rounded-lg overflow-hidden shadow-lg p-0 m-0 flex flex-col" style={{ minHeight: 0, minWidth: 0 }} onMouseMove={handleMouseMove}>
       <GraphD3Toolbar
         layoutMode={layoutMode}
         setLayoutMode={handleSetLayoutMode}
@@ -173,6 +207,16 @@ const GraphD3Canvas: React.FC = () => {
           onEdgeContextMenu={handleEdgeContextMenu}
         />
       </div>
+      {timeRange && (
+        <div className="absolute bottom-2 left-4 right-4 p-2 bg-background/90 backdrop-blur-sm rounded-md border shadow-lg z-20">
+            <TimeRangeSlider
+                min={minTs}
+                max={maxTs}
+                value={timeRange}
+                onChange={setTimeRange}
+            />
+        </div>
+      )}
       {edgeMenu && (
         <EdgeContextMenu
           edgeId={edgeMenu.edgeId}
