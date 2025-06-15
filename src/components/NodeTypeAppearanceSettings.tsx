@@ -4,6 +4,7 @@ import NodeTypeAppearanceForm from "./NodeTypeAppearanceForm";
 
 type NodeTypeAppearanceSettingsProps = {
   onSave?: (type: string, appearance: object) => void;
+  onSaveCustomPresetFromJson?: () => void;
 };
 
 export default function NodeTypeAppearanceSettings({ onSave }: NodeTypeAppearanceSettingsProps) {
