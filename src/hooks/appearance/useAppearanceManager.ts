@@ -1,4 +1,3 @@
-
 import { useCallback, useMemo, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useGraphStore } from "@/state/useGraphStore";
@@ -138,7 +137,7 @@ export function useAppearanceManager() {
   );
 
   const handlePresetSaveFromJson = useCallback(
-    (jsonStr: string, onDone?: () => void, showToast = true) => {
+    (jsonStr: string, showToast = true) => {
       try {
         const data = JSON.parse(jsonStr);
         let nodeTypes = data.nodeTypes || {};
@@ -164,7 +163,6 @@ export function useAppearanceManager() {
         });
         updateAllNodeAppearances(nodeTypes);
         if (showToast) toast.success("Preset changes saved to 'Custom' preset!");
-        if (onDone) onDone();
         setSelectedPresetKey(CUSTOM_PRESET_KEY);
         persistSelectedPresetKey(CUSTOM_PRESET_KEY);
         setIsPresetDirty(false); // Clear dirty state on save
@@ -180,6 +178,7 @@ export function useAppearanceManager() {
       setCustomPreset,
       updateAllNodeAppearances,
       setSelectedPresetKey,
+      setIsPresetDirty,
     ]
   );
 
@@ -216,6 +215,7 @@ export function useAppearanceManager() {
       resetEdgeTypeAppearance,
       setSelectedPresetKey,
       displayedPresets,
+      setIsPresetDirty,
     ]
   );
   
