@@ -16,7 +16,12 @@ export type NodeType =
   | "external-system";
 
 export interface IconRegistryType {
-  [nodeType: string]: React.ComponentType<{ filled?: boolean, className?: string, 'aria-label'?: string }>;
+  [nodeType: string]: React.ComponentType<{
+    filled?: boolean;
+    className?: string;
+    'aria-label'?: string;
+    color?: string; // <-- Allow passing the color prop
+  }>;
 }
 
 const ICON_REGISTRY: IconRegistryType = {
@@ -37,3 +42,4 @@ export const IconRegistryProvider = ({ children }: { children: ReactNode }) => (
     {children}
   </IconRegistryContext.Provider>
 );
+
