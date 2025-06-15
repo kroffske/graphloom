@@ -1,4 +1,3 @@
-
 import React, { useRef, useCallback } from "react";
 import * as Papa from "papaparse";
 import { toast } from "sonner";
@@ -66,17 +65,34 @@ const UploadCsvSection: React.FC<UploadCsvSectionProps> = ({ onExample }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { setNodes, setEdges } = useGraphStore();
 
+  // Helper for filename checking: match any "nodes" or "edges" file, regardless of case and extension
+  function matchNodesOrEdges(name: string, type: "nodes" | "edges") {
+    // strip extension and compare lowercase
+    const nameLower = name.toLowerCase();
+    if (type === "nodes") {
+      return nameLower === "nodes" || nameLower === "nodes.csv";
+    }
+    if (type === "edges") {
+      return nameLower === "edges" || nameLower === "edges.csv";
+    }
+    return false;
+  }
+
   // Parse CSV and validate
   const processFiles = useCallback((files: FileList | null) => {
     if (!files) return;
     let nodeFile: File | null = null;
     let edgeFile: File | null = null;
+
+    // Accept any file with basenames "nodes" or "edges" (case-insensitive, with or without .csv)
     for (let i = 0; i < files.length; i++) {
-      if (files[i].name.match(/^nodes\.csv$/i)) nodeFile = files[i];
-      if (files[i].name.match(/^edges\.csv$/i)) edgeFile = files[i];
+      const base = files[i].name.replace(/\.[^/.]+$/, "").toLowerCase();
+      if (base === "nodes" && !nodeFile) nodeFile = files[i];
+      if (base === "edges" && !edgeFile) edgeFile = files[i];
     }
+
     if (!nodeFile || !edgeFile) {
-      toast.error("Please upload both nodes.csv and edges.csv files.");
+      toast.error("Please upload files named 'nodes' and 'edges' (with or without the .csv extension).");
       return;
     }
 
@@ -86,12 +102,12 @@ const UploadCsvSection: React.FC<UploadCsvSectionProps> = ({ onExample }) => {
       complete: (results: Papa.ParseResult<any>) => {
         const data = results.data as any[];
         if (!data.length) {
-          toast.error("nodes.csv has no data rows.");
+          toast.error("nodes file has no data rows.");
           return;
         }
         const row0 = data[0];
         if (!row0?.node_id || !row0?.node_type) {
-          toast.error("Invalid nodes.csv: must have node_id and node_type columns.");
+          toast.error("Invalid nodes file: must have node_id and node_type columns.");
           return;
         }
         const ids = new Set<string>();
@@ -127,9 +143,9 @@ const UploadCsvSection: React.FC<UploadCsvSectionProps> = ({ onExample }) => {
         }
 
         setNodes(nodes as any);
-        toast.success("Loaded nodes.csv!");
+        toast.success("Loaded nodes!");
       },
-      error: () => toast.error("Failed to parse nodes.csv"),
+      error: () => toast.error("Failed to parse nodes file"),
     });
 
     Papa.parse(edgeFile, {
@@ -138,12 +154,12 @@ const UploadCsvSection: React.FC<UploadCsvSectionProps> = ({ onExample }) => {
       complete: (results: Papa.ParseResult<any>) => {
         const data = results.data as any[];
         if (!data.length) {
-          toast.error("edges.csv has no data rows.");
+          toast.error("edges file has no data rows.");
           return;
         }
         const row0 = data[0];
         if (!row0?.source || !row0?.target) {
-          toast.error("Invalid edges.csv: must have source and target columns.");
+          toast.error("Invalid edges file: must have source and target columns.");
           return;
         }
         const edges = data.map((row, i) => {
@@ -155,9 +171,9 @@ const UploadCsvSection: React.FC<UploadCsvSectionProps> = ({ onExample }) => {
           };
         });
         setEdges(edges);
-        toast.success("Loaded edges.csv!");
+        toast.success("Loaded edges!");
       },
-      error: () => toast.error("Failed to parse edges.csv"),
+      error: () => toast.error("Failed to parse edges file"),
     });
   }, [setNodes, setEdges]);
 
@@ -187,7 +203,7 @@ const UploadCsvSection: React.FC<UploadCsvSectionProps> = ({ onExample }) => {
       >
         <span className="text-lg font-bold text-foreground mb-1">Upload Graph Data</span>
         <span className="text-sm text-muted-foreground">
-          Drag & drop <b>nodes.csv</b> and <b>edges.csv</b> here, or click to browse
+          Drag & drop <b>nodes</b> and <b>edges</b> files here (with or without <b>.csv</b>), or click to browse
         </span>
         <input
           ref={fileInputRef}
