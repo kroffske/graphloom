@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useMemo } from "react";
+
+import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useIconRegistry } from "./IconRegistry";
 import NodeTypeIconSettings from "./NodeTypeIconSettings";
 import NodeTypeVisualSettings from "./NodeTypeVisualSettings";
 import { useNodeAppearanceSettings } from "./hooks/useNodeAppearanceSettings";
-import { Label } from "@/components/ui/label";
+import { resolveLabel } from "@/utils/labelJoin";
 
-// Node type labels
 const FRIENDLY_TYPE_LABELS: Record<string, string> = {
   entity: "Entity",
   process: "Process",
@@ -16,16 +16,17 @@ const FRIENDLY_TYPE_LABELS: Record<string, string> = {
   decision: "Decision",
   "external-system": "External System"
 };
+
 type NodeTypeAppearanceFormProps = {
   onSaveCustomPresetFromJson?: () => void;
 };
+
 const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
   onSaveCustomPresetFromJson
 }) => {
   const iconRegistry = useIconRegistry();
   const iconKeys = Object.keys(iconRegistry);
 
-  // Preset JSON for collecting all types
   const [presetJsonString, setPresetJsonString] = useState<string>("");
   useEffect(() => {
     function handlePresetJsonSync(e: any) {
@@ -35,7 +36,6 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
     return () => window.removeEventListener("lovable-preset-json-sync", handlePresetJsonSync);
   }, []);
 
-  // Get type keys and appearance
   const {
     nodeTypeKeys,
     nodeTypeLabels,
@@ -44,17 +44,13 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
     resetNodeTypeAppearance
   } = useNodeAppearanceSettings("", presetJsonString);
 
-  // --- Selected Type Logic (IMPROVED) ---
-  // Move selectedType to top-level and always ensure it matches an available nodeTypeKey.
   const [selectedType, setSelectedType] = useState<string>(nodeTypeKeys.length > 0 ? nodeTypeKeys[0] : "");
   useEffect(() => {
-    // Always sync selectedType if not found in nodeTypeKeys and nodeTypeKeys is not empty
     if (!selectedType || !nodeTypeKeys.includes(selectedType)) {
       setSelectedType(nodeTypeKeys[0] || "");
     }
   }, [selectedType, nodeTypeKeys]);
 
-  // Always get the correct appearance for the selected type
   const {
     appearance: selectedAppearance,
     setNodeTypeAppearance: setAppearanceForType,
@@ -63,7 +59,6 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
     nodeTypeLabels: stableNodeTypeLabels
   } = useNodeAppearanceSettings(selectedType, presetJsonString);
 
-  // Local form state for visuals/icons, mirror store nodeTypeAppearances shape
   const [icon, setIcon] = useState<string>(selectedAppearance.icon || selectedType);
   const [backgroundColor, setBackgroundColor] = useState<string>(selectedAppearance.backgroundColor || "");
   const [lineColor, setLineColor] = useState<string>(selectedAppearance.lineColor || "");
@@ -73,7 +68,6 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
   const [iconCircleColor, setIconCircleColor] = useState<string>(selectedAppearance.iconCircleColor || "#e9e9e9");
   const [iconOrder, setIconOrder] = useState<string[]>(iconKeys);
 
-  // Sync local state on appearance/type change
   useEffect(() => {
     setIcon(selectedAppearance.icon || selectedType);
     setBackgroundColor(selectedAppearance.backgroundColor || "");
@@ -88,6 +82,7 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
       return [...currOrder.filter(k => iconKeys.includes(k)), ...toAdd];
     });
   }, [selectedType, selectedAppearance, iconKeys.join(",")]);
+
   function handleSave(e?: React.FormEvent) {
     if (e) e.preventDefault();
     setAppearanceForType(selectedType, {
@@ -107,20 +102,54 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
     resetAppearanceForType(selectedType);
     toast("Reset to default");
   }
-  return <section className="w-full">
-      <div className="font-semibold text-lg mb-2 flex items-center gap-2">Node Type Appearance</div>
+
+  // Visual demo of label joining
+  const attributesSample = { label: "ID-1", name: "My Name", full_name: "My Full Name" };
+  const joinedLabel = resolveLabel(labelField, attributesSample, "Sample");
+
+  // Enhanced node icon preview
+  const IconComponent = iconRegistry[icon];
+
+  return (
+    <section className="w-full">
+      <div className="font-semibold text-lg mb-2 flex items-center gap-2">
+        Node Type Appearance
+        {IconComponent && (
+          <span
+            className="ml-2 inline-flex items-center justify-center rounded-full border"
+            style={{
+              background: showIconCircle ? iconCircleColor : backgroundColor || "#ede",
+              borderColor: lineColor || "#e5e7eb",
+              width: 28, height: 28,
+              borderWidth: 2,
+            }}
+          >
+            <IconComponent filled={true} className="w-5 h-5" color={iconCircleColor} />
+          </span>
+        )}
+      </div>
       <form className="flex flex-col gap-2" onSubmit={handleSave}>
         {/* Type selector */}
         <div>
-          
           <select className="input px-2 py-1 rounded bg-muted border" id="node-type" value={selectedType} onChange={e => setSelectedType(e.target.value)} disabled={stableNodeTypeKeys.length === 0}>
             {stableNodeTypeKeys.map(key => <option key={key} value={key}>
                 {stableNodeTypeLabels[key]}
               </option>)}
           </select>
         </div>
-        <NodeTypeIconSettings iconRegistry={iconRegistry} icon={icon} setIcon={setIcon} showIconCircle={showIconCircle} setShowIconCircle={setShowIconCircle} iconCircleColor={iconCircleColor} setIconCircleColor={setIconCircleColor} iconOrder={iconOrder} setIconOrder={setIconOrder} />
-        <NodeTypeVisualSettings backgroundColor={backgroundColor} setBackgroundColor={setBackgroundColor} lineColor={lineColor} setLineColor={setLineColor} size={size} setSize={setSize} labelField={labelField} setLabelField={setLabelField} />
+        <NodeTypeIconSettings
+          iconRegistry={iconRegistry}
+          icon={icon} setIcon={setIcon}
+          showIconCircle={showIconCircle} setShowIconCircle={setShowIconCircle}
+          iconCircleColor={iconCircleColor} setIconCircleColor={setIconCircleColor}
+          iconOrder={iconOrder} setIconOrder={setIconOrder}
+        />
+        <NodeTypeVisualSettings
+          backgroundColor={backgroundColor} setBackgroundColor={setBackgroundColor}
+          lineColor={lineColor} setLineColor={setLineColor}
+          size={size} setSize={setSize}
+          labelField={labelField} setLabelField={setLabelField}
+        />
         <div className="flex gap-2 mt-4">
           <Button type="submit" className="w-fit">Update node style</Button>
           <Button type="button" variant="outline" className="w-fit" onClick={handleReset}>
@@ -129,8 +158,11 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
         </div>
       </form>
       <p className="text-xs text-muted-foreground mt-2">
-        These settings affect all nodes of this type. You can still override them for individual nodes.
+        These settings affect all nodes of this type. You can still override them for individual nodes.<br />
+        <b>Label test:</b> <span className="rounded px-2 bg-muted">{joinedLabel}</span>
       </p>
-    </section>;
+    </section>
+  );
 };
+
 export default NodeTypeAppearanceForm;
