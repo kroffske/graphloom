@@ -8,6 +8,9 @@ import EdgeSettingsForm from "./EdgeSettingsForm";
 import EdgeDetailsDisplay from "./EdgeDetailsDisplay";
 import EdgeTypeAppearanceSettings from "./EdgeTypeAppearanceSettings";
 
+// All possible tab keys
+type TabKey = "details" | "settings" | "type-settings";
+
 const InspectorPanel = () => {
   const {
     selectedNodeId,
@@ -17,7 +20,7 @@ const InspectorPanel = () => {
   } = useGraphStore();
   const iconRegistry = useIconRegistry();
   // The tab state will apply for whichever object is selected
-  const [tab, setTab] = useState<"details" | "settings" | "type-settings">("details");
+  const [tab, setTab] = useState<TabKey>("details");
 
   // Show: nothing selected
   if (!selectedNodeId && !selectedEdgeId)
@@ -38,7 +41,7 @@ const InspectorPanel = () => {
     return (
       <aside className="h-full w-80 p-6 border-l border-border bg-card rounded-r-lg shadow-md flex flex-col gap-4 animate-fade-in transition-all duration-300 overflow-y-auto">
         <div>
-          <InspectorPanelTabs value={tab} onChange={setTab} extraTabs={[]} />
+          <InspectorPanelTabs value={tab} onChange={setTab} />
         </div>
         {tab === "details" && (
           <>
