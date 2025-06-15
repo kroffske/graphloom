@@ -14,6 +14,8 @@ export type IconRegistryType = {
     className?: string;
     'aria-label'?: string;
     color?: string;
+    width?: string | number;
+    height?: string | number;
   }>;
 };
 
@@ -41,8 +43,8 @@ lucideIconNames.forEach(name => {
     const camelCaseName = name.replace(/-([a-z])/g, g => g[1].toUpperCase());
     const LucideIconComponent = icons[camelCaseName as keyof typeof icons];
     if (LucideIconComponent) {
-        const IconComponent: React.FC<{ filled?: boolean; className?: string; color?: string }> = ({ className = "", color, ...props }) => (
-            <LucideIconComponent className={className} color={color || "currentColor"} fill={props.filled ? (color || "currentColor") : "none"} />
+        const IconComponent: React.FC<{ filled?: boolean; className?: string; color?: string; width?: string | number; height?: string | number; }> = ({ className = "", color, ...props }) => (
+            <LucideIconComponent className={className} color={color || "currentColor"} fill={props.filled ? (color || "currentColor") : "none"} {...props}/>
         );
         IconComponent.displayName = `Lucide(${name})`;
         lucideIcons[name] = IconComponent;
