@@ -4,9 +4,18 @@ import { Label } from "@/components/ui/label";
 import ColorCirclePicker from "./ColorCirclePicker";
 import IconPicker from "./IconPicker";
 
+// EXPANDED: Lucide icons group with more choices (add more as needed)
 const ICON_GROUPS: Record<string, string[]> = {
   "Classic": ["entity", "process", "data-store", "event", "decision", "external-system"],
-  "Lucide": ["user", "pc"]
+  "Lucide": [
+    "user", "activity", "alert-circle", "airplay", "air-vent", "alarm-clock", "align-center", "align-justify", "anchor",
+    "award", "baby", "battery", "bell", "book", "bookmark", "briefcase", "building", "calendar", "camera", "car", "check", "chevron-down",
+    "circle", "cloud", "code", "coffee", "compass", "computer", "cpu", "database", "dice", "disc", "dollar-sign", "download", "edit", "eye",
+    "file", "flag", "folder", "gift", "globe", "grid", "heart", "home", "image", "key", "layers", "layout", "lightbulb", "link", "list", "lock",
+    "map", "menu", "message-square", "mic", "moon", "music", "paperclip", "phone", "pie-chart", "play", "plus", "printer", "refresh-cw", "save",
+    "scissors", "search", "settings", "share", "shield", "shopping-cart", "shuffle", "sliders", "star", "sun", "tag", "thumbs-up", "trash", "trending-up",
+    "tv", "umbrella", "unlock", "upload", "user-check", "users", "video", "watch", "wifi", "zap"
+  ]
 };
 
 type NodeTypeIconSettingsProps = {
@@ -91,7 +100,7 @@ const NodeTypeIconSettings: React.FC<NodeTypeIconSettingsProps> = ({
             onChange={setIconColor}
           />
         </div>
-        {/* Node Border Color */}
+        {/* Node Border Option */}
         <div className="flex items-center gap-2 mt-2">
           <input
             id="node-border-enabled"
@@ -101,7 +110,7 @@ const NodeTypeIconSettings: React.FC<NodeTypeIconSettingsProps> = ({
             className="form-checkbox h-4 w-4 text-blue-600"
           />
           <Label htmlFor="node-border-enabled" className="mb-0">
-            Node Border Color
+            Node Border Enabled
           </Label>
           {borderEnabled && (
             <ColorCirclePicker

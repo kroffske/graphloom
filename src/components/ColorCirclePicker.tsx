@@ -1,11 +1,12 @@
 
 import React from "react";
 
-// Common palette, can be extended or passed as prop
+// Expanded palette (including a broader, modern set)
 const COLORS = [
   "#e94f37", "#f6c85f", "#6a4c93", "#3483eb",
   "#43b929", "#a259f7", "#00897b", "#ef476f",
-  "#ffd166", "#3aafa9", "#1fab89", "#3a3c3f", "#ededed", "#222", "#fff"
+  "#ffd166", "#3aafa9", "#1fab89", "#3a3c3f", "#ededed", "#222", "#fff",
+  "#ffb703", "#fb8500", "#219ebc", "#023047", "#8ecae6", "#b9e769", "#8338ec", "#3891a6", "#f13c20", "#9ae19d"
 ];
 
 export type ColorCirclePickerProps = {

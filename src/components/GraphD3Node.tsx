@@ -1,3 +1,4 @@
+
 import React from "react";
 import { GraphNode } from "@/state/useGraphStore";
 import { useIconRegistry } from "./IconRegistry";
@@ -53,9 +54,11 @@ const GraphD3Node = ({
   const radius = nodeSize / 2;
   const iconSize = nodeSize * 0.54; // center in circle comfortably
 
+  // Label sits just below the circle, not too far, and not overlapping
+  // Container set to relative for proper stacking of circle/icon/label
   return (
     <div
-      className={`flex flex-col items-center cursor-pointer outline-none`}
+      className="flex flex-col items-center cursor-pointer outline-none relative"
       tabIndex={0}
       role="button"
       aria-label={label || "Node"}
@@ -67,56 +70,62 @@ const GraphD3Node = ({
       onClick={() => onSelect?.(node.id)}
       style={{
         minWidth: nodeSize,
-        minHeight: nodeSize + 18,
-        outline: "none",
-        pointerEvents: "all",
+        minHeight: nodeSize + 20, // allow label area
         background: "none", // No rect background
+        position: "relative",
       }}
     >
       {/* Node as circular SVG background, center icon */}
-      <svg
-        width={nodeSize}
-        height={nodeSize}
-        style={{ display: "block" }}
-      >
-        <circle
-          cx={radius}
-          cy={radius}
-          r={radius - borderWidth / 2}
-          fill={backgroundColor}
-          stroke={appliedBorderColor}
-          strokeWidth={borderWidth}
-        />
-      </svg>
-      <div
-        style={{
-          position: "absolute",
-          width: nodeSize,
-          height: nodeSize,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          top: 0,
-          left: 0,
-          pointerEvents: "none", // only SVG handles interaction
-        }}
-        className="select-none"
-      >
-        {Icon && (
-          <Icon
-            className="w-8 h-8"
-            aria-label={iconType}
-            filled={true}
-            color={iconColor}
+      <div style={{ position: "relative", width: nodeSize, height: nodeSize }}>
+        <svg width={nodeSize} height={nodeSize} style={{ display: "block" }}>
+          <circle
+            cx={radius}
+            cy={radius}
+            r={radius - borderWidth / 2}
+            fill={backgroundColor}
+            stroke={appliedBorderColor}
+            strokeWidth={borderWidth}
           />
-        )}
+        </svg>
+        {/* Center icon absolutely inside the circle */}
+        <div
+          style={{
+            position: "absolute",
+            width: nodeSize,
+            height: nodeSize,
+            top: 0,
+            left: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            pointerEvents: "none",
+          }}
+          className="select-none"
+        >
+          {Icon && (
+            <Icon
+              className="w-8 h-8"
+              aria-label={iconType}
+              filled={true}
+              color={iconColor}
+              style={{ width: iconSize, height: iconSize }}
+            />
+          )}
+        </div>
       </div>
-      {/* Label below the circle, max width */}
+      {/* Label below the circle, close and uncut, always visible */}
       <span
-        className="text-xs font-medium truncate max-w-[90px] text-foreground text-center mt-1"
+        className="text-xs font-medium truncate max-w-[110px] text-foreground text-center"
         style={{
           width: nodeSize * 0.95,
+          marginTop: "4px",
+          lineHeight: "1.1",
+          maxHeight: "2.1em",
+          overflow: "hidden",
+          whiteSpace: "nowrap",
+          display: "block",
         }}
+        title={label}
       >
         {label}
       </span>
