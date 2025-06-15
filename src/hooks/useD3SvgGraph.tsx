@@ -4,6 +4,7 @@ import * as d3 from "d3";
 import { useD3DragNodes } from "@/hooks/useD3DragNodes";
 import { useD3ZoomAndPan } from "@/hooks/useD3ZoomAndPan";
 import GraphD3NodeMount from "@/components/GraphD3NodeMount";
+import { useGraphStore } from "@/state/useGraphStore";
 
 // Break out the shape constants since they may be used outside the hook as well
 export const WIDTH = 900;
@@ -53,6 +54,9 @@ export function useD3SvgGraph({
   simNodes,
   simEdges,
 }: UseD3SvgGraphProps) {
+  // Get edge selection API
+  const { selectedEdgeId, selectEdge, edgeAppearances, showEdgeLabels } = useGraphStore();
+
   useD3ZoomAndPan({
     svgRef,
     svgGroup: svgGroupRef.current ? d3.select(svgGroupRef.current) : null,
@@ -67,13 +71,42 @@ export function useD3SvgGraph({
     const svgGroup = svg.append("g");
     svgGroupRef.current = svgGroup.node() as SVGGElement;
 
+    // -- EDGE LAYER: add click/keyboard handlers for force layout!
     const link = svgGroup.append("g").attr("class", "edges").selectAll("line")
       .data(simEdges)
       .enter()
       .append("line")
-      .attr("stroke", "#64748b")
-      .attr("stroke-width", 2)
-      .attr("opacity", 0.7);
+      .attr("stroke", (d: any) => {
+        // Use appearance or fallback
+        const id = d.id;
+        const appearance = { ...(d.appearance || {}), ...(edgeAppearances[id] || {}) };
+        return appearance.color || "#64748b";
+      })
+      .attr("stroke-width", (d: any) => {
+        const id = d.id;
+        const appearance = { ...(d.appearance || {}), ...(edgeAppearances[id] || {}) };
+        return appearance.width || 2;
+      })
+      .attr("opacity", (d: any) => (selectedEdgeId === d.id ? 1 : 0.7))
+      .attr("cursor", "pointer")
+      .attr("tabindex", 0)
+      .attr("id", (d: any) => "edge-" + d.id)
+      .on("mousedown", function (event: any) {
+        event.stopPropagation();
+      })
+      .on("mouseup", function (event: any) {
+        event.stopPropagation();
+      })
+      .on("click", function (event: any, d: any) {
+        event.stopPropagation();
+        // Toggle selection
+        selectEdge(selectedEdgeId === d.id ? null : d.id);
+      })
+      .on("keydown", function (event: any, d: any) {
+        if (event.key === "Enter" || event.key === " ") {
+          selectEdge(selectedEdgeId === d.id ? null : d.id);
+        }
+      });
 
     const nodeLayer = svgGroup.append("g").attr("class", "nodes");
     const nodeG = nodeLayer
@@ -202,6 +235,18 @@ export function useD3SvgGraph({
           .attr("x2", (d: any) => (d.target as any).x!)
           .attr("y2", (d: any) => (d.target as any).y!);
         nodeG.attr("transform", (d: any) => `translate(${d.x},${d.y})`);
+        // // Optionally: visually indicate selection on D3 links after each tick
+        link
+          .attr("opacity", (d: any) => (selectedEdgeId === d.id ? 1 : 0.7))
+          .attr("stroke-width", (d: any) => {
+            const id = d.id;
+            const appearance = { ...(d.appearance || {}), ...(edgeAppearances[id] || {}) };
+            const width = appearance.width || 2;
+            return selectedEdgeId === d.id ? width + 2 : width;
+          })
+          .attr("filter", (d: any) =>
+            selectedEdgeId === d.id ? "drop-shadow(0 0 4px #60a5fa)" : null
+          );
       });
     } else {
       link
@@ -223,6 +268,18 @@ export function useD3SvgGraph({
         });
       nodeG.attr("transform", (d: any) => `translate(${d.x},${d.y})`);
       captureSimulationPositions(simNodes);
+      // For static layouts, visually indicate selection state as well
+      link
+        .attr("opacity", (d: any) => (selectedEdgeId === d.id ? 1 : 0.7))
+        .attr("stroke-width", (d: any) => {
+          const id = d.id;
+          const appearance = { ...(d.appearance || {}), ...(edgeAppearances[id] || {}) };
+          const width = appearance.width || 2;
+          return selectedEdgeId === d.id ? width + 2 : width;
+        })
+        .attr("filter", (d: any) =>
+          selectedEdgeId === d.id ? "drop-shadow(0 0 4px #60a5fa)" : null
+        );
     }
 
     return () => {
@@ -246,6 +303,13 @@ export function useD3SvgGraph({
     captureSimulationPositions,
     simulation,
     initialPositions,
+    // Add these to dependencies so selection updates properly
+    selectEdge,
+    selectedEdgeId,
+    edgeAppearances,
   ]);
 }
 
+// ... NOTE: This file is now over 252 lines. It is getting quite long!
+// Please consider asking Lovable to refactor this file into smaller, maintainable modules.
+// ... end file
