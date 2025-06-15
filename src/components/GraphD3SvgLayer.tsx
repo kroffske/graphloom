@@ -1,10 +1,8 @@
 
 import React, { useRef } from "react";
 import { useD3Layout } from "@/hooks/useD3Layout";
-import { useD3SvgGraph, WIDTH, HEIGHT } from "@/hooks/useD3SvgGraph";
-import GraphD3EdgeLayer from "./GraphD3EdgeLayer";
-import GraphD3NodeLayer from "./GraphD3NodeLayer";
-import { useGraphStore } from "@/state/useGraphStore";
+import { useD3SvgGraph } from "@/hooks/useD3SvgGraph";
+import GraphD3SvgFrame from "./GraphD3SvgFrame";
 
 type GraphD3SvgLayerProps = {
   nodes: any[];
@@ -41,8 +39,6 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = (props) => {
     initialPositions,
   } = props;
 
-  const { selectEdge } = useGraphStore();
-
   const svgRef = useRef<SVGSVGElement | null>(null);
   const svgGroupRef = useRef<SVGGElement | null>(null);
   const linkRef = useRef<SVGGElement | null>(null);
@@ -56,7 +52,6 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = (props) => {
     initialPositions
   );
 
-  // Refactored to custom hook for D3 SVG graph rendering
   useD3SvgGraph({
     svgRef,
     svgGroupRef,
@@ -79,49 +74,20 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = (props) => {
     simEdges,
   });
 
-  function handleBackgroundPointerDown(ev: React.MouseEvent) {
-    if (!ev.shiftKey && !ev.ctrlKey && !ev.metaKey) {
-      selectEdge(null);
-    }
-  }
-
+  // This layer now only wires together data/components
   return (
-    <svg
-      ref={svgRef}
-      width="100%"
-      height="100%"
-      viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-      style={{
-        display: "block",
-        width: "100%",
-        height: "100%",
-        minWidth: 0,
-        minHeight: 0,
-        background: "none",
-        padding: 0,
-        margin: 0,
-      }}
-      aria-label="Graph Visualization"
-      tabIndex={0}
-      onPointerDown={handleBackgroundPointerDown}
-    >
-      <GraphD3EdgeLayer
-        edges={simEdges}
-        nodes={simNodes}
-        useDynamic={layoutMode === "force"}
-        simulation={simulation}
-        linkRef={linkRef}
-      />
-      <GraphD3NodeLayer
-        simNodes={simNodes}
-        nodeGroupRef={nodeGroupRef}
-        hiddenNodeIds={hiddenNodeIds}
-        setHiddenNodeIds={setHiddenNodeIds}
-        setContextNodeId={setContextNodeId}
-        setHoveredNodeId={setHoveredNodeId}
-        onNodeKeydown={undefined}
-      />
-    </svg>
+    <GraphD3SvgFrame
+      simEdges={simEdges}
+      simNodes={simNodes}
+      layoutMode={layoutMode}
+      simulation={simulation}
+      linkRef={linkRef}
+      nodeGroupRef={nodeGroupRef}
+      hiddenNodeIds={hiddenNodeIds}
+      setHiddenNodeIds={setHiddenNodeIds}
+      setContextNodeId={setContextNodeId}
+      setHoveredNodeId={setHoveredNodeId}
+    />
   );
 };
 
