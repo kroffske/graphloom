@@ -6,6 +6,7 @@ import NodeSettingsForm from "./NodeSettingsForm";
 import InspectorPanelTabs from "./InspectorPanelTabs";
 import EdgeSettingsForm from "./EdgeSettingsForm";
 import EdgeDetailsDisplay from "./EdgeDetailsDisplay";
+import EdgeTypeAppearanceSettings from "./EdgeTypeAppearanceSettings";
 
 const InspectorPanel = () => {
   const {
@@ -16,7 +17,7 @@ const InspectorPanel = () => {
   } = useGraphStore();
   const iconRegistry = useIconRegistry();
   // The tab state will apply for whichever object is selected
-  const [tab, setTab] = useState<"details" | "settings">("details");
+  const [tab, setTab] = useState<"details" | "settings" | "type-settings">("details");
 
   // Show: nothing selected
   if (!selectedNodeId && !selectedEdgeId)
@@ -37,7 +38,7 @@ const InspectorPanel = () => {
     return (
       <aside className="h-full w-80 p-6 border-l border-border bg-card rounded-r-lg shadow-md flex flex-col gap-4 animate-fade-in transition-all duration-300 overflow-y-auto">
         <div>
-          <InspectorPanelTabs value={tab} onChange={setTab} />
+          <InspectorPanelTabs value={tab} onChange={setTab} extraTabs={[]} />
         </div>
         {tab === "details" && (
           <>
@@ -80,7 +81,16 @@ const InspectorPanel = () => {
     return (
       <aside className="h-full w-80 p-6 border-l border-border bg-card rounded-r-lg shadow-md flex flex-col gap-4 animate-fade-in transition-all duration-300 overflow-y-auto">
         <div>
-          <InspectorPanelTabs value={tab} onChange={setTab} />
+          <InspectorPanelTabs
+            value={tab}
+            onChange={setTab}
+            extraTabs={[
+              {
+                key: "type-settings",
+                label: "Type Settings",
+              },
+            ]}
+          />
         </div>
         {tab === "details" && (
           <div>
@@ -94,6 +104,14 @@ const InspectorPanel = () => {
               Edge Settings
             </div>
             <EdgeSettingsForm edge={edge} />
+          </div>
+        )}
+        {tab === "type-settings" && (
+          <div className="flex flex-col">
+            <div className="text-xs uppercase font-semibold text-muted-foreground mb-2">
+              Edge Type Appearance Settings
+            </div>
+            <EdgeTypeAppearanceSettings />
           </div>
         )}
       </aside>
