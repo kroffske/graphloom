@@ -5,22 +5,14 @@ import GraphD3Canvas from "@/components/GraphD3Canvas";
 import UploadPanel from "@/components/UploadPanel";
 import InspectorPanel from "@/components/InspectorPanel";
 import ThemeToggle from "@/components/ThemeToggle";
-import { useGraphStore } from "@/state/useGraphStore";
-import { NodeSettingsSidebar } from "@/components/NodeSettingsSidebar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import NodeSettingsTab from "@/components/NodeSettingsTab";
+// No more NodeSettingsSidebar import
 
 const Index = () => {
-  const { selectedNodeId } = useGraphStore();
-  const [settingsSidebarOpen, setSettingsSidebarOpen] = useState(false);
-
-  // "mainTab" determines whether to show UploadPanel or GraphCanvas
-  const [mainTab, setMainTab] = useState<"upload" | "graph">("graph");
-
-  React.useEffect(() => {
-    if (selectedNodeId) setSettingsSidebarOpen(true);
-    else setSettingsSidebarOpen(false);
-  }, [selectedNodeId]);
+  // "mainTab" controls the main content area, now includes "settings"
+  const [mainTab, setMainTab] = useState<"upload" | "graph" | "settings">("graph");
 
   return (
     <IconRegistryProvider>
@@ -32,10 +24,10 @@ const Index = () => {
           </h1>
           <ThemeToggle />
         </header>
-        {/* Tabs for Upload & Explore / Graph */}
+        {/* Tabs for Upload, Graph & Node Settings */}
         <Tabs
           value={mainTab}
-          onValueChange={(v) => setMainTab(v as "upload" | "graph")}
+          onValueChange={(v) => setMainTab(v as "upload" | "graph" | "settings")}
           className="w-full"
         >
           <TabsList className="w-full mb-0 border-b border-border pt-2 px-2 bg-background">
@@ -45,26 +37,26 @@ const Index = () => {
             <TabsTrigger value="graph" className="flex-1 text-lg py-2">
               Graph
             </TabsTrigger>
+            <TabsTrigger value="settings" className="flex-1 text-lg py-2">
+              Node Settings
+            </TabsTrigger>
           </TabsList>
-          {/* Wrap this row in SidebarProvider so all sidebar children work */}
+          {/* Tab Content Container */}
           <SidebarProvider>
             <div className="flex-1 flex flex-row w-full min-h-0 max-h-[calc(100vh-70px)] overflow-hidden">
-              {/* Main Section (Tab content) */}
               <main className="flex-1 flex flex-col pl-7 pr-2 pt-6 pb-0 max-w-[calc(100vw-370px)]">
                 <TabsContent value="upload" className="p-0 h-full w-full">
                   <UploadPanel />
                 </TabsContent>
                 <TabsContent value="graph" className="p-0 h-full w-full">
-                  {/* SWAP: Old GraphCanvas -> New GraphD3Canvas */}
                   <GraphD3Canvas />
                 </TabsContent>
+                <TabsContent value="settings" className="p-0 h-full w-full">
+                  <NodeSettingsTab />
+                </TabsContent>
               </main>
-              {/* Inspector Panel and Sidebar stay always visible */}
               <InspectorPanel />
-              <NodeSettingsSidebar
-                open={Boolean(selectedNodeId && settingsSidebarOpen)}
-                onClose={() => setSettingsSidebarOpen(false)}
-              />
+              {/* Remove NodeSettingsSidebar */}
             </div>
           </SidebarProvider>
         </Tabs>
