@@ -1,4 +1,3 @@
-
 import { useEffect, useRef } from "react";
 import * as d3 from "d3";
 import { useD3DragNodes } from "@/hooks/useD3DragNodes";
@@ -23,6 +22,7 @@ type UseD3SvgGraphProps = {
   hiddenNodeIds: Set<string>;
   setHiddenNodeIds: (s: Set<string>) => void;
   setHoveredNodeId: (id: string | null) => void;
+  setHoveredEdgeId: (id: string | null) => void;
   setContextNodeId: (id: string | null) => void;
   dragging: any;
   setDragging: (d: any) => void;
@@ -50,6 +50,7 @@ export function useD3SvgGraph({
   hiddenNodeIds,
   setHiddenNodeIds,
   setHoveredNodeId,
+  setHoveredEdgeId,
   setContextNodeId,
   dragging,
   setDragging,
@@ -95,7 +96,7 @@ export function useD3SvgGraph({
         return appearance.width || 2;
       })
       .attr("opacity", (d: any) => (selectedEdgeId === d.id ? 1 : 0.7))
-      .attr("cursor", "context-menu") // indicate right-click functionality
+      .attr("cursor", "pointer")
       .attr("tabindex", 0)
       .attr("id", (d: any) => "edge-" + d.id)
       // Prevent drag/select weirdness on mousedown/up
@@ -104,6 +105,12 @@ export function useD3SvgGraph({
       // DO NOT attach click/selection/keydown handlers for left click or keyboard
       .on("click", null)
       .on("keydown", null)
+      .on("mouseenter", function (_event, d: any) {
+        setHoveredEdgeId(d.id);
+      })
+      .on("mouseleave", function () {
+        setHoveredEdgeId(null);
+      })
       // Show context menu on right-click
       .on("contextmenu", function(event: MouseEvent, d: any) {
         event.preventDefault();
@@ -310,6 +317,7 @@ export function useD3SvgGraph({
     hiddenNodeIds,
     setHiddenNodeIds,
     setHoveredNodeId,
+    setHoveredEdgeId,
     setContextNodeId,
     dragging,
     captureSimulationPositions,

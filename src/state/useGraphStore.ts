@@ -1,3 +1,4 @@
+
 import { create } from "zustand";
 import { NodeTypeAppearanceMap, EdgeTypeAppearanceMap } from "@/types/appearance";
 import type {
@@ -12,12 +13,14 @@ type GraphStore = {
   edges: GraphEdge[];
   selectedNodeId: string | null;
   selectedEdgeId: string | null;
+  hoveredEdgeId: string | null;
   hiddenNodeIds: Set<string>;
   manualPositions: Record<string, { x: number; y: number }>;
   setNodes: (nodes: GraphNode[]) => void;
   setEdges: (edges: GraphEdge[]) => void;
   selectNode: (id: string | null) => void;
   selectEdge: (id: string | null) => void;
+  setHoveredEdgeId: (id: string | null) => void;
   hideNode: (id: string) => void;
   showNode: (id: string) => void;
   showAllHiddenNodes: () => void;
@@ -49,12 +52,14 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   edges: [],
   selectedNodeId: null,
   selectedEdgeId: null,
+  hoveredEdgeId: null,
   hiddenNodeIds: new Set(),
   manualPositions: {},
   setNodes: (nodes) => set({ nodes }),
   setEdges: (edges) => set({ edges }),
   selectNode: (id) => set({ selectedNodeId: id }),
   selectEdge: (id) => set({ selectedEdgeId: id }),
+  setHoveredEdgeId: (id) => set({ hoveredEdgeId: id }),
   hideNode: (id) => {
     set((state) => {
       const hiddenNodeIds = new Set(state.hiddenNodeIds);
