@@ -45,6 +45,11 @@ export default function EdgeTypeAppearanceForm({
   const isInitialMount = useRef(true);
   const prevType = useRef(type);
 
+  const onSaveRef = useRef(onSave);
+  useEffect(() => {
+    onSaveRef.current = onSave;
+  }, [onSave]);
+
   // Keep local state in sync with changes to the selected type, so changing type resets values
   useEffect(() => {
     setColor(edgeTypeAppearances[type]?.color ?? "#64748b");
@@ -63,12 +68,12 @@ export default function EdgeTypeAppearanceForm({
       prevType.current = type;
       return;
     }
-    onSave(type, {
+    onSaveRef.current(type, {
       color,
       width,
       labelField: labelField.trim() || undefined,
     });
-  }, [color, width, labelField, onSave, type]);
+  }, [color, width, labelField, type]);
 
   function handleReset() {
     onReset(type);
