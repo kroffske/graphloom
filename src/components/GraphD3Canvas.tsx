@@ -1,4 +1,3 @@
-
 import React, { useRef, useCallback } from "react";
 import { useD3GraphState } from "@/hooks/useD3GraphState";
 import GraphD3Toolbar from "./GraphD3Toolbar";
@@ -117,28 +116,30 @@ const GraphD3Canvas: React.FC = () => {
   }, [filteredNodes]);
 
   return (
-    <div className="relative w-full h-[70vh] bg-background border rounded-lg overflow-hidden shadow-lg">
+    <div className="relative w-full h-full flex-1 bg-background border rounded-lg overflow-hidden shadow-lg p-0 m-0" style={{ minHeight: 0, minWidth: 0 }}>
       <GraphD3Toolbar
         layoutMode={layoutMode}
         setLayoutMode={handleSetLayoutMode}
         onShowAllHidden={() => setHiddenNodeIds(new Set())}
       />
-      <GraphD3SvgLayer
-        nodes={filteredNodes}
-        edges={filteredEdges}
-        layoutMode={layoutMode}
-        manualPositions={manualPositions}
-        setManualPositions={setManualPositions}
-        saveManualPosition={saveManualPosition}
-        hiddenNodeIds={hiddenNodeIds}
-        setHiddenNodeIds={setHiddenNodeIds}
-        setHoveredNodeId={setHoveredNodeId}
-        setContextNodeId={setContextNodeId}
-        dragging={dragging}
-        setDragging={setDragging}
-        captureSimulationPositions={handleCaptureSimulationPositions}
-        initialPositions={layoutMode === "force" ? d3InitialPositions : undefined}
-      />
+      <div className="w-full h-full flex-1" style={{ minHeight: 0, minWidth: 0 }}>
+        <GraphD3SvgLayer
+          nodes={filteredNodes}
+          edges={filteredEdges}
+          layoutMode={layoutMode}
+          manualPositions={manualPositions}
+          setManualPositions={setManualPositions}
+          saveManualPosition={saveManualPosition}
+          hiddenNodeIds={hiddenNodeIds}
+          setHiddenNodeIds={setHiddenNodeIds}
+          setHoveredNodeId={setHoveredNodeId}
+          setContextNodeId={setContextNodeId}
+          dragging={dragging}
+          setDragging={setDragging}
+          captureSimulationPositions={handleCaptureSimulationPositions}
+          initialPositions={layoutMode === "force" ? d3InitialPositions : undefined}
+        />
+      </div>
       {contextNodeId && (
         <div className="fixed z-50 left-36 top-32 pointer-events-none"></div>
       )}
@@ -148,4 +149,3 @@ const GraphD3Canvas: React.FC = () => {
 };
 
 export default GraphD3Canvas;
-
