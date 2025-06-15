@@ -1,3 +1,4 @@
+
 import { useEffect, useRef } from "react";
 import * as d3 from "d3";
 import { useD3DragNodes } from "@/hooks/useD3DragNodes";
@@ -67,6 +68,7 @@ export function useD3SvgGraph({
     svgGroup: svgGroupRef.current ? d3.select(svgGroupRef.current) : null,
   });
 
+  // ------ D3 Setup/Rendering: Runs only on simNodes/simEdges/layout/topology updates ------
   useEffect(() => {
     if (!svgRef.current || !simNodes.length) return;
 
@@ -313,10 +315,30 @@ export function useD3SvgGraph({
     captureSimulationPositions,
     simulation,
     initialPositions,
-    // Add these to dependencies so selection updates properly
-    selectEdge,
-    selectedEdgeId,
-    edgeAppearances,
-    onEdgeContextMenu
+    // REMOVE: selectEdge, selectedEdgeId, edgeAppearances, onEdgeContextMenu
+    // (selection and appearance updates are handled below in a separate effect)
   ]);
+
+  // ----- NEW: Selection and appearance highlighting only (does not change graph structure) -----
+  useEffect(() => {
+    if (!svgRef.current) return;
+    const svg = d3.select(svgRef.current);
+    const links = svg.selectAll("g.edges line");
+    links
+      .attr("opacity", (d: any) => (selectedEdgeId === d.id ? 1 : 0.7))
+      .attr("stroke-width", (d: any) => {
+        const id = d.id;
+        const appearance = { ...(d.appearance || {}), ...(edgeAppearances[id] || {}) };
+        const width = appearance.width || 2;
+        return selectedEdgeId === d.id ? width + 2 : width;
+      })
+      .attr("filter", (d: any) =>
+        selectedEdgeId === d.id ? "drop-shadow(0 0 4px #60a5fa)" : null
+      )
+      .attr("stroke", (d: any) => {
+        const id = d.id;
+        const appearance = { ...(d.appearance || {}), ...(edgeAppearances[id] || {}) };
+        return appearance.color || "#64748b";
+      });
+  }, [svgRef, selectedEdgeId, edgeAppearances]);
 }
