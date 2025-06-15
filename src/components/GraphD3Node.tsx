@@ -29,6 +29,12 @@ const GraphD3Node = ({
   const labelField = appearance.labelField || "label";
   const Icon = iconRegistry[iconType];
 
+  // New Appearance
+  const showIconCircle = !!appearance.showIconCircle;
+  const iconCircleColor = appearance.iconCircleColor || "#ededed";
+  const backgroundColor = appearance.backgroundColor || nodeColor || "#fff";
+  const borderColor = appearance.lineColor || "#b2bec6";
+
   const label =
     labelField === "label"
       ? node.label
@@ -38,7 +44,7 @@ const GraphD3Node = ({
 
   return (
     <div
-      className={`flex flex-col items-center px-3 py-2 rounded-lg shadow-md cursor-pointer outline-none border-2 transition-all duration-200
+      className={`flex flex-col items-center px-3 py-2 rounded-lg shadow-md cursor-pointer outline-none border-2 
       ${selected ? "border-primary ring-2 ring-blue-300" : "border-transparent"}
       `}
       tabIndex={0}
@@ -55,18 +61,46 @@ const GraphD3Node = ({
         minHeight: nodeSize,
         outline: "none",
         pointerEvents: "all",
-        background: nodeColor,
-        // border color from Tailwind class above
+        background: backgroundColor,
+        borderColor: borderColor,
+        borderRadius: 16,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
       }}
     >
-      {Icon && (
-        <Icon
-          className="w-8 h-8 mb-1"
-          aria-label={iconType}
-          filled={false}
-        />
-      )}
-      <span className="text-xs font-medium truncate max-w-[90px] text-foreground">
+      <div className="flex items-center justify-center" style={{ marginBottom: 4 }}>
+        {Icon &&
+          (showIconCircle ? (
+            <span
+              className="flex items-center justify-center"
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: "50%",
+                backgroundColor: iconCircleColor,
+                border: `2px solid ${borderColor}`,
+                boxShadow: selected ? "0 0 0 2px #93c5fd" : undefined,
+                marginRight: 0,
+                marginLeft: 0,
+              }}
+            >
+              <Icon
+                className="w-7 h-7"
+                aria-label={iconType}
+                filled={true}
+                style={{ color: "#30334a" }}
+              />
+            </span>
+          ) : (
+            <Icon
+              className="w-8 h-8"
+              aria-label={iconType}
+              filled={true}
+            />
+          ))}
+      </div>
+      <span className="text-xs font-medium truncate max-w-[90px] text-foreground text-center">
         {label}
       </span>
     </div>
