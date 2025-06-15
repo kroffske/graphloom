@@ -68,26 +68,36 @@ const EXAMPLE_NODES_DESC = SAMPLE_NODES_DESC;
 const EXAMPLE_EDGES_DESC = SAMPLE_EDGES_DESC;
 
 export function SampleTabs({ onFillSample, onFillExample }: SampleTabsProps) {
-  const [tab, setTab] = React.useState<"sample" | "example">("sample");
+  const [mainTab, setMainTab] = React.useState<"data" | "other">("data");
+  const [dataTab, setDataTab] = React.useState<"sample" | "example">("sample");
+
   return (
-    <Tabs value={tab} onValueChange={v => setTab(v as any)} className="w-full">
+    <Tabs value={mainTab} onValueChange={v => setMainTab(v as any)} className="w-full">
       <TabsList className="w-full mb-2">
-        <TabsTrigger value="sample" className="flex-1">Sample Data</TabsTrigger>
-        <TabsTrigger value="example" className="flex-1">Example Data</TabsTrigger>
+        <TabsTrigger value="data" className="flex-1">Upload & Explore</TabsTrigger>
+        {/* Future: can add more main tabs if needed */}
       </TabsList>
-      <TabsContent value="sample">
-        <div className="flex flex-col gap-4">
-          <SampleCsvCard title="Sample nodes.csv" description={SAMPLE_NODES_DESC} csv={SAMPLE_NODES_CSV} />
-          <SampleCsvCard title="Sample edges.csv" description={SAMPLE_EDGES_DESC} csv={SAMPLE_EDGES_CSV} />
-          <Button variant="secondary" onClick={onFillSample}>Fill Sample</Button>
-        </div>
-      </TabsContent>
-      <TabsContent value="example">
-        <div className="flex flex-col gap-4">
-          <SampleCsvCard title="Example nodes.csv" description={EXAMPLE_NODES_DESC} csv={EXAMPLE_NODES_CSV} />
-          <SampleCsvCard title="Example edges.csv" description={EXAMPLE_EDGES_DESC} csv={EXAMPLE_EDGES_CSV} />
-          <Button variant="secondary" onClick={onFillExample}>Fill Example</Button>
-        </div>
+      <TabsContent value="data">
+        <Tabs value={dataTab} onValueChange={v => setDataTab(v as any)}>
+          <TabsList className="w-full mb-2">
+            <TabsTrigger value="sample" className="flex-1">Samples</TabsTrigger>
+            <TabsTrigger value="example" className="flex-1">Example</TabsTrigger>
+          </TabsList>
+          <TabsContent value="sample">
+            <div className="flex flex-col gap-4">
+              <SampleCsvCard title="Sample nodes.csv" description={SAMPLE_NODES_DESC} csv={SAMPLE_NODES_CSV} />
+              <SampleCsvCard title="Sample edges.csv" description={SAMPLE_EDGES_DESC} csv={SAMPLE_EDGES_CSV} />
+              <Button variant="secondary" onClick={onFillSample}>Fill Sample</Button>
+            </div>
+          </TabsContent>
+          <TabsContent value="example">
+            <div className="flex flex-col gap-4">
+              <SampleCsvCard title="Example nodes.csv" description={EXAMPLE_NODES_DESC} csv={EXAMPLE_NODES_CSV} />
+              <SampleCsvCard title="Example edges.csv" description={EXAMPLE_EDGES_DESC} csv={EXAMPLE_EDGES_CSV} />
+              <Button variant="secondary" onClick={onFillExample}>Fill Example</Button>
+            </div>
+          </TabsContent>
+        </Tabs>
       </TabsContent>
     </Tabs>
   );
