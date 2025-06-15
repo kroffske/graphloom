@@ -1,9 +1,11 @@
+
 import React, { useEffect, useRef } from "react";
 import * as d3 from "d3";
-import GraphD3Node from "./GraphD3Node";
-import GraphNodeContextMenu from "./GraphNodeContextMenu";
 import { useD3DragNodes } from "@/hooks/useD3DragNodes";
 import { useSimLayoutCapture } from "@/hooks/useSimLayoutCapture";
+import { d3SetupZoom } from "@/utils/d3SetupZoom";
+import { d3SetupSimulation } from "@/utils/d3SetupSimulation";
+import GraphD3NodeMount from "./GraphD3NodeMount";
 
 type GraphD3SvgLayerProps = {
   nodes: any[];
@@ -40,62 +42,38 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
   setDragging,
 }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
-  // Extracted layout capture logic
   const { capturePositions } = useSimLayoutCapture();
   const lastSimPositionsRef = useRef<Record<string, { x: number; y: number }>>({});
 
   useEffect(() => {
     if (!svgRef.current || !nodes.length) return;
 
-    const simNodes = nodes.map((n) => {
-      if (layoutMode === "manual" && manualPositions[n.id]) {
-        return { ...n, ...manualPositions[n.id] };
-      }
-      return { ...n };
-    });
-    const simEdges = edges.map((e) => ({ ...e }));
+    // Merge manual positions when in manual mode
+    const mergedNodes = nodes.map((n) =>
+      layoutMode === "manual" && manualPositions[n.id]
+        ? { ...n, ...manualPositions[n.id] }
+        : { ...n }
+    );
 
-    const simulation = d3
-      .forceSimulation(simNodes)
-      .force(
-        "link",
-        d3.forceLink(simEdges).id((d: any) => d.id).distance(120).strength(0.6)
-      )
-      .force("charge", d3.forceManyBody().strength(-370))
-      .force("center", d3.forceCenter(WIDTH / 2, HEIGHT / 2))
-      .force("collision", d3.forceCollide(NODE_RADIUS + 12));
+    // Simulation + edges set up
+    const { simulation, simNodes, simEdges } = d3SetupSimulation(
+      mergedNodes,
+      edges,
+      layoutMode,
+      NODE_RADIUS,
+      WIDTH,
+      HEIGHT
+    );
 
-    if (layoutMode === "manual") {
-      simulation.alpha(0).alphaTarget(0).stop();
-    }
-
-    // SVG clear
+    // D3 element selection and clearing
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
 
-    // ---- Imperative D3 Zoom & Pan ----
-    // Create group for zoom/pan
+    // Create group for zoom/pan and set up zoom
     const svgGroup = svg.append("g");
+    const cleanupZoom = d3SetupZoom(svgRef.current, svgGroup);
 
-    // Set up d3-zoom behavior imperatively here (not using a hook)
-    const zoom = d3
-      .zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.25, 1.75])
-      .on("zoom", (event) => {
-        svgGroup.attr("transform", event.transform);
-      });
-    svg.call(zoom as any);
-    // cleanup
-    const currentSvg = svgRef.current;
-    return () => {
-      if (currentSvg) {
-        d3.select(currentSvg).on(".zoom", null);
-      }
-      simulation.stop();
-    };
-    // ---- End D3 Zoom & Pan ----
-
-    // Edges
+    // Draw edges
     const link = svgGroup
       .selectAll("line")
       .data(simEdges)
@@ -105,7 +83,7 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
       .attr("stroke-width", 2)
       .attr("opacity", 0.7);
 
-    // Nodes
+    // Draw nodes layer
     const nodeLayer = svgGroup.append("g").attr("class", "nodes");
     const nodeG = nodeLayer
       .selectAll("g")
@@ -130,7 +108,10 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
       .attr("x", -NODE_RADIUS)
       .attr("y", -NODE_RADIUS)
       .append("xhtml:div")
-      .attr("style", "display: flex;justify-content:center;align-items:center;width:100%;height:100%;")
+      .attr(
+        "style",
+        "display: flex;justify-content:center;align-items:center;width:100%;height:100%;"
+      )
       .html((d) => `<div id="d3-node-${d.id}"></div>`);
 
     // Drag/Manual Layout
@@ -143,10 +124,10 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
       saveManualPosition,
     });
 
+    // Node interactions (hover, context menu, keyboard)
     nodeG
       .on("mouseenter", (_event, d) => setHoveredNodeId(d.id))
       .on("mouseleave", () => setHoveredNodeId(null))
-      .on("click", (_event, d) => { /* selection logic, not needed here */ })
       .on("contextmenu", function (event, d) {
         event.preventDefault();
         setContextNodeId(d.id);
@@ -157,15 +138,21 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
         // selection logic
       }
       if (
-        ((event.shiftKey && event.key === "F10") || event.key === "ContextMenu" || event.key === "Apps")
+        ((event.shiftKey && event.key === "F10") ||
+          event.key === "ContextMenu" ||
+          event.key === "Apps")
       ) {
         setContextNodeId(d.id);
       }
-      if (layoutMode === "manual" && (event.key.startsWith("Arrow"))) {
+      if (
+        layoutMode === "manual" &&
+        event.key.startsWith("Arrow")
+      ) {
         event.preventDefault();
         const { x = d.x ?? 0, y = d.y ?? 0 } = manualPositions[d.id] || d;
         let step = event.shiftKey ? 1 : 10;
-        let nx = x, ny = y;
+        let nx = x,
+          ny = y;
         if (event.key === "ArrowUp") ny -= step;
         if (event.key === "ArrowDown") ny += step;
         if (event.key === "ArrowLeft") nx -= step;
@@ -174,45 +161,40 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
       }
     });
 
+    // Render React node with context menu with ReactDOMClient
     setTimeout(() => {
       simNodes.forEach((n) => {
         const mountPoint = document.getElementById(`d3-node-${n.id}`);
         if (mountPoint) {
           import("react-dom/client").then((ReactDOMClient) => {
             ReactDOMClient.createRoot(mountPoint).render(
-              <GraphNodeContextMenu
-                nodeId={n.id}
-                isHidden={!!hiddenNodeIds.has(n.id)}
-                onHide={() => setHiddenNodeIds(new Set([...hiddenNodeIds, n.id]))}
-                onExpand={() => {
-                  const s = new Set(hiddenNodeIds);
-                  s.delete(n.id);
-                  setHiddenNodeIds(new Set(s));
-                }}
-              >
-                <GraphD3Node
-                  node={n}
-                  selected={false}
-                />
-              </GraphNodeContextMenu>
+              <GraphD3NodeMount
+                node={n}
+                hiddenNodeIds={hiddenNodeIds}
+                setHiddenNodeIds={setHiddenNodeIds}
+                setContextNodeId={setContextNodeId}
+              />
             );
           });
         }
       });
     }, 0);
 
+    // Simulation tick: layout, update pos and edges
     simulation.on("tick", () => {
       capturePositions(simNodes);
-
-      // Store last simulation positions for manual mode switch
+      // Store last simulation positions
       const result: Record<string, { x: number; y: number }> = {};
       simNodes.forEach((n: any) => {
-        if (typeof n.id === "string" && typeof n.x === "number" && typeof n.y === "number") {
+        if (
+          typeof n.id === "string" &&
+          typeof n.x === "number" &&
+          typeof n.y === "number"
+        ) {
           result[n.id] = { x: n.x, y: n.y };
         }
       });
       lastSimPositionsRef.current = result;
-
       link
         .attr("x1", (d: any) => (d.source as any).x!)
         .attr("y1", (d: any) => (d.source as any).y!)
@@ -222,14 +204,11 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
       nodeG.attr("transform", (d: any) => `translate(${d.x},${d.y})`);
     });
 
-    // Cleanup: remove listeners and stop simulation
+    // Cleanup: remove listeners, zoom and stop simulation
     return () => {
-      if (currentSvg) {
-        d3.select(currentSvg).on(".zoom", null);
-      }
+      cleanupZoom();
       simulation.stop();
     };
-
   }, [
     nodes,
     edges,
@@ -251,7 +230,13 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
       width="100%"
       height="100%"
       viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-      style={{ minWidth: WIDTH, minHeight: HEIGHT, width: "100%", height: "100%", background: "none" }}
+      style={{
+        minWidth: WIDTH,
+        minHeight: HEIGHT,
+        width: "100%",
+        height: "100%",
+        background: "none",
+      }}
       aria-label="Graph Visualization"
       tabIndex={0}
     />
