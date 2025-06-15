@@ -1,3 +1,4 @@
+
 import React, { useCallback, useRef, useEffect } from "react";
 import * as Papa from "papaparse";
 import { toast } from "sonner";
@@ -67,8 +68,8 @@ const UploadPanel = () => {
   useEffect(() => {
     if (nodes.length === 0 && edges.length === 0) {
       const { nodes: defaultNodes, edges: defaultEdges } = parseCsvData(
-        SAMPLE_TAB_CSVS.sample.nodes,
-        SAMPLE_TAB_CSVS.sample.edges
+        SAMPLE_TAB_CSVS.example.nodes,
+        SAMPLE_TAB_CSVS.example.edges
       );
       setNodes(defaultNodes);
       setEdges(defaultEdges);
@@ -183,13 +184,7 @@ const UploadPanel = () => {
     [processFiles]
   );
 
-  // Functions to fill Sample or Example data
-  const fillSample = () => {
-    const { nodes, edges } = parseCsvData(SAMPLE_TAB_CSVS.sample.nodes, SAMPLE_TAB_CSVS.sample.edges);
-    setNodes(nodes);
-    setEdges(edges);
-    toast.success("Restored sample data!");
-  };
+  // Function to fill Example data (sample-related code removed)
   const fillExample = () => {
     const { nodes, edges } = parseCsvData(SAMPLE_TAB_CSVS.example.nodes, SAMPLE_TAB_CSVS.example.edges);
     setNodes(nodes);
@@ -225,7 +220,7 @@ const UploadPanel = () => {
         />
       </section>
       <div className="flex flex-col md:gap-3 gap-4 md:mt-0 mt-[-1.2rem] w-full max-w-[420px]">
-        <SampleTabs onFillSample={fillSample} onFillExample={fillExample} />
+        <SampleTabs onFillExample={fillExample} />
       </div>
     </div>
   );
