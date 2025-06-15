@@ -1,12 +1,12 @@
 
 import React from "react";
 
-// Expanded palette (including a broader, modern set)
+// A smaller, curated palette
 const COLORS = [
-  "#e94f37", "#f6c85f", "#6a4c93", "#3483eb",
-  "#43b929", "#a259f7", "#00897b", "#ef476f",
-  "#ffd166", "#3aafa9", "#1fab89", "#3a3c3f", "#ededed", "#222", "#fff",
-  "#ffb703", "#fb8500", "#219ebc", "#023047", "#8ecae6", "#b9e769", "#8338ec", "#3891a6", "#f13c20", "#9ae19d"
+  "#d32f2f", "#1976d2", "#388e3c", "#fbc02d",
+  "#c2185b", "#7b1fa2", "#0288d1", "#00796b",
+  "#f57c00", "#546e7a", "#424242", "#bdbdbd",
+  "#222", "#fff"
 ];
 
 export type ColorCirclePickerProps = {

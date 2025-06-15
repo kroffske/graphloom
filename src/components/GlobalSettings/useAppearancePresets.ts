@@ -1,4 +1,3 @@
-
 import { useCallback, useMemo, useEffect, useState } from "react";
 import { appearancePresets } from "@/data/appearancePresets";
 import { toast } from "sonner";
@@ -183,6 +182,21 @@ export function useAppearancePresets() {
     [setNodeTypeAppearance, setEdgeTypeAppearance, updateAllNodeAppearances]
   );
 
+  const updateNodeTypeAndSave = useCallback((type: string, appearance: object) => {
+    const newCompleteObject = { ...completePresetObject, [type]: { ...DEFAULTS, ...completePresetObject[type], ...appearance } };
+    
+    const presetToSave = {
+        nodeTypes: newCompleteObject,
+        edgeTypes: completeEdgeTypeAppearance,
+    };
+    
+    const success = handlePresetSaveFromJson(JSON.stringify(presetToSave, null, 2));
+    if (success) {
+      toast.success(`Appearance for ${NODE_TYPE_LABELS[type] || type} saved to custom preset.`);
+    }
+
+  }, [completePresetObject, completeEdgeTypeAppearance, handlePresetSaveFromJson]);
+
   useEffect(() => {
     const loaded = getPersistedCustomPreset();
     if (loaded) setCustomPreset(loaded);
@@ -197,6 +211,7 @@ export function useAppearancePresets() {
     selectedPresetObj,
     handlePresetSaveFromJson,
     handlePresetSelect,
+    updateNodeTypeAndSave,
     customPreset,
     setCustomPreset,
     updateAllNodeAppearances,
