@@ -104,7 +104,7 @@ const GlobalSettingsSection: React.FC<{ onFillExample: () => void }> = () => {
             onSave={updateNodeTypeAppearance}
             onReset={resetNodeTypeAppearance}
             selectedType={selectedNodeType}
-            setSelectedType={setSelectedNodeType}
+            onSelectedTypeChange={setSelectedNodeType}
             appearance={selectedNodeTypeAppearance}
             nodeTypeKeys={nodeTypeKeys}
             nodeTypeLabels={nodeTypeLabels}
@@ -137,3 +137,4 @@ const GlobalSettingsSection: React.FC<{ onFillExample: () => void }> = () => {
 };
 
 export default GlobalSettingsSection;
+
