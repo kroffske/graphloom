@@ -30,7 +30,7 @@ export default function AppearanceSettingsColumns() {
           onSave={updateNodeTypeAppearance}
           onReset={resetNodeTypeAppearance}
           selectedType={selectedNodeType}
-          setSelectedType={setSelectedNodeType}
+          onSelectedTypeChange={setSelectedNodeType}
           appearance={selectedNodeTypeAppearance}
           nodeTypeKeys={nodeTypeKeys}
           nodeTypeLabels={nodeTypeLabels}
@@ -49,3 +49,4 @@ export default function AppearanceSettingsColumns() {
     </div>
   );
 }
+
