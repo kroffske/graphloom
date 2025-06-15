@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from "react";
 import * as d3 from "d3";
 import { useD3DragNodes } from "@/hooks/useD3DragNodes";
@@ -21,6 +22,7 @@ type GraphD3SvgLayerProps = {
   dragging: any;
   setDragging: (d: any) => void;
   captureSimulationPositions: (simNodes: any[]) => void;
+  initialPositions?: Record<string, { x: number; y: number }>;
 };
 
 const WIDTH = 900;
@@ -41,18 +43,20 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
   dragging,
   setDragging,
   captureSimulationPositions,
+  initialPositions,
 }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const svgGroupRef = useRef<SVGGElement | null>(null);
   const linkRef = useRef<SVGGElement | null>(null);
   const nodeGroupRef = useRef<SVGGElement | null>(null);
 
-  // Layout hook
+  // Layout hook, now passes initialPositions!
   const { simulation, simNodes, simEdges } = useD3Layout(
     layoutMode,
     nodes,
     edges,
-    manualPositions
+    manualPositions,
+    initialPositions
   );
 
   // -----
@@ -304,3 +308,4 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
 };
 
 export default GraphD3SvgLayer;
+
