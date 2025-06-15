@@ -28,6 +28,18 @@ export type GraphEdge = {
   type?: string;
 };
 
+type NodeTypeAppearanceMap = Record<string, {
+  icon?: string;
+  color?: string;
+  size?: number;
+  labelField?: string;
+  backgroundColor?: string;
+  lineColor?: string;
+  showIconCircle?: boolean;
+  iconCircleColor?: string;
+  iconOrder?: string[];
+}>;
+
 type GraphStore = {
   nodes: GraphNode[];
   edges: GraphEdge[];
@@ -44,6 +56,9 @@ type GraphStore = {
   // Add these lines:
   incrementalUpdateNodes: (changedNodes: GraphNode[]) => void;
   incrementalUpdateEdges: (changedEdges: GraphEdge[]) => void;
+  nodeTypeAppearances: NodeTypeAppearanceMap;
+  setNodeTypeAppearance: (type: string, appearance: NodeTypeAppearanceMap[string]) => void;
+  resetNodeTypeAppearance: (type: string) => void;
 };
 
 export const useGraphStore = create<GraphStore>((set, get) => ({
@@ -103,4 +118,15 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       return { edges: newEdges };
     });
   },
+  nodeTypeAppearances: {},
+  setNodeTypeAppearance: (type, appearance) =>
+    set((state) => ({
+      nodeTypeAppearances: { ...state.nodeTypeAppearances, [type]: { ...appearance } },
+    })),
+  resetNodeTypeAppearance: (type) =>
+    set((state) => {
+      const newMap = { ...state.nodeTypeAppearances };
+      delete newMap[type];
+      return { nodeTypeAppearances: newMap };
+    }),
 }));
