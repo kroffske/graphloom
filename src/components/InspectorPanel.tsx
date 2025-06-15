@@ -41,7 +41,10 @@ const InspectorPanel = () => {
     return (
       <aside className="h-full w-80 p-6 border-l border-border bg-card rounded-r-lg shadow-md flex flex-col gap-4 animate-fade-in transition-all duration-300 overflow-y-auto">
         <div>
-          <InspectorPanelTabs value={tab} onChange={setTab} />
+          <InspectorPanelTabs
+            value={tab}
+            onChange={(tab) => setTab(tab)}
+          />
         </div>
         {tab === "details" && (
           <>
@@ -86,7 +89,7 @@ const InspectorPanel = () => {
         <div>
           <InspectorPanelTabs
             value={tab}
-            onChange={setTab}
+            onChange={(tab) => setTab(tab)}
             extraTabs={[
               {
                 key: "type-settings",
@@ -126,3 +129,4 @@ const InspectorPanel = () => {
 };
 
 export default InspectorPanel;
+
