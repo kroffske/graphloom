@@ -54,6 +54,10 @@ type NodeTypeAppearanceMap = Record<string, {
   showIconCircle?: boolean;
   iconCircleColor?: string;
   iconOrder?: string[];
+  // --- CUSTOM APPEARANCE SUPPORT ---
+  iconColor?: string;
+  borderEnabled?: boolean;
+  borderColor?: string;
 }>;
 
 // UPDATED: include labelField here too!
