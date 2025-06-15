@@ -9,8 +9,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { SidebarProvider } from "@/components/ui/sidebar";
 
 const Index = () => {
-  // Only "upload" and "graph"
-  const [mainTab, setMainTab] = useState<"upload" | "graph">("graph");
+  // Only "graph" and "upload", now "graph" leftmost
+  const [mainTab, setMainTab] = useState<"graph" | "upload">("graph");
 
   return (
     <IconRegistryProvider>
@@ -22,28 +22,28 @@ const Index = () => {
           </h1>
           <ThemeToggle />
         </header>
-        {/* Tabs for Upload & Graph Only */}
+        {/* Tabs for Graph & Upload Only (Graph now leftmost) */}
         <Tabs
           value={mainTab}
-          onValueChange={(v) => setMainTab(v as "upload" | "graph")}
+          onValueChange={(v) => setMainTab(v as "graph" | "upload")}
           className="w-full"
         >
           <TabsList className="w-full mb-0 border-b border-border pt-2 px-2 bg-background">
-            <TabsTrigger value="upload" className="flex-1 text-lg py-2">
-              Upload & Explore
-            </TabsTrigger>
             <TabsTrigger value="graph" className="flex-1 text-lg py-2">
               Graph
+            </TabsTrigger>
+            <TabsTrigger value="upload" className="flex-1 text-lg py-2">
+              Upload & Explore
             </TabsTrigger>
           </TabsList>
           <SidebarProvider>
             <div className="flex-1 flex flex-row w-full min-h-0 max-h-[calc(100vh-70px)] overflow-hidden">
               <main className="flex-1 flex flex-col pl-7 pr-2 pt-6 pb-0 max-w-[calc(100vw-370px)]">
-                <TabsContent value="upload" className="p-0 h-full w-full">
-                  <UploadPanel />
-                </TabsContent>
                 <TabsContent value="graph" className="p-0 h-full w-full">
                   <GraphD3Canvas />
+                </TabsContent>
+                <TabsContent value="upload" className="p-0 h-full w-full">
+                  <UploadPanel />
                 </TabsContent>
               </main>
               <InspectorPanel />
