@@ -7,6 +7,7 @@ import { useGraphStore } from "@/state/useGraphStore";
 import { SampleTabs, SAMPLE_TAB_CSVS } from "./SampleTabs";
 import { Settings, Import } from "lucide-react";
 import NodeTypeAppearanceSettings from "@/components/NodeTypeAppearanceSettings";
+import { Textarea } from "@/components/ui/textarea";
 
 // Helper: Only allow string | number | boolean
 function castToSupportedType(val: unknown): string | number | boolean {
@@ -66,7 +67,7 @@ function parseCsvData(nodesCsv: string, edgesCsv: string) {
 const UploadPanel = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
-  const { setNodes, setEdges, nodes, edges, manualPositions } = useGraphStore();
+  const { setNodes, setEdges, nodes, edges, manualPositions, nodeTypeAppearances } = useGraphStore();
 
   // Always fill Example data on mount
   useEffect(() => {
@@ -237,7 +238,17 @@ const UploadPanel = () => {
     e.target.value = "";
   }
 
-  // Layout: Two-column on desktop, stacked on mobile
+  // Handler for copying JSON config
+  function handleCopyPreset() {
+    try {
+      navigator.clipboard.writeText(JSON.stringify(nodeTypeAppearances, null, 2));
+      toast.success("Appearance preset JSON copied!");
+    } catch {
+      toast.error("Unable to copy JSON!");
+    }
+  }
+
+  // --- Layout: Two-column on desktop, stacked on mobile ---
   return (
     <div className="w-full flex flex-col md:flex-row md:items-start gap-6">
       {/* ---- LEFT COLUMN: Upload and Examples ---- */}
@@ -273,7 +284,7 @@ const UploadPanel = () => {
         </div>
       </div>
       {/* ---- RIGHT COLUMN: Global Settings ---- */}
-      <div className="w-full md:w-[370px] min-w-[270px] mt-0 flex flex-col gap-5 px-1 max-w-2xl">
+      <div className="w-full md:w-[650px] min-w-[340px] mt-0 flex flex-col gap-5 px-1 max-w-4xl">
         <section className="border border-border rounded-lg bg-card/80 shadow p-5 flex flex-col gap-4">
           <div className="flex flex-row items-center gap-2 mb-1">
             <Settings className="w-5 h-5 text-muted-foreground" />
@@ -302,8 +313,30 @@ const UploadPanel = () => {
             <span className="font-semibold text-base mt-1 mb-0.5">Appearance Presets</span>
             <AppearancePresetsSection />
           </div>
-          {/* New: Node Type Appearance Settings */}
-          <NodeTypeAppearanceSettings />
+          {/* New: Node Type Appearance Settings with right-side preset JSON config */}
+          <div className="w-full flex flex-col md:flex-row gap-6 mt-2">
+            <div className="w-full md:w-2/3 flex-shrink-0">
+              <NodeTypeAppearanceSettings />
+            </div>
+            {/* --- JSON config panel on right --- */}
+            <div className="w-full md:w-1/3 flex flex-col">
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-semibold text-base">Preset JSON Config</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopyPreset}
+                  type="button"
+                >Copy</Button>
+              </div>
+              <Textarea
+                value={JSON.stringify(nodeTypeAppearances, null, 2)}
+                readOnly
+                className="bg-muted resize-none font-mono text-xs min-h-[300px] max-h-[440px] h-full"
+                style={{ minWidth: "170px" }}
+              />
+            </div>
+          </div>
           <p className="text-xs text-muted-foreground">
             Export/import includes nodes, edges, and manual positions. Presets are experimental.
           </p>
