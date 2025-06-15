@@ -19,6 +19,7 @@ function castToSupportedType(val: unknown): string | number | boolean {
   return String(val);
 }
 const RESERVED_NODE_KEYS = ["node_id", "node_type", "label"];
+const RESERVED_EDGE_KEYS = ["source", "target", "edge_type"];
 
 // Helper: parseCsvData for use on mount
 function parseCsvData(nodesCsv: string, edgesCsv: string) {
@@ -46,15 +47,24 @@ function parseCsvData(nodesCsv: string, edgesCsv: string) {
     })
     .filter(Boolean);
 
-  // Parse edges
+  // Parse edges with attributes
   const resultsEdges = Papa.parse(edgesCsv.trim(), { header: true, skipEmptyLines: true });
   const dataEdges = resultsEdges.data as any[];
-  const edges = dataEdges.map((row, i) => ({
-    id: `e${i + 1}`,
-    source: String(row.source),
-    target: String(row.target),
-    type: row.edge_type ? String(row.edge_type) : "default",
-  }));
+  const edges = dataEdges.map((row, i) => {
+    const attributes: Record<string, string | number | boolean> = {};
+    Object.entries(row).forEach(([k, v]) => {
+      if (!RESERVED_EDGE_KEYS.includes(k)) {
+        attributes[k] = castToSupportedType(v);
+      }
+    });
+    return {
+      id: `e${i + 1}`,
+      source: String(row.source),
+      target: String(row.target),
+      type: row.edge_type ? String(row.edge_type) : "default",
+      attributes: Object.keys(attributes).length ? attributes : undefined,
+    };
+  });
 
   return { nodes, edges };
 }

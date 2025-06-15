@@ -1,3 +1,4 @@
+
 import React, { useRef, useCallback } from "react";
 import * as Papa from "papaparse";
 import { toast } from "sonner";
@@ -47,12 +48,22 @@ function parseCsvData(nodesCsv: string, edgesCsv: string) {
 
   const resultsEdges = Papa.parse(edgesCsv.trim(), { header: true, skipEmptyLines: true });
   const dataEdges = resultsEdges.data as any[];
-  const edges = dataEdges.map((row, i) => ({
-    id: `e${i + 1}`,
-    source: String(row.source),
-    target: String(row.target),
-    type: row.edge_type ? String(row.edge_type) : "default",
-  }));
+  // Now: include all CSV columns as edge "attributes", except our base keys
+  const edges = dataEdges.map((row, i) => {
+    const attributes: Record<string, string | number | boolean> = {};
+    Object.entries(row).forEach(([k, v]) => {
+      if (!RESERVED_EDGE_KEYS.includes(k)) {
+        attributes[k] = castToSupportedType(v);
+      }
+    });
+    return {
+      id: `e${i + 1}`,
+      source: String(row.source),
+      target: String(row.target),
+      type: row.edge_type ? String(row.edge_type) : "default",
+      attributes: Object.keys(attributes).length ? attributes : undefined,
+    };
+  });
 
   return { nodes, edges };
 }
@@ -163,11 +174,18 @@ const UploadCsvSection: React.FC<UploadCsvSectionProps> = ({ onExample }) => {
           return;
         }
         const edges = data.map((row, i) => {
+          const attributes: Record<string, string | number | boolean> = {};
+          Object.entries(row).forEach(([k, v]) => {
+            if (!RESERVED_EDGE_KEYS.includes(k)) {
+              attributes[k] = castToSupportedType(v);
+            }
+          });
           return {
             id: `e${i + 1}`,
             source: String(row.source),
             target: String(row.target),
             type: row.edge_type ? String(row.edge_type) : "default",
+            attributes: Object.keys(attributes).length ? attributes : undefined,
           };
         });
         setEdges(edges);
@@ -221,3 +239,6 @@ const UploadCsvSection: React.FC<UploadCsvSectionProps> = ({ onExample }) => {
 };
 
 export default UploadCsvSection;
+
+// File is now 224+ lines and getting long.
+// After this you should consider refactoring it into smaller files for maintainability.

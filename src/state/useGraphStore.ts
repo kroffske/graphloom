@@ -1,3 +1,4 @@
+
 import { create } from "zustand";
 
 // Graph Node & Edge structures (loosely modeled)
@@ -26,12 +27,22 @@ export type GraphEdge = {
   source: string;
   target: string;
   type?: string;
+  // Edge attributes loaded from CSV
+  attributes?: Record<string, string | number | boolean>;
   appearance?: {
     color?: string;      // Edge color
     width?: number;      // Edge line thickness
     label?: string;      // Optional label
   };
 };
+
+// New: edge type appearance settings!
+type EdgeTypeAppearanceMap = Record<string, {
+  color?: string;
+  width?: number;
+  labelField?: string;    // which edge attr is shown as label
+  icon?: string;          // (future: edge icon or style)
+}>;
 
 type NodeTypeAppearanceMap = Record<string, {
   icon?: string;
@@ -66,12 +77,16 @@ type GraphStore = {
   showNode: (id: string) => void;
   showAllHiddenNodes: () => void;
   setManualPosition: (id: string, pos: { x: number; y: number }) => void;
-  // Add these lines:
   incrementalUpdateNodes: (changedNodes: GraphNode[]) => void;
   incrementalUpdateEdges: (changedEdges: GraphEdge[]) => void;
   nodeTypeAppearances: NodeTypeAppearanceMap;
   setNodeTypeAppearance: (type: string, appearance: NodeTypeAppearanceMap[string]) => void;
   resetNodeTypeAppearance: (type: string) => void;
+
+  // Edge type appearance
+  edgeTypeAppearances: EdgeTypeAppearanceMap;
+  setEdgeTypeAppearance: (type: string, appearance: EdgeTypeAppearanceMap[string]) => void;
+  resetEdgeTypeAppearance: (type: string) => void;
 
   // New: edge appearance and selection
   edgeAppearances: EdgeAppearanceMap;
@@ -110,8 +125,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     set((state) => ({
       manualPositions: { ...state.manualPositions, [id]: pos },
     })),
-  // === New: Incremental node updates (merge/update existing, don't do full replaces) ===
-  incrementalUpdateNodes: (changedNodes: GraphNode[]) => {
+  incrementalUpdateNodes: (changedNodes) => {
     set((state) => {
       const newNodes = [...state.nodes];
       changedNodes.forEach((incoming) => {
@@ -125,7 +139,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       return { nodes: newNodes };
     });
   },
-  incrementalUpdateEdges: (changedEdges: GraphEdge[]) => {
+  incrementalUpdateEdges: (changedEdges) => {
     set((state) => {
       const newEdges = [...state.edges];
       changedEdges.forEach((incoming) => {
@@ -151,7 +165,19 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       return { nodeTypeAppearances: newMap };
     }),
 
-  // Edge appearance management
+  // Edge type appearance state
+  edgeTypeAppearances: {},
+  setEdgeTypeAppearance: (type, appearance) =>
+    set((state) => ({
+      edgeTypeAppearances: { ...state.edgeTypeAppearances, [type]: { ...appearance } },
+    })),
+  resetEdgeTypeAppearance: (type) =>
+    set((state) => {
+      const map = { ...state.edgeTypeAppearances };
+      delete map[type];
+      return { edgeTypeAppearances: map };
+    }),
+
   edgeAppearances: {},
   setEdgeAppearance: (id, appearance) =>
     set((state) => ({
