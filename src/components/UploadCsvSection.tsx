@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useState } from "react";
+import React, { useRef, useCallback } from "react";
 import * as Papa from "papaparse";
 import { toast } from "sonner";
 import { useGraphStore } from "@/state/useGraphStore";
@@ -75,16 +75,18 @@ type UploadCsvSectionProps = {
 const UploadCsvSection: React.FC<UploadCsvSectionProps> = ({ onExample }) => {
   const nodeFileInputRef = useRef<HTMLInputElement>(null);
   const edgeFileInputRef = useRef<HTMLInputElement>(null);
-  const { setNodes, setEdges } = useGraphStore();
 
-  // Track uploaded filenames
-  const [nodeFilename, setNodeFilename] = useState<string | null>(null);
-  const [edgeFilename, setEdgeFilename] = useState<string | null>(null);
+  // Updated: use filenames and setters from the graph store, not from local state
+  const {
+    setNodes, setEdges,
+    nodeFilename, setNodeFilename,
+    edgeFilename, setEdgeFilename,
+  } = useGraphStore();
 
   // Parse CSV and validate (nodes)
   const processNodeFile = useCallback((file: File | null) => {
     if (!file) return;
-    setNodeFilename(file.name); // Track filename on upload
+    setNodeFilename(file.name); // now global!
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
@@ -130,18 +132,17 @@ const UploadCsvSection: React.FC<UploadCsvSectionProps> = ({ onExample }) => {
         if (hasInvalidRow) {
           toast.warning("One or more invalid node rows were skipped.");
         }
-
         setNodes(nodes as any);
         toast.success("Loaded nodes!");
       },
       error: () => toast.error("Failed to parse nodes.csv"),
     });
-  }, [setNodes]);
+  }, [setNodes, setNodeFilename]);
 
   // Parse CSV and validate (edges)
   const processEdgeFile = useCallback((file: File | null) => {
     if (!file) return;
-    setEdgeFilename(file.name); // Track filename on upload
+    setEdgeFilename(file.name); // now global!
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
@@ -176,7 +177,7 @@ const UploadCsvSection: React.FC<UploadCsvSectionProps> = ({ onExample }) => {
       },
       error: () => toast.error("Failed to parse edges.csv"),
     });
-  }, [setEdges]);
+  }, [setEdges, setEdgeFilename]);
 
   // File selection handlers
   const onNodeFile = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -282,5 +283,5 @@ const UploadCsvSection: React.FC<UploadCsvSectionProps> = ({ onExample }) => {
 
 export default UploadCsvSection;
 
-// File is now 245+ lines and getting long.
+// File is now 287+ lines and getting long.
 // After this you should consider refactoring it into smaller files for maintainability.
