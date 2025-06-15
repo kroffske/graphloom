@@ -1,6 +1,6 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import AppearancePresetsSection from "@/components/AppearancePresetsSection";
 import { Settings } from "lucide-react";
 import NodeTypeAppearanceSettings from "@/components/NodeTypeAppearanceSettings";
 import EdgeTypeAppearanceSettings from "@/components/EdgeTypeAppearanceSettings";
@@ -10,6 +10,7 @@ import { useAppearanceManager } from "@/hooks/appearance/useAppearanceManager";
 import AppearancePresetDropdown from "./AppearancePresetDropdown";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
+import NodeTypeVisualList from "./NodeTypeVisualList";
 
 const GlobalSettingsSection: React.FC<{ onFillExample: () => void }> = () => {
   const {
@@ -80,6 +81,17 @@ const GlobalSettingsSection: React.FC<{ onFillExample: () => void }> = () => {
     }
   }
 
+  const handleNodeTypeSelect = (type: string) => {
+    if (type === selectedNodeType) return;
+    if (isPresetDirty) {
+      toast.error(
+        "You have unsaved changes. Save or revert them before switching node types."
+      );
+      return;
+    }
+    setSelectedNodeType(type);
+  };
+
   return (
     <div className="flex flex-col flex-1 min-h-0 w-full gap-5 px-1 h-full">
       <section className="flex flex-col flex-1 min-h-0 h-full w-full border border-border rounded-lg bg-card/80 shadow p-8 gap-6">
@@ -87,7 +99,7 @@ const GlobalSettingsSection: React.FC<{ onFillExample: () => void }> = () => {
           <Settings className="w-5 h-5 text-muted-foreground" />
           <span className="font-semibold text-xl">Appearance</span>
         </div>
-        <div className="flex flex-row items-center gap-3 mb-2">
+        <div className="flex flex-row items-center flex-wrap gap-3 mb-2">
           <AppearancePresetDropdown
             presets={displayedPresets}
             selectedKey={selectedPresetKey}
@@ -114,31 +126,20 @@ const GlobalSettingsSection: React.FC<{ onFillExample: () => void }> = () => {
             </div>
           )}
         </div>
-        <div className="flex flex-col gap-3">
-          <span className="font-semibold text-base mt-1 mb-0.5">
-            Appearance Presets
-          </span>
-          <AppearancePresetsSection
-            onPresetSelect={(config, key) => {
-              if (isPresetDirty) {
-                toast.error(
-                  "You have unsaved changes. Save or revert them before switching presets."
-                );
-                return;
-              }
-              handlePresetSelect(config, key);
-            }}
-            selectedPresetKey={selectedPresetKey}
-            appearancePresets={displayedPresets}
-          />
-        </div>
+        <NodeTypeVisualList
+          nodeTypeKeys={nodeTypeKeys}
+          nodeTypeLabels={nodeTypeLabels}
+          nodeTypeAppearances={completePresetObject.nodeTypes || {}}
+          selectedNodeType={selectedNodeType}
+          onSelectedNodeTypeChange={handleNodeTypeSelect}
+        />
         <AppearanceImportExport />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-4">
           <NodeTypeAppearanceSettings
             onSave={updateNodeTypeAppearance}
             onReset={resetNodeTypeAppearance}
             selectedType={selectedNodeType}
-            onSelectedTypeChange={setSelectedNodeType}
+            onSelectedTypeChange={handleNodeTypeSelect}
             appearance={selectedNodeTypeAppearance}
             nodeTypeKeys={nodeTypeKeys}
             nodeTypeLabels={nodeTypeLabels}
