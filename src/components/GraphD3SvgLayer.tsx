@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from "react";
 import * as d3 from "d3";
 import { useD3DragNodes } from "@/hooks/useD3DragNodes";
@@ -277,11 +276,14 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
       height="100%"
       viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
       style={{
-        minWidth: WIDTH,
-        minHeight: HEIGHT,
+        display: "block",
         width: "100%",
         height: "100%",
+        minWidth: 0,
+        minHeight: 0,
         background: "none",
+        padding: 0,
+        margin: 0,
       }}
       aria-label="Graph Visualization"
       tabIndex={0}
@@ -308,4 +310,3 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
 };
 
 export default GraphD3SvgLayer;
-
