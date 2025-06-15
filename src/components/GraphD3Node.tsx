@@ -4,8 +4,7 @@ import { GraphNode } from "@/state/useGraphStore";
 import { useIconRegistry } from "./IconRegistry";
 
 /**
- * Renders the node box in a way visually consistent with the previous UI.
- * (Meant for rendering in a D3 foreignObject overlay and obeys .appearance.)
+ * Renders the node box in a way visually consistent with the previous UI, or as a minimal icon+label in circle mode.
  */
 const GraphD3Node = ({
   node,
@@ -17,7 +16,6 @@ const GraphD3Node = ({
   onSelect?: (id: string) => void;
 }) => {
   const iconRegistry = useIconRegistry();
-  // Appearance values (fallbacks for legacy data):
   const appearance = node.appearance || {};
   const iconType = appearance.icon || node.type;
   const nodeColor =
@@ -41,6 +39,63 @@ const GraphD3Node = ({
       ? String(node.attributes[labelField])
       : node.label;
 
+  // Key: In circle mode, render minimal vertical flex, transparent background, no border/shadow, and wrap click/focus only around the icon+text.
+  if (showIconCircle) {
+    return (
+      <button
+        type="button"
+        tabIndex={0}
+        role="button"
+        aria-label={label || "Node"}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            onSelect?.(node.id);
+          }
+        }}
+        onClick={() => onSelect?.(node.id)}
+        style={{
+          background: "transparent",
+          border: 0,
+          outline: "none",
+          padding: 0,
+          margin: 0,
+          boxShadow: "none",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          pointerEvents: "all",
+        }}
+        className={`group focus-visible:ring-2 focus-visible:ring-blue-400`}
+      >
+        <span
+          className="flex items-center justify-center transition"
+          style={{
+            width: 38,
+            height: 38,
+            borderRadius: "50%",
+            backgroundColor: iconCircleColor,
+            border: `2px solid ${borderColor}`,
+            boxShadow: selected ? "0 0 0 2px #93c5fd" : undefined,
+            marginBottom: 4,
+            boxSizing: "border-box",
+          }}
+        >
+          {Icon && (
+            <Icon
+              className="w-7 h-7 text-[#30334a]"
+              aria-label={iconType}
+              filled={true}
+            />
+          )}
+        </span>
+        <span className="text-xs font-medium truncate max-w-[90px] text-foreground text-center">
+          {label}
+        </span>
+      </button>
+    );
+  }
+
+  // Legacy "box" UI
   return (
     <div
       className={`flex flex-col items-center px-3 py-2 rounded-lg shadow-md cursor-pointer outline-none border-2
@@ -60,7 +115,7 @@ const GraphD3Node = ({
         minHeight: nodeSize,
         outline: "none",
         pointerEvents: "all",
-        background: showIconCircle ? "transparent" : backgroundColor,
+        background: backgroundColor,
         borderColor: borderColor,
         borderRadius: 16,
         display: "flex",
@@ -69,36 +124,13 @@ const GraphD3Node = ({
       }}
     >
       <div className="flex items-center justify-center" style={{ marginBottom: 4 }}>
-        {Icon &&
-          (showIconCircle ? (
-            <span
-              className="flex items-center justify-center"
-              style={{
-                width: 38,
-                height: 38,
-                borderRadius: "50%",
-                backgroundColor: iconCircleColor,
-                border: `2px solid ${borderColor}`,
-                boxShadow: selected ? "0 0 0 2px #93c5fd" : undefined,
-                marginRight: 0,
-                marginLeft: 0,
-                // Ensure all outside is transparent
-                boxSizing: "border-box",
-              }}
-            >
-              <Icon
-                className="w-7 h-7 text-[#30334a]"
-                aria-label={iconType}
-                filled={true}
-              />
-            </span>
-          ) : (
-            <Icon
-              className="w-8 h-8 text-[#30334a]"
-              aria-label={iconType}
-              filled={true}
-            />
-          ))}
+        {Icon && (
+          <Icon
+            className="w-8 h-8 text-[#30334a]"
+            aria-label={iconType}
+            filled={true}
+          />
+        )}
       </div>
       <span className="text-xs font-medium truncate max-w-[90px] text-foreground text-center">
         {label}
