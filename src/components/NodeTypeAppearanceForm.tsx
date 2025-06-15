@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -19,11 +20,11 @@ const FRIENDLY_TYPE_LABELS: Record<string, string> = {
 };
 
 type NodeTypeAppearanceFormProps = {
-  onSaveCustomPresetFromJson?: () => void;
+  onSave?: (type: string, appearance: object) => void;
 };
 
 const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
-  onSaveCustomPresetFromJson
+  onSave
 }) => {
   const iconRegistry = useIconRegistry();
   const iconKeys = Object.keys(iconRegistry);
@@ -89,7 +90,7 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
 
   function handleSave(e?: React.FormEvent) {
     if (e) e.preventDefault();
-    setAppearanceForType(selectedType, {
+    const newAppearance = {
       icon,
       iconColor,
       borderColor,
@@ -99,9 +100,14 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
       size,
       labelField,
       iconOrder
-    });
-    toast.success(`Saved default appearance for ${stableNodeTypeLabels[selectedType] || selectedType}`);
-    if (onSaveCustomPresetFromJson) onSaveCustomPresetFromJson();
+    };
+    setAppearanceForType(selectedType, newAppearance);
+
+    if (onSave) {
+      onSave(selectedType, newAppearance);
+    } else {
+      toast.warning("Save handler not available.");
+    }
   }
   function handleReset() {
     resetAppearanceForType(selectedType);

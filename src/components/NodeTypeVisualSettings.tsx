@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -48,12 +47,6 @@ const NodeTypeVisualSettings: React.FC<NodeTypeVisualSettingsProps> = ({
             <ColorCirclePicker value={backgroundColor} onChange={setBackgroundColor} />
           )}
         </div>
-      </div>
-      {/* Node Border Color REMOVED */}
-      {/* Node line color kept for edge/advanced use */}
-      <div>
-        <Label htmlFor="node-line-color">Node Line Color</Label>
-        <ColorCirclePicker value={lineColor} onChange={setLineColor} />
       </div>
       <div>
         <Label htmlFor="appearance-size">Node Size ({size ?? 64}px)</Label>

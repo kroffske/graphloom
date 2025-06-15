@@ -12,7 +12,6 @@ import AppearancePresetDropdown from "./AppearancePresetDropdown";
 import EdgeTypeAppearanceSettings from "@/components/EdgeTypeAppearanceSettings";
 import { useAppearancePresets } from "./GlobalSettings/useAppearancePresets";
 import AppearanceImportExport from "./GlobalSettings/AppearanceImportExport";
-import AppearanceSettingsColumns from "./GlobalSettings/AppearanceSettingsColumns";
 import PresetJsonConfigTextarea from "./GlobalSettings/PresetJsonConfigTextarea";
 
 // Node type labels for all built-in types (should match those in NodeTypeAppearanceSettings)
@@ -90,6 +89,7 @@ const GlobalSettingsSection: React.FC<{ onFillExample: () => void }> = () => {
     selectedPresetObj,
     handlePresetSaveFromJson,
     handlePresetSelect,
+    updateNodeTypeAndSave,
   } = useAppearancePresets();
 
   // JSON textarea state/dirty logic
@@ -120,7 +120,7 @@ const GlobalSettingsSection: React.FC<{ onFillExample: () => void }> = () => {
       <section className="flex flex-col flex-1 min-h-0 h-full w-full border border-border rounded-lg bg-card/80 shadow p-8 gap-6">
         <div className="flex flex-row items-center gap-2 mb-1">
           <Settings className="w-5 h-5 text-muted-foreground" />
-          <span className="font-semibold text-xl">Apearence</span>
+          <span className="font-semibold text-xl">Appearance</span>
         </div>
         <div className="flex flex-row items-center gap-3 mb-2">
           <AppearancePresetDropdown
@@ -144,7 +144,10 @@ const GlobalSettingsSection: React.FC<{ onFillExample: () => void }> = () => {
           />
         </div>
         <AppearanceImportExport />
-        <AppearanceSettingsColumns onSaveCustomPresetFromJson={() => handlePresetSaveFromJson(editableJson, () => setIsDirty(false))} />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-4">
+          <NodeTypeAppearanceSettings onSave={updateNodeTypeAndSave} />
+          <EdgeTypeAppearanceSettings />
+        </div>
         <PresetJsonConfigTextarea
           editableJson={editableJson}
           setEditableJson={setEditableJson}

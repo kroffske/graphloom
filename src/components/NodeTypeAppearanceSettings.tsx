@@ -3,9 +3,9 @@ import React from "react";
 import NodeTypeAppearanceForm from "./NodeTypeAppearanceForm";
 
 type NodeTypeAppearanceSettingsProps = {
-  onSaveCustomPresetFromJson?: () => void;
+  onSave?: (type: string, appearance: object) => void;
 };
 
-export default function NodeTypeAppearanceSettings({ onSaveCustomPresetFromJson }: NodeTypeAppearanceSettingsProps) {
-  return <NodeTypeAppearanceForm onSaveCustomPresetFromJson={onSaveCustomPresetFromJson} />;
+export default function NodeTypeAppearanceSettings({ onSave }: NodeTypeAppearanceSettingsProps) {
+  return <NodeTypeAppearanceForm onSave={onSave} />;
 }
