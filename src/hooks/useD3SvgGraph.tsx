@@ -1,11 +1,10 @@
-import { useEffect } from "react";
+
+import { useEffect, useRef } from "react";
 import * as d3 from "d3";
 import { useD3DragNodes } from "@/hooks/useD3DragNodes";
 import { useD3ZoomAndPan } from "@/hooks/useD3ZoomAndPan";
 import GraphD3NodeMount from "@/components/GraphD3NodeMount";
 import { useGraphStore } from "@/state/useGraphStore";
-import { useD3NodeRenderer } from "./useD3NodeRenderer";
-import { useD3EdgeRenderer } from "./useD3EdgeRenderer";
 
 // Break out the shape constants since they may be used outside the hook as well
 export const WIDTH = 900;
@@ -37,9 +36,6 @@ type UseD3SvgGraphProps = {
    * You can plug in a UI or logic to display/hide a menu.
    */
   onEdgeContextMenu?: (edgeId: string, event: MouseEvent) => void;
-  // NEW for hover
-  setHoveredEdgeId?: (id: string | null) => void;
-  setEdgeMousePos?: (pos: { x: number; y: number } | null) => void;
 };
 
 export function useD3SvgGraph({
@@ -63,9 +59,8 @@ export function useD3SvgGraph({
   simNodes,
   simEdges,
   onEdgeContextMenu,
-  setHoveredEdgeId,
-  setEdgeMousePos,
 }: UseD3SvgGraphProps) {
+  // Get edge selection API
   const { selectedEdgeId, selectEdge, edgeAppearances, showEdgeLabels } = useGraphStore();
 
   useD3ZoomAndPan({
@@ -73,6 +68,7 @@ export function useD3SvgGraph({
     svgGroup: svgGroupRef.current ? d3.select(svgGroupRef.current) : null,
   });
 
+  // ------ D3 Setup/Rendering: Runs only on simNodes/simEdges/layout/topology updates ------
   useEffect(() => {
     if (!svgRef.current || !simNodes.length) return;
 
@@ -82,47 +78,176 @@ export function useD3SvgGraph({
     const svgGroup = svg.append("g");
     svgGroupRef.current = svgGroup.node() as SVGGElement;
 
-    // --- Render edges layer ---
-    const link = useD3EdgeRenderer({
-      svgGroup,
-      simEdges,
-      simNodes,
-      selectedEdgeId,
-      selectEdge,
-      edgeAppearances,
-      onEdgeContextMenu,
-      setHoveredEdgeId,
-      setEdgeMousePos,
+    // -- EDGE LAYER --
+    const link = svgGroup.append("g").attr("class", "edges").selectAll("line")
+      .data(simEdges)
+      .enter()
+      .append("line")
+      .attr("stroke", (d: any) => {
+        // Use appearance or fallback
+        const id = d.id;
+        const appearance = { ...(d.appearance || {}), ...(edgeAppearances[id] || {}) };
+        return appearance.color || "#64748b";
+      })
+      .attr("stroke-width", (d: any) => {
+        const id = d.id;
+        const appearance = { ...(d.appearance || {}), ...(edgeAppearances[id] || {}) };
+        return appearance.width || 2;
+      })
+      .attr("opacity", (d: any) => (selectedEdgeId === d.id ? 1 : 0.7))
+      .attr("cursor", "context-menu") // indicate right-click functionality
+      .attr("tabindex", 0)
+      .attr("id", (d: any) => "edge-" + d.id)
+      // Prevent drag/select weirdness on mousedown/up
+      .on("mousedown", function(event: any) { event.stopPropagation(); })
+      .on("mouseup", function(event: any) { event.stopPropagation(); })
+      // DO NOT attach click/selection/keydown handlers for left click or keyboard
+      .on("click", null)
+      .on("keydown", null)
+      // Show context menu on right-click
+      .on("contextmenu", function(event: MouseEvent, d: any) {
+        event.preventDefault();
+        event.stopPropagation();
+        // --- UPDATE: Select edge on right-click before showing context menu ---
+        if (typeof selectEdge === "function") {
+          selectEdge(d.id);
+        }
+        // If a callback is provided, call it; otherwise fallback to setContextNodeId for now
+        if (onEdgeContextMenu) {
+          onEdgeContextMenu(d.id, event);
+        } else if (typeof setContextNodeId === "function") {
+          setContextNodeId(d.id);
+        }
+      });
+
+    const nodeLayer = svgGroup.append("g").attr("class", "nodes");
+    const nodeG = nodeLayer
+      .selectAll("g")
+      .data(simNodes)
+      .enter()
+      .append("g")
+      .attr("cursor", "pointer")
+      .attr("tabindex", 0);
+
+    nodeG
+      .append("circle")
+      .attr("r", NODE_RADIUS * 0.8)
+      .attr("fill", "#fff")
+      .attr("stroke", "#94a3b8")
+      .attr("stroke-width", 1.5)
+      .style("opacity", 0.01);
+
+    nodeG
+      .append("foreignObject")
+      .attr("width", NODE_RADIUS * 2)
+      .attr("height", NODE_RADIUS * 2)
+      .attr("x", -NODE_RADIUS)
+      .attr("y", -NODE_RADIUS)
+      .append("xhtml:div")
+      .attr(
+        "style",
+        "display: flex;justify-content:center;align-items:center;width:100%;height:100%;"
+      )
+      .html((d) => `<div id="d3-node-${d.id}"></div>`);
+
+    if (layoutMode === "manual") {
+      useD3DragNodes({
+        nodeG,
+        link,
+        layoutMode,
+        manualPositions,
+        setDragging,
+        saveManualPosition,
+      });
+    } else if (layoutMode === "force") {
+      nodeG.call(
+        d3
+          .drag<SVGGElement, any>()
+          .on("start", function (event, d) {
+            if (!event.active && simulation && simulation.alphaTarget)
+              simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+          })
+          .on("drag", function (event, d) {
+            d.fx = event.x;
+            d.fy = event.y;
+          })
+          .on("end", function (event, d) {
+            if (!event.active && simulation && simulation.alphaTarget)
+              simulation.alphaTarget(0);
+          })
+      );
+      nodeG.on("dblclick", function (_event, d) {
+        d.fx = null;
+        d.fy = null;
+        if (simulation && simulation.alphaTarget)
+          simulation.alphaTarget(0.3).restart();
+      });
+    }
+
+    nodeG
+      .on("mouseenter", (_event, d) => setHoveredNodeId(d.id))
+      .on("mouseleave", () => setHoveredNodeId(null))
+      .on("contextmenu", function (event, d) {
+        event.preventDefault();
+        setContextNodeId(d.id);
+      });
+
+    nodeG.on("keydown", function (event, d) {
+      if (layoutMode === "manual" && event.key.startsWith("Arrow")) {
+        event.preventDefault();
+        const manual = manualPositions[d.id];
+        const x = manual?.x ?? d.x ?? 0;
+        const y = manual?.y ?? d.y ?? 0;
+        let step = event.shiftKey ? 1 : 10;
+        let nx = x,
+          ny = y;
+        if (event.key === "ArrowUp") ny -= step;
+        if (event.key === "ArrowDown") ny += step;
+        if (event.key === "ArrowLeft") nx -= step;
+        if (event.key === "ArrowRight") nx += step;
+        saveManualPosition(d.id, { x: nx, y: ny });
+      }
+      if (event.key === "Enter" || event.key === " ") {
+      }
+      if (
+        ((event.shiftKey && event.key === "F10") ||
+          event.key === "ContextMenu" ||
+          event.key === "Apps")
+      ) {
+        setContextNodeId(d.id);
+      }
     });
 
-    // --- Render nodes layer ---
-    const nodeGroup = useD3NodeRenderer({
-      svgGroup,
-      simNodes,
-      hiddenNodeIds,
-      dragging,
-      setHoveredNodeId,
-      setContextNodeId,
-    });
+    setTimeout(() => {
+      simNodes.forEach((n) => {
+        const mountPoint = document.getElementById(`d3-node-${n.id}`);
+        if (mountPoint) {
+          import("react-dom/client").then((ReactDOMClient) => {
+            ReactDOMClient.createRoot(mountPoint).render(
+              <GraphD3NodeMount
+                node={n}
+                hiddenNodeIds={hiddenNodeIds}
+                setHiddenNodeIds={setHiddenNodeIds}
+                setContextNodeId={setContextNodeId}
+              />
+            );
+          });
+        }
+      });
+    }, 0);
 
-    // --- Node + edge update logic on tick / layout ---
-    if (layoutMode === "force" && simulation) {
+    if (layoutMode === "force") {
       simulation.on("tick", () => {
         captureSimulationPositions(simNodes);
-        // Edge positions
         link
           .attr("x1", (d: any) => (d.source as any).x!)
           .attr("y1", (d: any) => (d.source as any).y!)
           .attr("x2", (d: any) => (d.target as any).x!)
           .attr("y2", (d: any) => (d.target as any).y!);
-        // Node positions
-        nodeGroup.selectAll("circle")
-          .attr("cx", (d: any) => d.x)
-          .attr("cy", (d: any) => d.y);
-        nodeGroup.selectAll("foreignObject")
-          .attr("x", (d: any) => d.x - NODE_RADIUS)
-          .attr("y", (d: any) => d.y - NODE_RADIUS);
-
+        nodeG.attr("transform", (d: any) => `translate(${d.x},${d.y})`);
+        // // Optionally: visually indicate selection on D3 links after each tick
         link
           .attr("opacity", (d: any) => (selectedEdgeId === d.id ? 1 : 0.7))
           .attr("stroke-width", (d: any) => {
@@ -136,7 +261,6 @@ export function useD3SvgGraph({
           );
       });
     } else {
-      // Non-force layouts: set positions once
       link
         .attr("x1", (d: any) => {
           const s: any = typeof d.source === "object" ? d.source : simNodes.find((n: any) => n.id === d.source);
@@ -154,15 +278,9 @@ export function useD3SvgGraph({
           const t: any = typeof d.target === "object" ? d.target : simNodes.find((n: any) => n.id === d.target);
           return t?.y ?? 0;
         });
-      // Node positions
-      nodeGroup.selectAll("circle")
-        .attr("cx", (d: any) => d.x)
-        .attr("cy", (d: any) => d.y);
-      nodeGroup.selectAll("foreignObject")
-        .attr("x", (d: any) => d.x - NODE_RADIUS)
-        .attr("y", (d: any) => d.y - NODE_RADIUS);
-
+      nodeG.attr("transform", (d: any) => `translate(${d.x},${d.y})`);
       captureSimulationPositions(simNodes);
+      // For static layouts, visually indicate selection state as well
       link
         .attr("opacity", (d: any) => (selectedEdgeId === d.id ? 1 : 0.7))
         .attr("stroke-width", (d: any) => {
@@ -177,7 +295,7 @@ export function useD3SvgGraph({
     }
 
     return () => {
-      simulation && simulation.stop && simulation.stop();
+      simulation.stop && simulation.stop();
       svg.on(".zoom", null);
     };
   }, [
@@ -197,13 +315,11 @@ export function useD3SvgGraph({
     captureSimulationPositions,
     simulation,
     initialPositions,
-    selectEdge,
-    selectedEdgeId,
-    edgeAppearances,
-    onEdgeContextMenu
+    // REMOVE: selectEdge, selectedEdgeId, edgeAppearances, onEdgeContextMenu
+    // (selection and appearance updates are handled below in a separate effect)
   ]);
 
-  // Edge appearance update
+  // ----- NEW: Selection and appearance highlighting only (does not change graph structure) -----
   useEffect(() => {
     if (!svgRef.current) return;
     const svg = d3.select(svgRef.current);
