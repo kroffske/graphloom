@@ -158,8 +158,8 @@ export function useAppearanceManager() {
 
   const updateAllNodeAppearances = useCallback(
     (appearanceMap: Record<string, any>) => {
-      setNodes(
-        nodes.map((n) => ({
+      setNodes((currentNodes) =>
+        currentNodes.map((n) => ({
           ...n,
           appearance: appearanceMap[n.type]
             ? { ...appearanceMap[n.type] }
@@ -167,7 +167,7 @@ export function useAppearanceManager() {
         }))
       );
     },
-    [nodes, setNodes]
+    [setNodes]
   );
 
   const handlePresetSaveFromJson = useCallback(
