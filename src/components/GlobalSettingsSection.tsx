@@ -318,62 +318,63 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
     // Don't set initial preset key here; handled above
   }, []);
   return <div className="w-full md:w-[850px] min-w-[340px] mt-0 flex flex-col gap-5 px-1 max-w-5xl">
-      <section className="border border-border rounded-lg bg-card/80 shadow p-8 flex flex-col gap-6 w-full max-w-5xl min-w-[380px]">
-        <div className="flex flex-row items-center gap-2 mb-1">
-          <Settings className="w-5 h-5 text-muted-foreground" />
-          <span className="font-semibold text-xl">Apearence
+    <section className="border border-border rounded-lg bg-card/80 shadow p-8 flex flex-col gap-6 w-full max-w-5xl min-w-[380px]">
+      <div className="flex flex-row items-center gap-2 mb-1">
+        <Settings className="w-5 h-5 text-muted-foreground" />
+        <span className="font-semibold text-xl">Apearence</span>
+      </div>
+      <div className="flex flex-row items-center gap-3 mb-2">
+        <AppearancePresetDropdown presets={displayedPresets} selectedKey={selectedPresetKey} onSelect={handlePresetKeyDropdownChange} />
+        <span className="inline-flex items-center rounded bg-primary/10 text-primary font-semibold px-3 py-0.5 text-sm">
+          {selectedPresetObj?.name ?? "—"}
         </span>
+      </div>
+      <div className="flex flex-col gap-3">
+        <span className="font-semibold text-base mt-1 mb-0.5">Appearance Presets</span>
+        <AppearancePresetsSection onPresetSelect={handlePresetSelect} selectedPresetKey={selectedPresetKey} appearancePresets={displayedPresets} />
+      </div>
+      {/* Move Export/Import buttons here, right below AppearancePresetsSection */}
+      <div className="flex flex-row items-center gap-3 mb-2 mt-1">
+        <Button variant="outline" size="sm" onClick={handleExport}>
+          Export JSON
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => importInputRef.current?.click()}>
+          <Import className="w-4 h-4 mr-1" /> Import JSON
+        </Button>
+        <input ref={importInputRef} type="file" accept="application/json" className="hidden" onChange={handleImportFile} />
+      </div>
+      <div className="w-full flex flex-col md:flex-row gap-6 mt-2">
+        {/* NodeType appearance settings */}
+        <div className="w-full md:w-1/2 flex-shrink-0">
+          <NodeTypeAppearanceSettings onSaveCustomPresetFromJson={handlePresetSave} />
         </div>
-        <div className="flex flex-row items-center gap-3 mb-2">
-          <AppearancePresetDropdown presets={displayedPresets} selectedKey={selectedPresetKey} onSelect={handlePresetKeyDropdownChange} />
-          <span className="inline-flex items-center rounded bg-primary/10 text-primary font-semibold px-3 py-0.5 text-sm">
-            {selectedPresetObj?.name ?? "—"}
-          </span>
+        {/* EdgeType appearance settings - NEW */}
+        <div className="w-full md:w-1/2 flex flex-col min-w-[240px] max-w-[520px]">
+          <div className="font-semibold text-base mb-1">Edge Type Appearance</div>
+          <EdgeTypeAppearanceSettings />
         </div>
-        <div className="flex flex-row gap-3 items-center">
-          <Button variant="outline" size="sm" onClick={handleExport}>
-            Export JSON
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => importInputRef.current?.click()}>
-            <Import className="w-4 h-4 mr-1" /> Import JSON
-          </Button>
-          <input ref={importInputRef} type="file" accept="application/json" className="hidden" onChange={handleImportFile} />
+      </div>
+      {/* Preset JSON config textarea */}
+      <div className="flex flex-col mt-4">
+        <div className="mb-2">
+          <span className="font-semibold text-base">Preset JSON Config</span>
         </div>
-        <div className="flex flex-col gap-3">
-          <span className="font-semibold text-base mt-1 mb-0.5">Appearance Presets</span>
-          <AppearancePresetsSection onPresetSelect={handlePresetSelect} selectedPresetKey={selectedPresetKey} appearancePresets={displayedPresets} />
-        </div>
-        <div className="w-full flex flex-col md:flex-row gap-6 mt-2">
-          {/* NodeType appearance settings */}
-          <div className="w-full md:w-1/2 flex-shrink-0">
-            <NodeTypeAppearanceSettings onSaveCustomPresetFromJson={handlePresetSave} />
-          </div>
-          {/* EdgeType appearance settings - NEW */}
-          <div className="w-full md:w-1/2 flex flex-col min-w-[240px] max-w-[520px]">
-            <div className="font-semibold text-base mb-1">Edge Type Appearance</div>
-            <EdgeTypeAppearanceSettings />
-          </div>
-        </div>
-        {/* Preset JSON config textarea (moves to below above, preserve structure) */}
-        <div className="flex flex-col mt-4">
-          <div className="flex items-center justify-between mb-2 gap-2">
-            <span className="font-semibold text-base">Preset JSON Config</span>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={handleCopyPreset} type="button">Copy</Button>
-              <Button variant="outline" size="sm" onClick={handlePresetSave} type="button">
-                <Save className="w-4 h-4 mr-1" /> Save
-              </Button>
-            </div>
-          </div>
-          <Textarea value={editableJson} onChange={handleJsonChange} className="bg-muted resize-none font-mono text-xs min-h-[300px] max-h-[600px] h-full" style={{
+        <Textarea value={editableJson} onChange={handleJsonChange} className="bg-muted resize-none font-mono text-xs min-h-[300px] max-h-[600px] h-full" style={{
           minWidth: "170px"
         }} spellCheck={false} />
+        {/* Move Copy/Save below textarea */}
+        <div className="flex items-center justify-end gap-2 mt-2">
+          <Button variant="outline" size="sm" onClick={handleCopyPreset} type="button">Copy</Button>
+          <Button variant="outline" size="sm" onClick={handlePresetSave} type="button">
+            <Save className="w-4 h-4 mr-1" /> Save
+          </Button>
         </div>
-        <p className="text-xs text-muted-foreground">
-          Export/import includes nodes, edges, and manual positions. Presets are experimental. Now includes global edge appearance!
-        </p>
-      </section>
-    </div>;
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Export/import includes nodes, edges, and manual positions. Presets are experimental. Now includes global edge appearance!
+      </p>
+    </section>
+  </div>;
 };
 export default GlobalSettingsSection;
 
