@@ -1,6 +1,7 @@
 
 import React, { useRef } from "react";
 import { useD3SvgGraph } from "@/hooks/useD3SvgGraph";
+import GraphD3NodeLayer from "./GraphD3NodeLayer";
 
 type GraphD3SvgLayerProps = {
   nodes: any[];
@@ -44,6 +45,7 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
   // Define these refs ONCE and reuse them everywhere
   const svgRef = useRef<SVGSVGElement>(null);
   const svgGroupRef = useRef<SVGGElement>(null);
+  const nodeGroupRef = useRef<SVGGElement | null>(null);
 
   // useD3SvgGraph handles all D3 drawing, pass along new handlers using *the same refs*
   useD3SvgGraph({
@@ -79,11 +81,19 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
       viewBox="0 0 900 530"
       className="block"
     >
-      {/* D3 draws everything inside nodeGroupRef */}
+      {/* D3 draws everything inside this group */}
       <g ref={svgGroupRef} />
+      {/* GraphD3NodeLayer mounts React components into the foreignObjects created by D3 */}
+      <GraphD3NodeLayer
+        simNodes={nodes}
+        nodeGroupRef={nodeGroupRef}
+        hiddenNodeIds={hiddenNodeIds}
+        setHiddenNodeIds={setHiddenNodeIds}
+        setContextNodeId={setContextNodeId}
+        setHoveredNodeId={setHoveredNodeId}
+      />
     </svg>
   );
 };
 
 export default GraphD3SvgLayer;
-
