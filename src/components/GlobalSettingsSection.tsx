@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import AppearancePresetsSection from "@/components/AppearancePresetsSection";
@@ -9,6 +8,7 @@ import AppearanceImportExport from "./GlobalSettings/AppearanceImportExport";
 import PresetJsonConfigTextarea from "./GlobalSettings/PresetJsonConfigTextarea";
 import { useAppearanceManager } from "@/hooks/appearance/useAppearanceManager";
 import AppearancePresetDropdown from "./AppearancePresetDropdown";
+import { toast } from "sonner";
 
 const GlobalSettingsSection: React.FC<{ onFillExample: () => void }> = () => {
   const {
@@ -33,34 +33,36 @@ const GlobalSettingsSection: React.FC<{ onFillExample: () => void }> = () => {
     selectedPresetObj,
     handlePresetSaveFromJson,
     handlePresetSelect,
+    isPresetDirty,
+    setIsPresetDirty,
+    savePresetChanges,
+    revertPresetChanges,
   } = useAppearanceManager();
 
-  // JSON textarea state/dirty logic
+  // JSON textarea state
   const [editableJson, setEditableJson] = useState<string>(
     JSON.stringify(completePresetObject, null, 2)
   );
-  const [isDirty, setIsDirty] = useState(false);
 
   // Sync text with presets if not dirty
   useEffect(() => {
-    if (!isDirty) {
+    if (!isPresetDirty) {
       setEditableJson(JSON.stringify(completePresetObject, null, 2));
     }
-  }, [completePresetObject, isDirty]);
+  }, [completePresetObject, isPresetDirty]);
 
   // Dropdown handler
   function handlePresetKeyDropdownChange(presetKey: string) {
     if (presetKey === selectedPresetKey) return;
+    if (isPresetDirty) {
+      toast.error(
+        "You have unsaved changes. Save or revert them before switching presets."
+      );
+      return;
+    }
     const preset = displayedPresets.find((p) => p.key === presetKey);
     if (preset) {
-      handlePresetSelect(
-        preset.config,
-        preset.key,
-        (nodeTypes, edgeTypes) => {
-          setEditableJson(JSON.stringify({ nodeTypes, edgeTypes }, null, 2));
-          setIsDirty(false);
-        }
-      );
+      handlePresetSelect(preset.config, preset.key);
     }
   }
 
@@ -79,21 +81,29 @@ const GlobalSettingsSection: React.FC<{ onFillExample: () => void }> = () => {
           />
           <span className="inline-flex items-center rounded bg-primary/10 text-primary font-semibold px-3 py-0.5 text-sm">
             {selectedPresetObj?.name ?? "—"}
+            {isPresetDirty && <span className="ml-1 text-lg font-bold">*</span>}
           </span>
+          {isPresetDirty && (
+            <div className="flex items-center gap-2">
+              <Button onClick={savePresetChanges} size="sm">Save as Custom</Button>
+              <Button onClick={revertPresetChanges} variant="outline" size="sm">Revert</Button>
+            </div>
+          )}
         </div>
         <div className="flex flex-col gap-3">
           <span className="font-semibold text-base mt-1 mb-0.5">
             Appearance Presets
           </span>
           <AppearancePresetsSection
-            onPresetSelect={(config, key) =>
-              handlePresetSelect(config, key, (nodeTypes, edgeTypes) => {
-                setEditableJson(
-                  JSON.stringify({ nodeTypes, edgeTypes }, null, 2)
+            onPresetSelect={(config, key) => {
+              if (isPresetDirty) {
+                toast.error(
+                  "You have unsaved changes. Save or revert them before switching presets."
                 );
-                setIsDirty(false);
-              })
-            }
+                return;
+              }
+              handlePresetSelect(config, key);
+            }}
             selectedPresetKey={selectedPresetKey}
             appearancePresets={displayedPresets}
           />
@@ -120,11 +130,11 @@ const GlobalSettingsSection: React.FC<{ onFillExample: () => void }> = () => {
         <PresetJsonConfigTextarea
           editableJson={editableJson}
           setEditableJson={setEditableJson}
-          isDirty={isDirty}
-          setIsDirty={setIsDirty}
+          isDirty={isPresetDirty}
+          setIsDirty={setIsPresetDirty}
           completePresetObject={completePresetObject}
           onSaveCustomPresetFromJson={(jsonStr) =>
-            handlePresetSaveFromJson(jsonStr, () => setIsDirty(false))
+            handlePresetSaveFromJson(jsonStr, () => setIsPresetDirty(false))
           }
         />
         <p className="text-xs text-muted-foreground">
@@ -137,4 +147,3 @@ const GlobalSettingsSection: React.FC<{ onFillExample: () => void }> = () => {
 };
 
 export default GlobalSettingsSection;
-

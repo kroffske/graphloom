@@ -1,3 +1,4 @@
+
 import { useCallback, useMemo, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useGraphStore } from "@/state/useGraphStore";
@@ -54,6 +55,8 @@ export function useAppearanceManager() {
     setSelectedPresetKey,
     selectedPresetObj,
   } = useAppearancePresets();
+
+  const [isPresetDirty, setIsPresetDirty] = useState(false);
 
   // --- Node Type Logic ---
   const nodeTypeKeys = useMemo(() => {
@@ -160,10 +163,11 @@ export function useAppearanceManager() {
           config: newPresetConfig,
         });
         updateAllNodeAppearances(nodeTypes);
-        if (showToast) toast.success("Preset JSON saved!");
+        if (showToast) toast.success("Preset changes saved to 'Custom' preset!");
         if (onDone) onDone();
         setSelectedPresetKey(CUSTOM_PRESET_KEY);
         persistSelectedPresetKey(CUSTOM_PRESET_KEY);
+        setIsPresetDirty(false); // Clear dirty state on save
         return true;
       } catch {
         toast.error("Invalid JSON format or content.");
@@ -180,11 +184,7 @@ export function useAppearanceManager() {
   );
 
   const handlePresetSelect = useCallback(
-    (
-      presetConfig: PresetConfig,
-      presetKey: string,
-      onDone?: (nodeTypes: any, edgeTypes: any) => void
-    ) => {
+    (presetConfig: PresetConfig, presetKey: string) => {
       let nodeTypes = presetConfig.nodeTypes || {};
       let edgeTypes = presetConfig.edgeTypes || {};
 
@@ -202,10 +202,11 @@ export function useAppearanceManager() {
         setEdgeTypeAppearance(type, config as any);
       });
       updateAllNodeAppearances(nodeTypes);
-      toast.success("Preset loaded!");
-      if (onDone) onDone(nodeTypes, edgeTypes);
+      const preset = displayedPresets.find(p => p.key === presetKey);
+      toast.success(`Preset "${preset?.name ?? presetKey}" loaded!`);
       setSelectedPresetKey(presetKey);
       persistSelectedPresetKey(presetKey);
+      setIsPresetDirty(false);
     },
     [
       setNodeTypeAppearance,
@@ -214,26 +215,34 @@ export function useAppearanceManager() {
       resetNodeTypeAppearance,
       resetEdgeTypeAppearance,
       setSelectedPresetKey,
+      displayedPresets,
     ]
   );
-
-  const updateAndSavePreset = useCallback(() => {
+  
+  const savePresetChanges = useCallback(() => {
     const presetToSave = {
         nodeTypes: completePresetObject.nodeTypes,
         edgeTypes: completePresetObject.edgeTypes,
     };
-    handlePresetSaveFromJson(JSON.stringify(presetToSave, null, 2), undefined, false);
+    handlePresetSaveFromJson(JSON.stringify(presetToSave, null, 2));
   }, [completePresetObject, handlePresetSaveFromJson]);
+  
+  const revertPresetChanges = useCallback(() => {
+    if (selectedPresetObj) {
+      handlePresetSelect(selectedPresetObj.config, selectedPresetObj.key);
+      toast.info("Changes have been reverted.");
+    }
+  }, [selectedPresetObj, handlePresetSelect]);
 
   const updateNodeTypeAppearance = useCallback((type: string, appearance: NodeTypeAppearance) => {
     setNodeTypeAppearance(type, appearance);
-    updateAndSavePreset();
-  }, [setNodeTypeAppearance, updateAndSavePreset]);
+    setIsPresetDirty(true);
+  }, [setNodeTypeAppearance]);
 
   const updateEdgeTypeAppearance = useCallback((type: string, appearance: EdgeTypeAppearance) => {
     setEdgeTypeAppearance(type, appearance);
-    updateAndSavePreset();
-  }, [setEdgeTypeAppearance, updateAndSavePreset]);
+    setIsPresetDirty(true);
+  }, [setEdgeTypeAppearance]);
 
   return {
     // Node
@@ -254,9 +263,12 @@ export function useAppearanceManager() {
     completePresetObject,
     displayedPresets,
     selectedPresetKey,
-    setSelectedPresetKey,
     selectedPresetObj,
     handlePresetSaveFromJson,
     handlePresetSelect,
+    isPresetDirty,
+    setIsPresetDirty,
+    savePresetChanges,
+    revertPresetChanges,
   };
 }
