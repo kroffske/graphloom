@@ -1,6 +1,6 @@
 
 import React from "react";
-import { GraphNode } from "@/state/useGraphStore";
+import type { GraphNode } from "@/types/graph";
 
 const AttributeTooltip = ({ node }: { node?: GraphNode }) => {
   const [visible, setVisible] = React.useState(false);

@@ -1,5 +1,5 @@
 
-import { GraphNode, GraphEdge } from "@/state/useGraphStore";
+import type { GraphNode, GraphEdge } from "@/types/graph";
 
 /** Returns all nodes that have changed x/y/attrs or are new/deleted (by id). */
 export function diffGraphNodes(oldNodes: GraphNode[], newNodes: GraphNode[]): GraphNode[] {
