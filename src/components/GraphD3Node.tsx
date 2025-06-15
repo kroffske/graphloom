@@ -1,4 +1,3 @@
-
 import React from "react";
 import { GraphNode } from "@/state/useGraphStore";
 import { useIconRegistry } from "./IconRegistry";
@@ -33,7 +32,8 @@ const GraphD3Node = ({
   // The icon circle color is the "nodeColor" (the custom color or node attribute color) if set, or fallback.
   const iconCircleColor = nodeColor || "#ededed";
   // Main node box background: only use appearance.backgroundColor (not nodeColor!)
-  const backgroundColor = appearance.backgroundColor || "#fff";
+  // CHANGE: Default backgroundColor is now "transparent" instead of "#fff"
+  const backgroundColor = appearance.backgroundColor || "transparent";
 
   // Border logic:
   let borderColor: string;
@@ -127,7 +127,7 @@ const GraphD3Node = ({
         minHeight: nodeSize,
         outline: "none",
         pointerEvents: "all",
-        background: backgroundColor, // NO nodeColor here!
+        background: backgroundColor, // NOW transparent by default
         borderColor: borderColor,
         borderRadius: 16,
         display: "flex",
@@ -153,4 +153,3 @@ const GraphD3Node = ({
 };
 
 export default GraphD3Node;
-
