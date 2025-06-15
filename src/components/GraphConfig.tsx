@@ -1,8 +1,10 @@
 
 import React from "react";
-import GraphNodeBox from "./GraphNodeBox";
-import { useIconRegistry } from "./IconRegistry";
+import GraphFlowNode from "./GraphFlowNode";
 
+/**
+ * Color palette for types.
+ */
 const nodePalette: Record<string, string> = {
   entity: "#2563eb",
   process: "#059669",
@@ -14,17 +16,18 @@ const nodePalette: Record<string, string> = {
 
 export const getNodeColor = (type: string) => nodePalette[type] || "#64748b";
 
+/**
+ * Returns nodeTypes mapping for ReactFlow.
+ */
 export const getNodeTypes = (setHoveredNodeId: (id: string | null) => void, onSelect: (id: string) => void) => ({
-  custom: ({ id, data, selected }: any) => (
-    <div
-      onMouseEnter={() => setHoveredNodeId(data.nodeId)}
-      onMouseLeave={() => setHoveredNodeId(null)}
-    >
-      <GraphNodeBox nodeId={data.nodeId} selected={selected} onSelect={onSelect} />
-    </div>
+  custom: (props: any) => (
+    <GraphFlowNode
+      {...props}
+      setHoveredNodeId={setHoveredNodeId}
+      onSelect={onSelect}
+    />
   ),
 });
 
 // You can extend this with edgeTypes if you add custom edges.
 export const edgeTypes = {}; // Currently unused, stub for expansion
-
