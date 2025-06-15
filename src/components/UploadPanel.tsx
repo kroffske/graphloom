@@ -1,8 +1,23 @@
 import React, { useEffect } from "react";
+import * as Papa from "papaparse";
 import { useGraphStore } from "@/state/useGraphStore";
 import { SAMPLE_TAB_CSVS } from "./SampleTabs";
 import UploadCsvSection from "./UploadCsvSection";
 import GlobalSettingsSection from "./GlobalSettingsSection";
+
+// --- Copy helpers from UploadCsvSection ---
+function castToSupportedType(val: unknown): string | number | boolean {
+  if (typeof val === "string") {
+    const num = Number(val);
+    if (!isNaN(num) && val.trim() !== "") return num;
+    if (val.toLowerCase() === "true") return true;
+    if (val.toLowerCase() === "false") return false;
+    return val;
+  }
+  if (typeof val === "number" || typeof val === "boolean") return val;
+  return String(val);
+}
+const RESERVED_NODE_KEYS = ["node_id", "node_type", "label"];
 
 // Helper: parseCsvData for use on mount
 function parseCsvData(nodesCsv: string, edgesCsv: string) {
