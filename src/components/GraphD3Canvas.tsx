@@ -67,14 +67,10 @@ const GraphD3Canvas: React.FC = () => {
   }, [setTimeRange]);
 
   // Initialize time range when edges with timestamps are loaded - but only once
-  // Move this logic to run immediately when conditions are met, not in useEffect
-  React.useMemo(() => {
+  React.useEffect(() => {
     if (minTs < maxTs && !timeRange && !timeRangeInitialized.current) {
       timeRangeInitialized.current = true;
-      // Use setTimeout to avoid synchronous state update during render
-      setTimeout(() => {
-        stableSetTimeRange([minTs, maxTs]);
-      }, 0);
+      stableSetTimeRange([minTs, maxTs]);
     }
   }, [minTs, maxTs, timeRange, stableSetTimeRange]);
 
