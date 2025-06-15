@@ -28,10 +28,10 @@ const AttributeTooltip = ({ node }: { node?: GraphNode }) => {
       <div className="font-bold text-base text-foreground mb-2 truncate">{node.label}</div>
       <dl className="grid grid-cols-2 gap-x-2 gap-y-1">
         {Object.entries(node.attributes).map(([k, v]) => (
-          <React.Fragment key={k}>
+          <div key={k} className="contents">
             <dt className="font-semibold text-xs text-muted-foreground">{k}</dt>
             <dd className="text-xs text-foreground truncate">{String(v)}</dd>
-          </React.Fragment>
+          </div>
         ))}
       </dl>
     </div>
