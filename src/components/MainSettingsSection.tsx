@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Settings } from "lucide-react";
-import NodeTypeAppearanceSettings from "@/components/NodeTypeAppearanceSettings";
+import GlobalSettingsSection from "@/components/GlobalSettingsSection";
 
 type MainSettingsSectionProps = {
   onFillExample: () => void;
@@ -15,7 +15,7 @@ const MainSettingsSection: React.FC<MainSettingsSectionProps> = ({ onFillExample
         <span className="font-bold text-xl tracking-wide">Appearance</span>
       </div>
       <div className="flex-1 w-full min-h-0 mt-1">
-        <NodeTypeAppearanceSettings />
+        <GlobalSettingsSection onFillExample={onFillExample} />
       </div>
     </div>
   );
