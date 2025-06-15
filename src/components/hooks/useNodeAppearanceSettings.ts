@@ -12,6 +12,7 @@ export function useNodeAppearanceSettings(selectedType: string, presetJsonString
     setNodeTypeAppearance,
     resetNodeTypeAppearance,
     nodes,
+    setNodes
   } = useGraphStore();
 
   // Calculate present node types
@@ -51,6 +52,20 @@ export function useNodeAppearanceSettings(selectedType: string, presetJsonString
   // Expose appearance for type
   const appearance = nodeTypeAppearances?.[selectedType] || {};
 
+  // Update all nodes of a type to use the latest type appearance
+  const updateAllNodeAppearancesForType = React.useCallback(
+    (type: string, appearanceObj: any) => {
+      setNodes(
+        nodes.map(n =>
+          n.type === type
+            ? { ...n, appearance: { ...appearanceObj } }
+            : n
+        )
+      );
+    },
+    [setNodes, nodes]
+  );
+
   // . . . Any other logic can stay in form (provide helper if needed)
 
   return {
@@ -59,5 +74,6 @@ export function useNodeAppearanceSettings(selectedType: string, presetJsonString
     appearance,
     setNodeTypeAppearance,
     resetNodeTypeAppearance,
+    updateAllNodeAppearancesForType,
   };
 }

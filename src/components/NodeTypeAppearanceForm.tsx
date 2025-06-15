@@ -43,7 +43,8 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
     nodeTypeLabels,
     appearance,
     setNodeTypeAppearance,
-    resetNodeTypeAppearance
+    resetNodeTypeAppearance,
+    updateAllNodeAppearancesForType
   } = useNodeAppearanceSettings("", presetJsonString);
 
   const [selectedType, setSelectedType] = useState<string>(nodeTypeKeys.length > 0 ? nodeTypeKeys[0] : "");
@@ -57,6 +58,7 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
     appearance: selectedAppearance,
     setNodeTypeAppearance: setAppearanceForType,
     resetNodeTypeAppearance: resetAppearanceForType,
+    updateAllNodeAppearancesForType: updateAllNodeAppearancesForSelectedType,
     nodeTypeKeys: stableNodeTypeKeys,
     nodeTypeLabels: stableNodeTypeLabels
   } = useNodeAppearanceSettings(selectedType, presetJsonString);
@@ -101,12 +103,26 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
       labelField,
       iconOrder
     });
-    toast.success(`Saved default appearance for ${stableNodeTypeLabels[selectedType] || selectedType}`);
+    // Immediately update all nodes of this type to use new style!
+    updateAllNodeAppearancesForSelectedType(selectedType, {
+      icon,
+      iconColor,
+      borderColor,
+      borderEnabled,
+      backgroundColor,
+      lineColor,
+      size,
+      labelField,
+      iconOrder
+    });
+    toast.success(`Saved and updated appearance for ${stableNodeTypeLabels[selectedType] || selectedType}`);
     if (onSaveCustomPresetFromJson) onSaveCustomPresetFromJson();
   }
   function handleReset() {
     resetAppearanceForType(selectedType);
     toast("Reset to default");
+    // Also remove appearance override for nodes of this type
+    updateAllNodeAppearancesForSelectedType(selectedType, {});
   }
 
   // Visual demo of label joining
