@@ -1,4 +1,3 @@
-
 // FIX: Use named import instead of default import for zustand
 import { create } from "zustand";
 
@@ -10,6 +9,13 @@ export type GraphNode = {
   attributes: Record<string, string | number | boolean>;
   x?: number;
   y?: number;
+  // Appearance options
+  appearance?: {
+    icon?: string; // nodeType key
+    color?: string; // hex or color name
+    size?: number; // px, default 64
+    labelField?: string; // key to show (else "label")
+  };
 };
 
 export type GraphEdge = {
