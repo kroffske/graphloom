@@ -1,11 +1,5 @@
 
 import React from "react";
-import {
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuSeparator,
-  ContextMenuLabel,
-} from "@/components/ui/context-menu";
 import { useGraphStore } from "@/state/useGraphStore";
 import EdgeDetailsDisplay from "./EdgeDetailsDisplay";
 import EdgeSettingsForm from "./EdgeSettingsForm";
@@ -26,6 +20,20 @@ type EdgeContextMenuProps = {
 const EdgeContextMenu: React.FC<EdgeContextMenuProps> = ({ edgeId, x, y, onClose }) => {
   const { selectEdge } = useGraphStore();
   const edge = useEdgeById(edgeId);
+  const menuRef = React.useRef<HTMLDivElement>(null);
+
+  // Close on click outside
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [onClose]);
 
   if (!edge) return null;
 
@@ -35,49 +43,42 @@ const EdgeContextMenu: React.FC<EdgeContextMenuProps> = ({ edgeId, x, y, onClose
     onClose();
   }
 
-  // Example: Delete edge handler (not implemented)
-  // function handleDelete() {
-  //   // You could add: removeEdge(edge.id);
-  //   onClose();
-  // }
+  // A simple MenuItem component to mimic Radix/shadcn's
+  const MenuItem = ({ children, onSelect }: { children: React.ReactNode, onSelect: () => void }) => (
+    <button
+      onClick={onSelect}
+      className="w-full text-left relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-accent focus:text-accent-foreground"
+    >
+      {children}
+    </button>
+  );
 
-  // Render a floating menu like Radix's ContextMenuContent at x,y
-  // We do not use ContextMenu root here, simply render content as a floating div
+  // This component now uses plain divs and buttons styled to look like a context menu,
+  // avoiding the Radix context issue.
   return (
     <div
-      className="fixed z-50"
+      ref={menuRef}
+      className="fixed z-50 min-w-[240px] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md animate-in fade-in-80"
       style={{
         top: y + 2,
         left: x + 2,
         pointerEvents: "auto",
-        minWidth: 240,
       }}
       tabIndex={-1}
-      onBlur={onClose}
     >
-      <ContextMenuContent
-        forceMount
-        onInteractOutside={onClose}
-        className="rounded-lg shadow-xl border bg-popover"
-      >
-        <ContextMenuLabel className="font-semibold text-xs">Edge Menu</ContextMenuLabel>
-        <ContextMenuItem onSelect={handleShowDetails}>
+        <div className="px-2 py-1.5 text-sm font-semibold text-foreground">Edge Menu</div>
+        <MenuItem onSelect={handleShowDetails}>
           Show Details & Settings
-        </ContextMenuItem>
-        {/* Example: quick future actions */}
-        {/* <ContextMenuItem onSelect={handleDelete} className="text-red-500">Delete Edge</ContextMenuItem> */}
-        <ContextMenuSeparator />
-        {/* Inline edge details */}
+        </MenuItem>
+        <div className="-mx-1 my-1 h-px bg-border" />
         <div className="px-2 pt-1 pb-2">
           <EdgeDetailsDisplay edge={edge} />
         </div>
         <div className="px-2 pb-2 border-t border-border">
           <EdgeSettingsForm edge={edge} />
         </div>
-      </ContextMenuContent>
     </div>
   );
 };
 
 export default EdgeContextMenu;
-
