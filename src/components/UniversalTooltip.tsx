@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { GraphNode, GraphEdge } from '@/types/graph';
 import { useGraphStore } from '@/state/useGraphStore';
@@ -13,6 +12,9 @@ const UniversalTooltip: React.FC<UniversalTooltipProps> = ({ item, type, positio
   const { nodes } = useGraphStore();
   const [visible, setVisible] = React.useState(false);
 
+  // Moved useMemo before any conditional returns to respect the rules of hooks.
+  const nodeMap = React.useMemo(() => new Map(nodes.map(n => [n.id, n])), [nodes]);
+
   React.useEffect(() => {
     if (!item || !position) {
       setVisible(false);
@@ -23,8 +25,6 @@ const UniversalTooltip: React.FC<UniversalTooltipProps> = ({ item, type, positio
   }, [item, position]);
 
   if (!item || !type || !position || !visible) return null;
-
-  const nodeMap = React.useMemo(() => new Map(nodes.map(n => [n.id, n])), [nodes]);
 
   const renderContent = () => {
     if (type === 'node') {
