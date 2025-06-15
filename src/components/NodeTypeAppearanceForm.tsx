@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -15,14 +14,14 @@ const FRIENDLY_TYPE_LABELS: Record<string, string> = {
   "data-store": "Data Store",
   event: "Event",
   decision: "Decision",
-  "external-system": "External System",
+  "external-system": "External System"
 };
-
 type NodeTypeAppearanceFormProps = {
   onSaveCustomPresetFromJson?: () => void;
 };
-
-const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({ onSaveCustomPresetFromJson }) => {
+const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
+  onSaveCustomPresetFromJson
+}) => {
   const iconRegistry = useIconRegistry();
   const iconKeys = Object.keys(iconRegistry);
 
@@ -42,15 +41,12 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({ onSaveC
     nodeTypeLabels,
     appearance,
     setNodeTypeAppearance,
-    resetNodeTypeAppearance,
+    resetNodeTypeAppearance
   } = useNodeAppearanceSettings("", presetJsonString);
 
   // --- Selected Type Logic (IMPROVED) ---
   // Move selectedType to top-level and always ensure it matches an available nodeTypeKey.
-  const [selectedType, setSelectedType] = useState<string>(
-    nodeTypeKeys.length > 0 ? nodeTypeKeys[0] : ""
-  );
-
+  const [selectedType, setSelectedType] = useState<string>(nodeTypeKeys.length > 0 ? nodeTypeKeys[0] : "");
   useEffect(() => {
     // Always sync selectedType if not found in nodeTypeKeys and nodeTypeKeys is not empty
     if (!selectedType || !nodeTypeKeys.includes(selectedType)) {
@@ -74,9 +70,7 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({ onSaveC
   const [size, setSize] = useState<number>(selectedAppearance.size || 64);
   const [labelField, setLabelField] = useState<string>(selectedAppearance.labelField || "label");
   const [showIconCircle, setShowIconCircle] = useState<boolean>(!!selectedAppearance.showIconCircle);
-  const [iconCircleColor, setIconCircleColor] = useState<string>(
-    selectedAppearance.iconCircleColor || "#e9e9e9"
-  );
+  const [iconCircleColor, setIconCircleColor] = useState<string>(selectedAppearance.iconCircleColor || "#e9e9e9");
   const [iconOrder, setIconOrder] = useState<string[]>(iconKeys);
 
   // Sync local state on appearance/type change
@@ -88,13 +82,12 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({ onSaveC
     setLabelField(selectedAppearance.labelField || "label");
     setShowIconCircle(!!selectedAppearance.showIconCircle);
     setIconCircleColor(selectedAppearance.iconCircleColor || "#e9e9e9");
-    setIconOrder((currOrder) => {
+    setIconOrder(currOrder => {
       const currSet = new Set(currOrder);
-      const toAdd = iconKeys.filter((k) => !currSet.has(k));
-      return [...currOrder.filter((k) => iconKeys.includes(k)), ...toAdd];
+      const toAdd = iconKeys.filter(k => !currSet.has(k));
+      return [...currOrder.filter(k => iconKeys.includes(k)), ...toAdd];
     });
   }, [selectedType, selectedAppearance, iconKeys.join(",")]);
-
   function handleSave(e?: React.FormEvent) {
     if (e) e.preventDefault();
     setAppearanceForType(selectedType, {
@@ -105,61 +98,29 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({ onSaveC
       labelField,
       showIconCircle,
       iconCircleColor,
-      iconOrder,
+      iconOrder
     });
     toast.success(`Saved default appearance for ${stableNodeTypeLabels[selectedType] || selectedType}`);
     if (onSaveCustomPresetFromJson) onSaveCustomPresetFromJson();
   }
-
   function handleReset() {
     resetAppearanceForType(selectedType);
     toast("Reset to default");
   }
-
-  return (
-    <section className="w-full">
-      <div className="font-semibold text-lg mb-2 flex items-center gap-2">
-        Node Type Appearance Settings
-      </div>
+  return <section className="w-full">
+      <div className="font-semibold text-lg mb-2 flex items-center gap-2">Node Type Appearance</div>
       <form className="flex flex-col gap-2" onSubmit={handleSave}>
         {/* Type selector */}
         <div>
           <Label htmlFor="node-type">Node Type</Label>
-          <select
-            className="input px-2 py-1 rounded bg-muted border"
-            id="node-type"
-            value={selectedType}
-            onChange={e => setSelectedType(e.target.value)}
-            disabled={stableNodeTypeKeys.length === 0}
-          >
-            {stableNodeTypeKeys.map(key => (
-              <option key={key} value={key}>
+          <select className="input px-2 py-1 rounded bg-muted border" id="node-type" value={selectedType} onChange={e => setSelectedType(e.target.value)} disabled={stableNodeTypeKeys.length === 0}>
+            {stableNodeTypeKeys.map(key => <option key={key} value={key}>
                 {stableNodeTypeLabels[key]}
-              </option>
-            ))}
+              </option>)}
           </select>
         </div>
-        <NodeTypeIconSettings
-          iconRegistry={iconRegistry}
-          icon={icon}
-          setIcon={setIcon}
-          showIconCircle={showIconCircle}
-          setShowIconCircle={setShowIconCircle}
-          iconCircleColor={iconCircleColor}
-          setIconCircleColor={setIconCircleColor}
-          iconOrder={iconOrder}
-          setIconOrder={setIconOrder}
-        />
-        <NodeTypeVisualSettings
-          backgroundColor={backgroundColor}
-          setBackgroundColor={setBackgroundColor}
-          lineColor={lineColor}
-          setLineColor={setLineColor}
-          size={size}
-          setSize={setSize}
-          labelField={labelField}
-          setLabelField={setLabelField}
-        />
+        <NodeTypeIconSettings iconRegistry={iconRegistry} icon={icon} setIcon={setIcon} showIconCircle={showIconCircle} setShowIconCircle={setShowIconCircle} iconCircleColor={iconCircleColor} setIconCircleColor={setIconCircleColor} iconOrder={iconOrder} setIconOrder={setIconOrder} />
+        <NodeTypeVisualSettings backgroundColor={backgroundColor} setBackgroundColor={setBackgroundColor} lineColor={lineColor} setLineColor={setLineColor} size={size} setSize={setSize} labelField={labelField} setLabelField={setLabelField} />
         <div className="flex gap-2 mt-4">
           <Button type="submit" className="w-fit">Update node style</Button>
           <Button type="button" variant="outline" className="w-fit" onClick={handleReset}>
@@ -170,9 +131,6 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({ onSaveC
       <p className="text-xs text-muted-foreground mt-2">
         These settings affect all nodes of this type. You can still override them for individual nodes.
       </p>
-    </section>
-  );
+    </section>;
 };
-
 export default NodeTypeAppearanceForm;
-
