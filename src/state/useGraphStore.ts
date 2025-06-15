@@ -1,54 +1,9 @@
 import { create } from "zustand";
 import { NodeTypeAppearanceMap, EdgeTypeAppearanceMap } from "@/types/appearance";
-
-// Graph Node & Edge structures (loosely modeled)
-export type GraphNode = {
-  id: string;
-  type: string; // node type, used for icon mapping
-  label: string;
-  attributes: Record<string, string | number | boolean>;
-  x?: number;
-  y?: number;
-  // Appearance options -- now with explicit iconColor, borderColor, borderEnabled
-  appearance?: {
-    icon?: string; // nodeType key
-    color?: string; // legacy color/name primary
-    size?: number; // px, default 64
-    labelField?: string; // key to show (else "label")
-    backgroundColor?: string; // New: background color with alpha
-    lineColor?: string; // New: border/line color (stroke)
-    showIconCircle?: boolean; // (legacy/unneeded)
-    iconCircleColor?: string; // (legacy/unneeded)
-    // Explicit extras:
-    iconColor?: string;
-    borderEnabled?: boolean;
-    borderColor?: string;
-    borderWidth?: number;
-  };
-};
-
-export type GraphEdge = {
-  id: string;
-  source: string;
-  target: string;
-  type?: string;
-  // Edge attributes loaded from CSV
-  attributes?: Record<string, string | number | boolean>;
-  appearance?: {
-    color?: string;      // Edge color
-    width?: number;      // Edge line thickness
-    label?: string;      // Optional label
-    labelField?: string; // Optional label field (used for display/custom label source)
-  };
-};
+import { GraphNode, GraphEdge, GraphEdgeAppearance } from "@/types/graph";
 
 // UPDATED: include labelField here too!
-type EdgeAppearanceMap = Record<string, {
-  color?: string;
-  width?: number;
-  label?: string;
-  labelField?: string; // Add this property for edge-level override
-}>;
+type GraphEdgeAppearanceMap = Record<string, GraphEdgeAppearance>;
 
 type GraphStore = {
   nodes: GraphNode[];
@@ -75,8 +30,8 @@ type GraphStore = {
   setEdgeTypeAppearance: (type: string, appearance: EdgeTypeAppearanceMap[string]) => void;
   resetEdgeTypeAppearance: (type: string) => void;
   // New: edge appearance and selection
-  edgeAppearances: EdgeAppearanceMap;
-  setEdgeAppearance: (id: string, appearance: EdgeAppearanceMap[string]) => void;
+  edgeAppearances: GraphEdgeAppearanceMap;
+  setEdgeAppearance: (id: string, appearance: GraphEdgeAppearance) => void;
   showEdgeLabels: boolean;
   toggleEdgeLabels: () => void;
 
@@ -175,7 +130,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     set((state) => ({
       edgeAppearances: { ...state.edgeAppearances, [id]: { ...state.edgeAppearances[id], ...appearance } },
       edges: state.edges.map((e) =>
-        e.id === id ? { ...e, appearance: { ...state.edgeAppearances[id], ...appearance } } : e
+        e.id === id ? { ...e, appearance: { ...(e.appearance || {}), ...appearance } } : e
       ),
     })),
 

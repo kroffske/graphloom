@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { EdgeTypeAppearance } from "@/types/appearance";
+import { EdgeTypeAppearanceFormProps } from "@/types/forms";
 
 // Default color choices
 const COLORS = [
@@ -24,14 +25,6 @@ const COLORS = [
   "#a21caf", // purple
 ];
 
-type Props = {
-  type: string;
-  allTypes?: string[];
-  onTypeChange?: (t: string) => void;
-  onSave: (type: string, appearance: EdgeTypeAppearance) => void;
-  onReset: (type: string) => void;
-};
-
 /**
  * Edge type appearance form, styled like node form.
  * If `allTypes` and `onTypeChange` are provided, renders type dropdown at top.
@@ -42,7 +35,7 @@ export default function EdgeTypeAppearanceForm({
   onTypeChange,
   onSave,
   onReset,
-}: Props) {
+}: EdgeTypeAppearanceFormProps) {
   const { edgeTypeAppearances } = useGraphStore();
   const existing = edgeTypeAppearances[type] || {};
   const [color, setColor] = useState(existing.color ?? "#64748b");

@@ -1,16 +1,8 @@
-
 import React, { useState, useEffect } from "react";
 import EdgeTypeAppearanceForm from "./EdgeTypeAppearanceForm";
 import { useGraphStore } from "@/state/useGraphStore";
 import { EdgeTypeAppearance } from "@/types/appearance";
-
-type EdgeTypeAppearanceSettingsProps = {
-  onSave: (type: string, appearance: EdgeTypeAppearance) => void;
-  onReset: (type: string) => void;
-  selectedType: string;
-  setSelectedType: (type: string) => void;
-  allTypes: string[];
-};
+import { EdgeTypeAppearanceSettingsProps } from "@/types/forms";
 
 export default function EdgeTypeAppearanceSettings({
   onSave,
