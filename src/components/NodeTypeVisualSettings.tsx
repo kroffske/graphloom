@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -15,8 +16,8 @@ const NodeTypeVisualSettings: React.FC<NodeTypeVisualSettingsProps> = ({
   setBackgroundColor,
   size,
   setSize,
-  labelField,
-  setLabelField,
+  labelTemplate,
+  setLabelTemplate,
 }) => {
   // Allow toggling the backgroundColor (enable/disable)
   const isBgEnabled = backgroundColor.trim() !== "";
@@ -57,18 +58,17 @@ const NodeTypeVisualSettings: React.FC<NodeTypeVisualSettingsProps> = ({
         />
       </div>
       <div>
-        <Label htmlFor="appearance-label-field">Label Field(s)</Label>
+        <Label htmlFor="appearance-label-template">Label Template</Label>
         <Input
-          id="appearance-label-field"
-          value={labelField}
-          onChange={(e) => setLabelField(e.target.value)}
+          id="appearance-label-template"
+          value={labelTemplate}
+          onChange={(e) => setLabelTemplate(e.target.value)}
           className="mt-1"
-          placeholder="e.g. label,name,full_name"
-          title="Separate field names by comma, space, dash, or underscore"
+          placeholder="e.g. {label} ({type})"
+          title="Use {property} to insert values from node data."
         />
         <p className="text-xs text-muted-foreground mt-1">
-          Separate multiple fields with <b>,</b> <b>-</b> <b>_</b> or{" "}
-          <b>space</b>
+          Use {'{property}'} to insert values. E.g. {'{label}'}.
         </p>
       </div>
     </div>

@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useIconRegistry } from "./IconRegistry";
 import NodeTypeIconSettings from "./NodeTypeIconSettings";
 import NodeTypeVisualSettings from "./NodeTypeVisualSettings";
-import { resolveLabel } from "@/utils/labelJoin";
+import { resolveLabelTemplate } from "@/utils/labelTemplate";
 import { NodeTypeAppearance } from "@/types/appearance";
 import { NodeTypeAppearanceFormProps } from "@/types/forms";
 
@@ -37,8 +38,8 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
     appearance.backgroundColor || ""
   );
   const [size, setSize] = useState<number>(appearance.size ?? 64);
-  const [labelField, setLabelField] = useState<string>(
-    appearance.labelField || "label"
+  const [labelTemplate, setLabelTemplate] = useState<string>(
+    appearance.labelTemplate || ""
   );
   const [iconOrder, setIconOrder] = useState<string[]>(iconKeys);
 
@@ -58,7 +59,7 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
     setBorderWidth(appearance.borderWidth ?? 2);
     setBackgroundColor(appearance.backgroundColor || "");
     setSize(appearance.size ?? 64);
-    setLabelField(appearance.labelField || "label");
+    setLabelTemplate(appearance.labelTemplate || "");
     setIconOrder((currOrder) => {
       const currSet = new Set(currOrder);
       const toAdd = iconKeys.filter((k) => !currSet.has(k));
@@ -76,7 +77,7 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
       prevSelectedType.current = selectedType;
       return;
     }
-    const newAppearance = {
+    const newAppearance: NodeTypeAppearance = {
       icon,
       iconColor,
       borderColor,
@@ -84,7 +85,7 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
       borderWidth,
       backgroundColor,
       size,
-      labelField,
+      labelTemplate,
       iconOrder,
     };
     onSaveRef.current(selectedType, newAppearance);
@@ -96,7 +97,7 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
     borderWidth,
     backgroundColor,
     size,
-    labelField,
+    labelTemplate,
     iconOrder,
     selectedType,
   ]);
@@ -110,9 +111,15 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
   const attributesSample = {
     label: "ID-1",
     name: "My Name",
-    full_name: "My Full Name",
+    type: selectedType,
+    id: "node-123"
   };
-  const joinedLabel = resolveLabel(labelField, attributesSample, "Sample");
+  const templateForSample = labelTemplate || "{label}";
+  const resolvedSampleLabel = resolveLabelTemplate(
+    templateForSample,
+    attributesSample,
+    "Sample"
+  );
 
   const IconComponent = iconRegistry[icon];
 
@@ -176,8 +183,8 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
           setBackgroundColor={setBackgroundColor}
           size={size}
           setSize={setSize}
-          labelField={labelField}
-          setLabelField={setLabelField}
+          labelTemplate={labelTemplate}
+          setLabelTemplate={setLabelTemplate}
         />
         <div className="flex gap-2 mt-4">
           <Button
@@ -195,7 +202,7 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
         them for individual nodes.
         <br />
         <b>Label test:</b>{" "}
-        <span className="rounded px-2 bg-muted">{joinedLabel}</span>
+        <span className="rounded px-2 bg-muted">{resolvedSampleLabel}</span>
       </p>
     </section>
   );

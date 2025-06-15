@@ -1,3 +1,4 @@
+
 import { NodeTypeAppearance, EdgeTypeAppearance } from "./appearance";
 import type { GraphNode, GraphEdge } from "./graph";
 
@@ -6,8 +7,8 @@ export type NodeTypeVisualSettingsProps = {
   setBackgroundColor: (c: string) => void;
   size: number;
   setSize: (n: number) => void;
-  labelField: string;
-  setLabelField: (s: string) => void;
+  labelTemplate: string;
+  setLabelTemplate: (s: string) => void;
 };
 
 export type NodeTypeAppearanceFormProps = {

@@ -42,7 +42,6 @@ const nodeAppearancesAreEqual = (a?: NodeTypeAppearance, b?: NodeTypeAppearance)
     if (a.iconColor !== b.iconColor) return false;
     if ((a.backgroundColor || '') !== (b.backgroundColor || '')) return false;
     if (a.size !== b.size) return false;
-    if ((a.labelField || 'label') !== (b.labelField || 'label')) return false;
     if ((a.labelTemplate || '') !== (b.labelTemplate || '')) return false;
     if (!!a.borderEnabled !== !!b.borderEnabled) return false;
     
@@ -56,7 +55,7 @@ const nodeAppearancesAreEqual = (a?: NodeTypeAppearance, b?: NodeTypeAppearance)
 const edgeAppearancesAreEqual = (a?: EdgeTypeAppearance, b?: EdgeTypeAppearance): boolean => {
     if (!a && !b) return true;
     if (!a || !b) return false;
-    return a.color === b.color && a.width === b.width && (a.labelField || '') === (b.labelField || '') && (a.labelTemplate || '') === (b.labelTemplate || '');
+    return a.color === b.color && a.width === b.width && (a.labelTemplate || '') === (b.labelTemplate || '');
 }
 
 

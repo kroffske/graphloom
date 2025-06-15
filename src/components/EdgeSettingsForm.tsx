@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import type { EdgeSettingsFormProps } from "@/types/forms";
 import { resolveLabelTemplate } from "@/utils/labelTemplate";
-import { resolveLabel as resolveJoinedLabel } from "@/utils/labelJoin";
 
 const COLORS = [
   "#64748b", // default (slate)
@@ -46,37 +45,14 @@ export default function EdgeSettingsForm({ edge }: EdgeSettingsFormProps) {
   const [tab, setTab] = useState<"general" | "appearance" | "advanced">("general");
 
   // State for all appearance controls (per edge)
-  const [label, setLabel] = useState(
-    // If the edge has an override label, use it; otherwise fall back to labelField if set, or the edge's appearance label.
-    current.label ??
-      (() => {
-        const field = current.labelField || typeDefault.labelField;
-        if (field && edge.attributes) {
-          const attrValue = edge.attributes[field];
-          return attrValue !== undefined ? String(attrValue) : "";
-        }
-        return edge.appearance?.label ?? "";
-      })()
-  );
-  const [labelField, setLabelField] = useState(current.labelField ?? typeDefault.labelField ?? "");
+  const [label, setLabel] = useState(current.label ?? "");
   const [labelTemplate, setLabelTemplate] = useState(current.labelTemplate ?? typeDefault.labelTemplate ?? "");
   const [color, setColor] = useState(current.color ?? typeDefault.color ?? "#64748b");
   const [width, setWidth] = useState(current.width ?? typeDefault.width ?? 2);
 
   // Watch for changes in the edge/type default and update local state if the id changes (editing another edge)
   React.useEffect(() => {
-    setLabel(
-      current.label ??
-        (() => {
-          const field = current.labelField || typeDefault.labelField;
-          if (field && edge.attributes) {
-            const attrValue = edge.attributes[field];
-            return attrValue !== undefined ? String(attrValue) : "";
-          }
-          return edge.appearance?.label ?? "";
-        })()
-    );
-    setLabelField(current.labelField ?? typeDefault.labelField ?? "");
+    setLabel(current.label ?? "");
     setLabelTemplate(current.labelTemplate ?? typeDefault.labelTemplate ?? "");
     setColor(current.color ?? typeDefault.color ?? "#64748b");
     setWidth(current.width ?? typeDefault.width ?? 2);
@@ -86,7 +62,6 @@ export default function EdgeSettingsForm({ edge }: EdgeSettingsFormProps) {
   const typeDefaults = {
     color: typeDefault.color ?? "#64748b",
     width: typeDefault.width ?? 2,
-    labelField: typeDefault.labelField ?? "",
     labelTemplate: typeDefault.labelTemplate ?? "",
   };
 
@@ -95,12 +70,10 @@ export default function EdgeSettingsForm({ edge }: EdgeSettingsFormProps) {
     current.color !== undefined ||
     current.width !== undefined ||
     current.label !== undefined ||
-    current.labelField !== undefined ||
     current.labelTemplate !== undefined;
 
   // The effective resolved appearance values for this edge (shown in a "preview")
   const effective = useMemo(() => {
-    const effectiveLabelField = labelField.trim() !== "" ? labelField : typeDefaults.labelField;
     const effectiveLabelTemplate = labelTemplate.trim() !== "" ? labelTemplate : typeDefaults.labelTemplate;
     
     let effectiveLabel = "";
@@ -108,25 +81,21 @@ export default function EdgeSettingsForm({ edge }: EdgeSettingsFormProps) {
       effectiveLabel = label.trim();
     } else if (effectiveLabelTemplate) {
       effectiveLabel = resolveLabelTemplate(effectiveLabelTemplate, { ...edge, ...edge.attributes }, "...");
-    } else if (effectiveLabelField) {
-      effectiveLabel = resolveJoinedLabel(effectiveLabelField, edge.attributes, "");
     }
 
     return {
       color,
       width,
       label: effectiveLabel,
-      labelField: effectiveLabelField,
       labelTemplate: effectiveLabelTemplate,
     };
-  }, [color, width, label, labelField, labelTemplate, typeDefaults, edge]);
+  }, [color, width, label, labelTemplate, typeDefaults, edge]);
 
   function handleSave() {
     setEdgeAppearance(edge.id, {
       label,
       color,
       width,
-      labelField: labelField.trim() || undefined,
       labelTemplate: labelTemplate.trim() || undefined,
     });
   }
@@ -259,22 +228,6 @@ export default function EdgeSettingsForm({ edge }: EdgeSettingsFormProps) {
             <div className="font-semibold text-xs mb-2 text-muted-foreground">
               Label Configuration
             </div>
-            {/* Label field selector */}
-            <div className="mb-2">
-              <Label className="text-xs mb-1 block">Label attribute field</Label>
-              <Input
-                value={labelField}
-                onChange={(e) => setLabelField(e.target.value)}
-                placeholder={typeDefaults.labelField ? `e.g. ${typeDefaults.labelField}` : "Edge attribute name"}
-                className="w-full"
-              />
-              <div className="text-[11px] text-muted-foreground mt-0.5">
-                {typeDefaults.labelField
-                  ? <>Type default: <span className="font-mono">{typeDefaults.labelField}</span></>
-                  : <>No default set for this type.</>
-                }
-              </div>
-            </div>
             {/* Label Template */}
             <div className="mb-2">
               <Label className="text-xs mb-1 block">Label template <span className="text-muted-foreground">(optional)</span></Label>
@@ -287,7 +240,7 @@ export default function EdgeSettingsForm({ edge }: EdgeSettingsFormProps) {
               <div className="text-[11px] text-muted-foreground mt-0.5">
                 {typeDefaults.labelTemplate
                   ? <>Type default: <span className="font-mono">{typeDefaults.labelTemplate}</span></>
-                  : <>Overrides label attribute field.</>
+                  : <>No default set for this type.</>
                 }
               </div>
             </div>
@@ -297,11 +250,11 @@ export default function EdgeSettingsForm({ edge }: EdgeSettingsFormProps) {
               <Input
                 value={label}
                 onChange={(e) => setLabel(e.target.value)}
-                placeholder="Type a custom label (or leave blank to use attribute above)"
+                placeholder="Type a custom label"
                 className="w-full"
               />
               <div className="text-[11px] text-muted-foreground mt-0.5">
-                If blank, will use the template or attribute specified above.
+                If blank, will use the template.
               </div>
             </div>
           </div>
@@ -326,12 +279,6 @@ export default function EdgeSettingsForm({ edge }: EdgeSettingsFormProps) {
               <li>
                 <span className="font-mono">labelTemplate</span>: <span>{effective.labelTemplate || <span className="italic text-muted-foreground">none</span>}</span>
                 {labelTemplate.trim() !== "" && (
-                  <span className="ml-1 italic text-muted-foreground">(customized)</span>
-                )}
-              </li>
-              <li>
-                <span className="font-mono">labelField</span>: <span>{effective.labelField || <span className="italic text-muted-foreground">none</span>}</span>
-                {labelField.trim() !== "" && labelTemplate.trim() === "" && (
                   <span className="ml-1 italic text-muted-foreground">(customized)</span>
                 )}
               </li>
