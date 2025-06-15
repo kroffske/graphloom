@@ -6,6 +6,7 @@ import {
   Node,
   Edge,
   Connection,
+  NodeChange,
 } from "@xyflow/react";
 import { useGraphStore } from "@/state/useGraphStore";
 import { shallow } from "zustand/shallow";
@@ -95,7 +96,7 @@ export function useGraphLogic() {
 
   // On node drag or change: sync positions to Zustand
   const handleNodesChange = useCallback(
-    (changes) => {
+    (changes: NodeChange[]) => {
       onNodesChange(changes);
 
       // We only update the store when the dragging stops to avoid too many updates
