@@ -1,63 +1,56 @@
-
 import React, { useState, useEffect } from "react";
 import { useGraphStore } from "@/state/useGraphStore";
 import EdgeTypeAppearanceForm from "./EdgeTypeAppearanceForm";
-import { Separator } from "@/components/ui/separator";
-import {
-  Select,
-  SelectTrigger,
-  SelectContent,
-  SelectItem,
-  SelectValue,
-} from "@/components/ui/select";
 
-export default function EdgeTypeAppearanceSettings() {
+// Accept onSaveCustomPresetFromJson for future extensibility like NodeTypeAppearanceSettings
+type EdgeTypeAppearanceSettingsProps = {
+  onSaveCustomPresetFromJson?: () => void;
+};
+
+export default function EdgeTypeAppearanceSettings({ onSaveCustomPresetFromJson }: EdgeTypeAppearanceSettingsProps) {
   const { edges, selectedEdgeId } = useGraphStore();
-  // Get all unique edge types
+  // Get unique edge types
   const types = Array.from(new Set(edges.map(e => e.type || "default"))).sort();
 
-  // Determine selectedEdgeType from selectedEdgeId if available
+  // Determine selected type based on selected edge, fallback to first type
   const selectedEdge = selectedEdgeId
     ? edges.find(e => e.id === selectedEdgeId)
     : undefined;
   const selectedEdgeType = selectedEdge ? (selectedEdge.type || "default") : (types[0] || "default");
-  // Use local state but initialize to selectedEdgeType
+
+  // Track the selected type; when list of types changes, keep in sync
   const [selected, setSelected] = useState<string>(selectedEdgeType);
 
-  // Update dropdown if edge selection changes
   useEffect(() => {
+    // Sync local selected type if the current selected type changes (e.g. new edge selected)
     if (selectedEdgeType && types.includes(selectedEdgeType)) {
       setSelected(selectedEdgeType);
     } else if (types.length > 0) {
       setSelected(types[0]);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedEdgeType, types.join(",")]);
 
   if (!types.length) {
     return <div className="text-xs text-muted-foreground">No edges loaded.</div>;
   }
 
+  // Section shell, matching NodeTypeAppearanceForm
   return (
-    <div className="flex flex-col gap-2">
-      <div className="mb-2 w-full max-w-xs">
-        <Select value={selected} onValueChange={setSelected}>
-          <SelectTrigger className="w-full h-8 text-xs">
-            <SelectValue placeholder="Select edge type" />
-          </SelectTrigger>
-          <SelectContent>
-            {types.map(type => (
-              <SelectItem value={type} key={type} className="text-xs capitalize">
-                {type}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+    <section className="w-full">
+      <div className="font-semibold text-lg mb-2 flex items-center gap-2">
+        Edge Type Appearance
       </div>
-      <EdgeTypeAppearanceForm type={selected} />
-      <Separator className="my-3" />
-      <span className="text-xs text-muted-foreground block">
-        Changes will affect all edges of that type, unless individually overridden.
-      </span>
-    </div>
+      <EdgeTypeAppearanceForm
+        type={selected}
+        allTypes={types}
+        value={selected}
+        onTypeChange={setSelected}
+        onSaveCustomPresetFromJson={onSaveCustomPresetFromJson}
+      />
+      <p className="text-xs text-muted-foreground mt-2">
+        These settings affect all edges of this type. You can still override them for individual edges.
+      </p>
+    </section>
   );
 }
