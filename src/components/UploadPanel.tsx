@@ -1,73 +1,10 @@
 import React from "react";
-import * as Papa from "papaparse";
 import { useGraphStore } from "@/state/useGraphStore";
 import { SAMPLE_TAB_CSVS } from "./SampleTabs";
 import UploadCsvSection from "./UploadCsvSection";
 import MainSettingsSection from "./MainSettingsSection";
 import { ScrollArea } from "./ui/scroll-area";
-
-// --- Copy helpers from UploadCsvSection ---
-function castToSupportedType(val: unknown): string | number | boolean {
-  if (typeof val === "string") {
-    const num = Number(val);
-    if (!isNaN(num) && val.trim() !== "") return num;
-    if (val.toLowerCase() === "true") return true;
-    if (val.toLowerCase() === "false") return false;
-    return val;
-  }
-  if (typeof val === "number" || typeof val === "boolean") return val;
-  return String(val);
-}
-const RESERVED_NODE_KEYS = ["node_id", "node_type", "label"];
-const RESERVED_EDGE_KEYS = ["source", "target", "edge_type"];
-
-// Helper: parseCsvData for use on mount
-function parseCsvData(nodesCsv: string, edgesCsv: string) {
-  // Parse nodes
-  const resultsNodes = Papa.parse(nodesCsv.trim(), { header: true, skipEmptyLines: true });
-  const dataNodes = resultsNodes.data as any[];
-  const nodeIds = new Set<string>();
-  const nodes = dataNodes
-    .map((row, idx) => {
-      const nodeId = row.node_id;
-      if (!nodeId || !row.node_type || nodeIds.has(nodeId)) return null;
-      nodeIds.add(nodeId);
-      const attributes: Record<string, string | number | boolean> = {};
-      Object.entries(row).forEach(([k, v]) => {
-        if (!RESERVED_NODE_KEYS.includes(k)) {
-          attributes[k] = castToSupportedType(v);
-        }
-      });
-      return {
-        id: nodeId,
-        type: String(row.node_type),
-        label: row.label ? String(row.label) : nodeId,
-        attributes,
-      };
-    })
-    .filter(Boolean);
-
-  // Parse edges with attributes
-  const resultsEdges = Papa.parse(edgesCsv.trim(), { header: true, skipEmptyLines: true });
-  const dataEdges = resultsEdges.data as any[];
-  const edges = dataEdges.map((row, i) => {
-    const attributes: Record<string, string | number | boolean> = {};
-    Object.entries(row).forEach(([k, v]) => {
-      if (!RESERVED_EDGE_KEYS.includes(k)) {
-        attributes[k] = castToSupportedType(v);
-      }
-    });
-    return {
-      id: `e${i + 1}`,
-      source: String(row.source),
-      target: String(row.target),
-      type: row.edge_type ? String(row.edge_type) : "default",
-      attributes: Object.keys(attributes).length ? attributes : undefined,
-    };
-  });
-
-  return { nodes, edges };
-}
+import { parseCsvData } from "@/utils/csvParser";
 
 const UploadPanel = () => {
   const { setNodes, setEdges } = useGraphStore();
