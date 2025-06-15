@@ -81,6 +81,21 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
   // selectedPresetKey points to Preset key, can be any preset or "custom"
   const [selectedPresetKey, setSelectedPresetKey] = useState<string | undefined>(undefined);
 
+  // --- Helper: find selected preset's name ---
+  const displayedPresets = useMemo(() => {
+    const presets = [...appearancePresets];
+    if (customPreset) {
+      return [customPreset, ...presets];
+    }
+    return presets;
+  }, [customPreset]);
+
+  // Find selected preset object by key; fallback to 'Custom' (for backward compatible first load)
+  const selectedPresetObj = useMemo(() => {
+    if (!selectedPresetKey) return null;
+    return displayedPresets.find((p) => p.key === selectedPresetKey) || null;
+  }, [selectedPresetKey, displayedPresets]);
+
   // === Helper: sync appearances into all nodes ===
   const updateAllNodeAppearances = useCallback(
     (appearanceMap: Record<string, any>) => {
@@ -270,6 +285,15 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
           <Settings className="w-5 h-5 text-muted-foreground" />
           <span className="font-semibold text-xl">Global Settings</span>
         </div>
+        {/* Selected Appearance Preset indicator */}
+        <div className="flex flex-row items-center gap-3 mb-2">
+          <span className="text-sm font-medium text-muted-foreground">
+            Selected Appearance Preset:
+          </span>
+          <span className="inline-flex items-center rounded bg-primary/10 text-primary font-semibold px-3 py-0.5 text-sm">
+            {selectedPresetObj?.name ?? "—"}
+          </span>
+        </div>
         <div className="flex flex-row gap-3 items-center">
           <Button variant="outline" size="sm" onClick={handleExport}>
             Export JSON
@@ -344,5 +368,5 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
 
 export default GlobalSettingsSection;
 
-// NOTE: This file is getting too long (308+ lines). 
+// NOTE: This file is getting too long (349+ lines).
 // Please consider asking me to refactor it into smaller files for maintainability after these changes.
