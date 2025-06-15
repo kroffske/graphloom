@@ -106,7 +106,7 @@ export function useD3SvgGraph({
     });
 
     // --- Node + edge update logic on tick / layout ---
-    if (layoutMode === "force") {
+    if (layoutMode === "force" && simulation) {
       simulation.on("tick", () => {
         captureSimulationPositions(simNodes);
         // Edge positions
@@ -177,7 +177,7 @@ export function useD3SvgGraph({
     }
 
     return () => {
-      simulation.stop && simulation.stop();
+      simulation && simulation.stop && simulation.stop();
       svg.on(".zoom", null);
     };
   }, [
