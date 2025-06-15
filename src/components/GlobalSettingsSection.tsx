@@ -1,4 +1,3 @@
-
 import React, { useRef, useMemo, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import AppearancePresetsSection from "@/components/AppearancePresetsSection";
@@ -146,6 +145,21 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
     }
   }
 
+  // --- Handler to load a selected preset ---
+  function handlePresetSelect(presetConfig: Record<string, any>) {
+    // Overwrite nodeTypeAppearances for every type in presetConfig
+    Object.entries(presetConfig).forEach(([type, config]) => {
+      setNodeTypeAppearance(type, config);
+    });
+    toast.success("Preset loaded!");
+    // Reset editable JSON and dirty state
+    setEditableJson(JSON.stringify({
+      ...completePresetObject,
+      ...presetConfig
+    }, null, 2));
+    setIsDirty(false);
+  }
+
   return (
     <div className="w-full md:w-[650px] min-w-[340px] mt-0 flex flex-col gap-5 px-1 max-w-4xl">
       <section className="border border-border rounded-lg bg-card/80 shadow p-5 flex flex-col gap-4">
@@ -174,7 +188,7 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
         </div>
         <div className="flex flex-col gap-3">
           <span className="font-semibold text-base mt-1 mb-0.5">Appearance Presets</span>
-          <AppearancePresetsSection />
+          <AppearancePresetsSection onPresetSelect={handlePresetSelect} />
         </div>
         <div className="w-full flex flex-col md:flex-row gap-6 mt-2">
           <div className="w-full md:w-1/2 flex-shrink-0">
@@ -218,4 +232,3 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
 };
 
 export default GlobalSettingsSection;
-
