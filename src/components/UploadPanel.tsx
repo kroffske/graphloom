@@ -1,10 +1,8 @@
-
 import React, { useCallback, useRef, useEffect } from "react";
 import * as Papa from "papaparse";
 import { toast } from "sonner";
 import { useGraphStore } from "@/state/useGraphStore";
--import SampleCsvCard from "./SampleCsvCard";
-+import { SampleTabs, SAMPLE_TAB_CSVS } from "./SampleTabs";
+import { SampleTabs, SAMPLE_TAB_CSVS } from "./SampleTabs";
 
 // Helper: Only allow string | number | boolean
 function castToSupportedType(val: unknown): string | number | boolean {
@@ -21,26 +19,6 @@ function castToSupportedType(val: unknown): string | number | boolean {
 
 const RESERVED_NODE_KEYS = ["node_id", "node_type", "label"];
 const RESERVED_EDGE_KEYS = ["source", "target", "edge_type"];
-
--const SAMPLE_NODES_CSV = `node_id,node_type,label,color,is_active
--user1,entity,Alice,blue,true
--user2,entity,Bob,green,false
--app,external-system,My App,gray,true
--event1,event,Login,,true
--db,data-store,Users DB,,true
--`;
--const SAMPLE_NODES_DESC = `Required columns: node_id, node_type. Optional: label, plus custom attributes (e.g. color, is_active).
--Each node_id must be unique.`;
--
--const SAMPLE_EDGES_CSV = `source,target,edge_type,label
--user1,event1,triggered,User Login
--event1,app,initiated,
--app,db,reads,App fetches user
--user2,event1,triggered,
--`;
--const SAMPLE_EDGES_DESC = `Required columns: source, target. Optional: edge_type, label.
--source/target must match node_id from nodes.csv.`;
-
 
 // CSV PARSING UTILS FOR DEFAULT DATA
 function parseCsvData(nodesCsv: string, edgesCsv: string) {
@@ -88,15 +66,12 @@ const UploadPanel = () => {
   // Populate default test data on mount only if empty
   useEffect(() => {
     if (nodes.length === 0 && edges.length === 0) {
--      const { nodes: defaultNodes, edges: defaultEdges } = parseCsvData(SAMPLE_NODES_CSV, SAMPLE_EDGES_CSV);
--      setNodes(defaultNodes);
--      setEdges(defaultEdges);
-+      const { nodes: defaultNodes, edges: defaultEdges } = parseCsvData(
-+        SAMPLE_TAB_CSVS.sample.nodes,
-+        SAMPLE_TAB_CSVS.sample.edges
-+      );
-+      setNodes(defaultNodes);
-+      setEdges(defaultEdges);
+      const { nodes: defaultNodes, edges: defaultEdges } = parseCsvData(
+        SAMPLE_TAB_CSVS.sample.nodes,
+        SAMPLE_TAB_CSVS.sample.edges
+      );
+      setNodes(defaultNodes);
+      setEdges(defaultEdges);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -208,19 +183,19 @@ const UploadPanel = () => {
     [processFiles]
   );
 
-+  // Functions to fill Sample or Example data
-+  const fillSample = () => {
-+    const { nodes, edges } = parseCsvData(SAMPLE_TAB_CSVS.sample.nodes, SAMPLE_TAB_CSVS.sample.edges);
-+    setNodes(nodes);
-+    setEdges(edges);
-+    toast.success("Restored sample data!");
-+  };
-+  const fillExample = () => {
-+    const { nodes, edges } = parseCsvData(SAMPLE_TAB_CSVS.example.nodes, SAMPLE_TAB_CSVS.example.edges);
-+    setNodes(nodes);
-+    setEdges(edges);
-+    toast.success("Loaded example data!");
-+  };
+  // Functions to fill Sample or Example data
+  const fillSample = () => {
+    const { nodes, edges } = parseCsvData(SAMPLE_TAB_CSVS.sample.nodes, SAMPLE_TAB_CSVS.sample.edges);
+    setNodes(nodes);
+    setEdges(edges);
+    toast.success("Restored sample data!");
+  };
+  const fillExample = () => {
+    const { nodes, edges } = parseCsvData(SAMPLE_TAB_CSVS.example.nodes, SAMPLE_TAB_CSVS.example.edges);
+    setNodes(nodes);
+    setEdges(edges);
+    toast.success("Loaded example data!");
+  };
 
   // Layout: Stack vertically on mobile, horizontally on desktop
   return (
@@ -249,17 +224,11 @@ const UploadPanel = () => {
           aria-label="Upload CSV files input"
         />
       </section>
--      <div className="flex flex-col md:gap-3 gap-4 md:mt-0 mt-[-1.2rem]">
--        <SampleCsvCard title="Sample nodes.csv" description={SAMPLE_NODES_DESC} csv={SAMPLE_NODES_CSV} />
--        <div className="md:h-2"></div>
--        <SampleCsvCard title="Sample edges.csv" description={SAMPLE_EDGES_DESC} csv={SAMPLE_EDGES_CSV} />
--      </div>
-+      <div className="flex flex-col md:gap-3 gap-4 md:mt-0 mt-[-1.2rem] w-full max-w-[420px]">
-+        <SampleTabs onFillSample={fillSample} onFillExample={fillExample} />
-+      </div>
+      <div className="flex flex-col md:gap-3 gap-4 md:mt-0 mt-[-1.2rem] w-full max-w-[420px]">
+        <SampleTabs onFillSample={fillSample} onFillExample={fillExample} />
+      </div>
     </div>
   );
 };
 
 export default UploadPanel;
-
