@@ -1,3 +1,4 @@
+
 import React from "react";
 import NodeTypeAppearanceForm from "./NodeTypeAppearanceForm";
 import { NodeTypeAppearance } from "@/types/appearance";
@@ -7,7 +8,7 @@ export default function NodeTypeAppearanceSettings({
   onSave,
   onReset,
   selectedType,
-  setSelectedType,
+  onSelectedTypeChange,
   appearance,
   nodeTypeKeys,
   nodeTypeLabels,
@@ -17,7 +18,7 @@ export default function NodeTypeAppearanceSettings({
       onSave={onSave}
       onReset={onReset}
       selectedType={selectedType}
-      setSelectedType={setSelectedType}
+      onSelectedTypeChange={onSelectedTypeChange}
       appearance={appearance}
       nodeTypeKeys={nodeTypeKeys}
       nodeTypeLabels={nodeTypeLabels}

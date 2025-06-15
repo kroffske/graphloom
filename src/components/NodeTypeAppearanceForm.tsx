@@ -12,7 +12,7 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
   onSave,
   onReset,
   selectedType,
-  setSelectedType,
+  onSelectedTypeChange,
   appearance,
   nodeTypeKeys,
   nodeTypeLabels,
@@ -146,7 +146,7 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
             className="input px-2 py-1 rounded bg-muted border"
             id="node-type"
             value={selectedType}
-            onChange={(e) => setSelectedType(e.target.value)}
+            onChange={(e) => onSelectedTypeChange(e.target.value)}
             disabled={nodeTypeKeys.length === 0}
           >
             {nodeTypeKeys.map((key) => (
