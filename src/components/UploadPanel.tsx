@@ -4,6 +4,7 @@ import React, { useCallback, useRef } from "react";
 import * as Papa from "papaparse";
 import { toast } from "sonner";
 import { useGraphStore } from "@/state/useGraphStore";
+import SampleCsvCard from "./SampleCsvCard";
 
 // Helper: Only allow string | number | boolean
 function castToSupportedType(val: unknown): string | number | boolean {
@@ -24,6 +25,25 @@ function castToSupportedType(val: unknown): string | number | boolean {
 // Reserved columns
 const RESERVED_NODE_KEYS = ["node_id", "node_type", "label"];
 const RESERVED_EDGE_KEYS = ["source", "target", "edge_type"];
+
+const SAMPLE_NODES_CSV = `node_id,node_type,label,color,is_active
+user1,entity,Alice,blue,true
+user2,entity,Bob,green,false
+app,external-system,My App,gray,true
+event1,event,Login,,true
+db,data-store,Users DB,,true
+`;
+const SAMPLE_NODES_DESC = `Required columns: node_id, node_type. Optional: label, plus custom attributes (e.g. color, is_active).
+Each node_id must be unique.`;
+
+const SAMPLE_EDGES_CSV = `source,target,edge_type,label
+user1,event1,triggered,User Login
+event1,app,initiated,
+app,db,reads,App fetches user
+user2,event1,triggered,
+`;
+const SAMPLE_EDGES_DESC = `Required columns: source, target. Optional: edge_type, label.
+source/target must match node_id from nodes.csv.`;
 
 const UploadPanel = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -144,31 +164,39 @@ const UploadPanel = () => {
     [processFiles]
   );
 
+  // Layout: Stack vertically on mobile, horizontally on desktop
   return (
-    <section
-      onDrop={onDrop}
-      onDragOver={e => e.preventDefault()}
-      className="w-full flex flex-col items-center justify-center gap-3 border-2 border-dashed border-primary/40 rounded-lg p-6 bg-card/80 shadow mb-4 transition hover:border-primary cursor-pointer"
-      tabIndex={0}
-      aria-label="Upload CSV files"
-      onClick={() => fileInputRef.current?.click()}
-      role="button"
-      onKeyDown={e => { if (e.key === "Enter" || e.key === " ") fileInputRef.current?.click(); }}
-    >
-      <span className="text-lg font-bold text-foreground mb-1">Upload Graph Data</span>
-      <span className="text-sm text-muted-foreground">
-        Drag & drop <b>nodes.csv</b> and <b>edges.csv</b> here, or click to browse
-      </span>
-      <input
-        ref={fileInputRef}
-        multiple
-        type="file"
-        accept=".csv"
-        className="hidden"
-        onChange={onFiles}
-        aria-label="Upload CSV files input"
-      />
-    </section>
+    <div className="w-full flex flex-col md:flex-row md:items-start gap-6">
+      <section
+        onDrop={onDrop}
+        onDragOver={e => e.preventDefault()}
+        className="w-full flex flex-col items-center justify-center gap-3 border-2 border-dashed border-primary/40 rounded-lg p-6 bg-card/80 shadow mb-4 transition hover:border-primary cursor-pointer md:max-w-[420px]"
+        tabIndex={0}
+        aria-label="Upload CSV files"
+        onClick={() => fileInputRef.current?.click()}
+        role="button"
+        onKeyDown={e => { if (e.key === "Enter" || e.key === " ") fileInputRef.current?.click(); }}
+      >
+        <span className="text-lg font-bold text-foreground mb-1">Upload Graph Data</span>
+        <span className="text-sm text-muted-foreground">
+          Drag & drop <b>nodes.csv</b> and <b>edges.csv</b> here, or click to browse
+        </span>
+        <input
+          ref={fileInputRef}
+          multiple
+          type="file"
+          accept=".csv"
+          className="hidden"
+          onChange={onFiles}
+          aria-label="Upload CSV files input"
+        />
+      </section>
+      <div className="flex flex-col md:gap-3 gap-4 md:mt-0 mt-[-1.2rem]">
+        <SampleCsvCard title="Sample nodes.csv" description={SAMPLE_NODES_DESC} csv={SAMPLE_NODES_CSV} />
+        <div className="md:h-2"></div>
+        <SampleCsvCard title="Sample edges.csv" description={SAMPLE_EDGES_DESC} csv={SAMPLE_EDGES_CSV} />
+      </div>
+    </div>
   );
 };
 
