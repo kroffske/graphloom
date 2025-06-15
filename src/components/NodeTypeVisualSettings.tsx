@@ -1,7 +1,10 @@
+
 import React from "react";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import ColorCirclePicker from "./ColorCirclePicker";
+import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
 
 /**
  * Controls for node background, border color, size and label mapping
@@ -33,18 +36,23 @@ const NodeTypeVisualSettings: React.FC<NodeTypeVisualSettingsProps> = ({
     <div className="flex flex-col gap-4 mt-3">
       {/* Node Background Color */}
       <div>
-        <Label htmlFor="node-bg-color">Node Background Color</Label>
-        <div className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={isBgEnabled}
+        <Label>Node Background Color</Label>
+        <div className="flex items-center gap-2 mt-1">
+          <Switch
             id="enable-bg-color"
-            onChange={e => setBackgroundColor(e.target.checked ? "#e5e7eb" : "")}
-            className="form-checkbox h-4 w-4 text-blue-600"
+            checked={isBgEnabled}
+            onCheckedChange={(checked) =>
+              setBackgroundColor(checked ? "#e5e7eb" : "")
+            }
           />
-          <Label htmlFor="enable-bg-color" className="mb-0">Enable</Label>
+          <Label htmlFor="enable-bg-color" className="mb-0 font-normal">
+            Enable
+          </Label>
           {isBgEnabled && (
-            <ColorCirclePicker value={backgroundColor} onChange={setBackgroundColor} />
+            <ColorCirclePicker
+              value={backgroundColor}
+              onChange={setBackgroundColor}
+            />
           )}
         </div>
       </div>
@@ -62,16 +70,17 @@ const NodeTypeVisualSettings: React.FC<NodeTypeVisualSettingsProps> = ({
       </div>
       <div>
         <Label htmlFor="appearance-label-field">Label Field(s)</Label>
-        <input
+        <Input
           id="appearance-label-field"
           value={labelField}
-          onChange={e => setLabelField(e.target.value)}
-          className="input px-2 py-1 rounded border mt-1 bg-gray-900 text-gray-100 border-gray-700"
-          placeholder='e.g. label,name,full_name'
+          onChange={(e) => setLabelField(e.target.value)}
+          className="mt-1"
+          placeholder="e.g. label,name,full_name"
           title="Separate field names by comma, space, dash, or underscore"
         />
         <p className="text-xs text-muted-foreground mt-1">
-          Separate multiple fields with <b>,</b> <b>-</b> <b>_</b> or <b>space</b>
+          Separate multiple fields with <b>,</b> <b>-</b> <b>_</b> or{" "}
+          <b>space</b>
         </p>
       </div>
     </div>
