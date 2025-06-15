@@ -1,8 +1,12 @@
+
 import React, { useCallback, useRef, useEffect } from "react";
 import * as Papa from "papaparse";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import AppearancePresetsSection from "@/components/AppearancePresetsSection";
 import { useGraphStore } from "@/state/useGraphStore";
 import { SampleTabs, SAMPLE_TAB_CSVS } from "./SampleTabs";
+import { Settings, Import, Export } from "lucide-react";
 
 // Helper: Only allow string | number | boolean
 function castToSupportedType(val: unknown): string | number | boolean {
@@ -45,8 +49,6 @@ function parseCsvData(nodesCsv: string, edgesCsv: string) {
       };
     })
     .filter(Boolean);
-  // DEBUG LOG:
-  console.log("[DEBUG] parseCsvData nodes", dataNodes, nodes);
 
   // Parse edges
   const resultsEdges = Papa.parse(edgesCsv.trim(), { header: true, skipEmptyLines: true });
@@ -63,7 +65,8 @@ function parseCsvData(nodesCsv: string, edgesCsv: string) {
 
 const UploadPanel = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { setNodes, setEdges, nodes, edges } = useGraphStore();
+  const importInputRef = useRef<HTMLInputElement>(null);
+  const { setNodes, setEdges, nodes, edges, manualPositions } = useGraphStore();
 
   // Always fill Example data on mount
   useEffect(() => {
@@ -73,8 +76,6 @@ const UploadPanel = () => {
     );
     setNodes(defaultNodes);
     setEdges(defaultEdges);
-    // Don't show a toast here, since it's the default load
-    // Optionally you could add: toast.info("Loaded example data!");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -193,6 +194,49 @@ const UploadPanel = () => {
     toast.success("Loaded example data!");
   };
 
+  // Export current graph state as JSON
+  function handleExport() {
+    const payload = {
+      nodes,
+      edges,
+      manualPositions,
+      timestamp: Date.now()
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const tempLink = document.createElement("a");
+    tempLink.href = url;
+    tempLink.download = "graph-export.json";
+    document.body.appendChild(tempLink);
+    tempLink.click();
+    document.body.removeChild(tempLink);
+    URL.revokeObjectURL(url);
+    toast.success("Exported graph data as JSON.");
+  }
+
+  // Import graph state from JSON
+  function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const data = JSON.parse(String(evt.target?.result));
+        if (data.nodes && data.edges) {
+          setNodes(data.nodes);
+          setEdges(data.edges);
+          toast.success("Imported graph data!");
+        } else {
+          toast.error("Invalid file format: Missing nodes or edges.");
+        }
+      } catch (err) {
+        toast.error("Failed to import file.");
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  }
+
   // Layout: Stack vertically on mobile, horizontally on desktop
   return (
     <div className="w-full flex flex-col md:flex-row md:items-start gap-6">
@@ -222,6 +266,43 @@ const UploadPanel = () => {
       </section>
       <div className="flex flex-col md:gap-3 gap-4 md:mt-0 mt-[-1.2rem] w-full max-w-[420px]">
         <SampleTabs onFillExample={fillExample} />
+      </div>
+      {/* ---- Global Settings Area (inline, no Sheet/panel) ---- */}
+      <div className="w-full mt-6 flex flex-col gap-5 px-1 max-w-2xl">
+        <section className="border border-border rounded-lg bg-card/80 shadow p-5 flex flex-col gap-4">
+          <div className="flex flex-row items-center gap-2 mb-1">
+            <Settings className="w-5 h-5 text-muted-foreground" />
+            <span className="font-semibold text-xl">Global Settings</span>
+          </div>
+          {/* Export/Import buttons */}
+          <div className="flex flex-row gap-3 items-center">
+            <Button variant="outline" size="sm" onClick={handleExport}>
+              <Export className="w-4 h-4 mr-1" /> Export JSON
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => importInputRef.current?.click()}
+            >
+              <Import className="w-4 h-4 mr-1" /> Import JSON
+            </Button>
+            <input
+              ref={importInputRef}
+              type="file"
+              accept="application/json"
+              className="hidden"
+              onChange={handleImportFile}
+            />
+          </div>
+          {/* Appearance Presets */}
+          <div className="flex flex-col gap-3">
+            <span className="font-semibold text-base mt-1 mb-0.5">Appearance Presets</span>
+            <AppearancePresetsSection />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Export/import includes nodes, edges, and manual positions. Presets are experimental.
+          </p>
+        </section>
       </div>
     </div>
   );
