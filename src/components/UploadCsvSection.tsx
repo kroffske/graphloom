@@ -4,6 +4,7 @@ import * as Papa from "papaparse";
 import { toast } from "sonner";
 import { useGraphStore } from "@/state/useGraphStore";
 import { SAMPLE_TAB_CSVS, SampleTabs } from "./SampleTabs";
+import { Upload as UploadIcon } from "lucide-react";
 
 // Utility used here and in parent; safe to copy for isolation
 function castToSupportedType(val: unknown): string | number | boolean {
@@ -73,52 +74,25 @@ type UploadCsvSectionProps = {
 };
 
 const UploadCsvSection: React.FC<UploadCsvSectionProps> = ({ onExample }) => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const nodeFileInputRef = useRef<HTMLInputElement>(null);
+  const edgeFileInputRef = useRef<HTMLInputElement>(null);
   const { setNodes, setEdges } = useGraphStore();
 
-  // Helper for filename checking: match any "nodes" or "edges" file, regardless of case and extension
-  function matchNodesOrEdges(name: string, type: "nodes" | "edges") {
-    // strip extension and compare lowercase
-    const nameLower = name.toLowerCase();
-    if (type === "nodes") {
-      return nameLower === "nodes" || nameLower === "nodes.csv";
-    }
-    if (type === "edges") {
-      return nameLower === "edges" || nameLower === "edges.csv";
-    }
-    return false;
-  }
-
-  // Parse CSV and validate
-  const processFiles = useCallback((files: FileList | null) => {
-    if (!files) return;
-    let nodeFile: File | null = null;
-    let edgeFile: File | null = null;
-
-    // Accept any file with basenames "nodes" or "edges" (case-insensitive, with or without .csv)
-    for (let i = 0; i < files.length; i++) {
-      const base = files[i].name.replace(/\.[^/.]+$/, "").toLowerCase();
-      if (base === "nodes" && !nodeFile) nodeFile = files[i];
-      if (base === "edges" && !edgeFile) edgeFile = files[i];
-    }
-
-    if (!nodeFile || !edgeFile) {
-      toast.error("Please upload files named 'nodes' and 'edges' (with or without the .csv extension).");
-      return;
-    }
-
-    Papa.parse(nodeFile, {
+  // Parse CSV and validate (nodes)
+  const processNodeFile = useCallback((file: File | null) => {
+    if (!file) return;
+    Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
       complete: (results: Papa.ParseResult<any>) => {
         const data = results.data as any[];
         if (!data.length) {
-          toast.error("nodes file has no data rows.");
+          toast.error("nodes.csv has no data rows.");
           return;
         }
         const row0 = data[0];
         if (!row0?.node_id || !row0?.node_type) {
-          toast.error("Invalid nodes file: must have node_id and node_type columns.");
+          toast.error("Invalid nodes.csv: must have node_id and node_type columns.");
           return;
         }
         const ids = new Set<string>();
@@ -150,27 +124,31 @@ const UploadCsvSection: React.FC<UploadCsvSectionProps> = ({ onExample }) => {
         }).filter(Boolean);
 
         if (hasInvalidRow) {
-          toast.error("One or more invalid node rows were found and skipped.");
+          toast.warning("One or more invalid node rows were skipped.");
         }
 
         setNodes(nodes as any);
         toast.success("Loaded nodes!");
       },
-      error: () => toast.error("Failed to parse nodes file"),
+      error: () => toast.error("Failed to parse nodes.csv"),
     });
+  }, [setNodes]);
 
-    Papa.parse(edgeFile, {
+  // Parse CSV and validate (edges)
+  const processEdgeFile = useCallback((file: File | null) => {
+    if (!file) return;
+    Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
       complete: (results: Papa.ParseResult<any>) => {
         const data = results.data as any[];
         if (!data.length) {
-          toast.error("edges file has no data rows.");
+          toast.error("edges.csv has no data rows.");
           return;
         }
         const row0 = data[0];
         if (!row0?.source || !row0?.target) {
-          toast.error("Invalid edges file: must have source and target columns.");
+          toast.error("Invalid edges.csv: must have source and target columns.");
           return;
         }
         const edges = data.map((row, i) => {
@@ -191,48 +169,95 @@ const UploadCsvSection: React.FC<UploadCsvSectionProps> = ({ onExample }) => {
         setEdges(edges);
         toast.success("Loaded edges!");
       },
-      error: () => toast.error("Failed to parse edges file"),
+      error: () => toast.error("Failed to parse edges.csv"),
     });
-  }, [setNodes, setEdges]);
+  }, [setEdges]);
 
-  const onFiles = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    processFiles(e.target.files);
-  }, [processFiles]);
+  // File selection handlers
+  const onNodeFile = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    processNodeFile(file);
+    e.target.value = ""; // clear selection
+  }, [processNodeFile]);
 
-  const onDrop = useCallback(
+  const onEdgeFile = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    processEdgeFile(file);
+    e.target.value = "";
+  }, [processEdgeFile]);
+
+  // Drag & drop handlers for each uploader
+  const onDropNode = useCallback(
     (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault();
-      processFiles(e.dataTransfer.files);
+      const file = e.dataTransfer.files?.[0] || null;
+      processNodeFile(file);
     },
-    [processFiles]
+    [processNodeFile]
+  );
+
+  const onDropEdge = useCallback(
+    (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      const file = e.dataTransfer.files?.[0] || null;
+      processEdgeFile(file);
+    },
+    [processEdgeFile]
   );
 
   return (
     <div className="w-full md:w-[420px] flex flex-col gap-4">
+      {/* Node uploader */}
       <section
-        onDrop={onDrop}
+        onDrop={onDropNode}
         onDragOver={e => e.preventDefault()}
-        className="w-full flex flex-col items-center justify-center gap-3 border-2 border-dashed border-primary/40 rounded-lg p-6 bg-card/80 shadow mb-2 transition hover:border-primary cursor-pointer"
+        className="w-full flex flex-col items-center justify-center gap-3 border-2 border-dashed border-primary/40 rounded-lg p-6 bg-card/80 shadow mb-1 transition hover:border-primary cursor-pointer"
         tabIndex={0}
-        aria-label="Upload CSV files"
-        onClick={() => fileInputRef.current?.click()}
+        aria-label="Upload nodes.csv"
+        onClick={() => nodeFileInputRef.current?.click()}
         role="button"
-        onKeyDown={e => { if (e.key === "Enter" || e.key === " ") fileInputRef.current?.click(); }}
+        onKeyDown={e => { if (e.key === "Enter" || e.key === " ") nodeFileInputRef.current?.click(); }}
       >
-        <span className="text-lg font-bold text-foreground mb-1">Upload Graph Data</span>
-        <span className="text-sm text-muted-foreground">
-          Drag & drop <b>nodes</b> and <b>edges</b> files here (with or without <b>.csv</b>), or click to browse
+        <UploadIcon className="w-6 h-6 text-primary mb-1" />
+        <span className="text-lg font-semibold text-foreground">Upload nodes.csv</span>
+        <span className="text-xs text-muted-foreground text-center pb-1">
+          Drag & drop your <b>nodes.csv</b> file here,<br />or click to browse.
         </span>
         <input
-          ref={fileInputRef}
-          multiple
+          ref={nodeFileInputRef}
           type="file"
           accept=".csv"
           className="hidden"
-          onChange={onFiles}
-          aria-label="Upload CSV files input"
+          onChange={onNodeFile}
+          aria-label="Upload nodes CSV file"
         />
       </section>
+      {/* Edge uploader */}
+      <section
+        onDrop={onDropEdge}
+        onDragOver={e => e.preventDefault()}
+        className="w-full flex flex-col items-center justify-center gap-3 border-2 border-dashed border-primary/40 rounded-lg p-6 bg-card/80 shadow mb-1 transition hover:border-primary cursor-pointer"
+        tabIndex={0}
+        aria-label="Upload edges.csv"
+        onClick={() => edgeFileInputRef.current?.click()}
+        role="button"
+        onKeyDown={e => { if (e.key === "Enter" || e.key === " ") edgeFileInputRef.current?.click(); }}
+      >
+        <UploadIcon className="w-6 h-6 text-primary mb-1" />
+        <span className="text-lg font-semibold text-foreground">Upload edges.csv</span>
+        <span className="text-xs text-muted-foreground text-center pb-1">
+          Drag & drop your <b>edges.csv</b> file here,<br />or click to browse.
+        </span>
+        <input
+          ref={edgeFileInputRef}
+          type="file"
+          accept=".csv"
+          className="hidden"
+          onChange={onEdgeFile}
+          aria-label="Upload edges CSV file"
+        />
+      </section>
+      {/* SampleTabs */}
       <SampleTabs onFillExample={() => onExample("example")} />
     </div>
   );
@@ -240,5 +265,6 @@ const UploadCsvSection: React.FC<UploadCsvSectionProps> = ({ onExample }) => {
 
 export default UploadCsvSection;
 
-// File is now 224+ lines and getting long.
+// File is now 245+ lines and getting long.
 // After this you should consider refactoring it into smaller files for maintainability.
+
