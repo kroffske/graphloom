@@ -1,17 +1,7 @@
-
 import React from "react";
 import NodeTypeAppearanceForm from "./NodeTypeAppearanceForm";
 import { NodeTypeAppearance } from "@/types/appearance";
-
-type NodeTypeAppearanceSettingsProps = {
-  onSave: (type: string, appearance: NodeTypeAppearance) => void;
-  onReset: (type: string) => void;
-  selectedType: string;
-  setSelectedType: (type: string) => void;
-  appearance: NodeTypeAppearance;
-  nodeTypeKeys: string[];
-  nodeTypeLabels: Record<string, string>;
-};
+import { NodeTypeAppearanceSettingsProps } from "@/types/forms";
 
 export default function NodeTypeAppearanceSettings({
   onSave,

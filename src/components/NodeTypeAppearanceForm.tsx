@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -7,16 +6,7 @@ import NodeTypeIconSettings from "./NodeTypeIconSettings";
 import NodeTypeVisualSettings from "./NodeTypeVisualSettings";
 import { resolveLabel } from "@/utils/labelJoin";
 import { NodeTypeAppearance } from "@/types/appearance";
-
-type NodeTypeAppearanceFormProps = {
-  onSave: (type: string, appearance: NodeTypeAppearance) => void;
-  onReset: (type: string) => void;
-  selectedType: string;
-  setSelectedType: (type: string) => void;
-  appearance: NodeTypeAppearance;
-  nodeTypeKeys: string[];
-  nodeTypeLabels: Record<string, string>;
-};
+import { NodeTypeAppearanceFormProps } from "@/types/forms";
 
 const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
   onSave,

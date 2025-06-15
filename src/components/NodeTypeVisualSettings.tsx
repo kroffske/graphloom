@@ -1,24 +1,14 @@
-
 import React from "react";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import ColorCirclePicker from "./ColorCirclePicker";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
+import { NodeTypeVisualSettingsProps } from "@/types/forms";
 
 /**
  * Controls for node background, border color, size and label mapping
  */
-type NodeTypeVisualSettingsProps = {
-  backgroundColor: string;
-  setBackgroundColor: (c: string) => void;
-  lineColor: string;
-  setLineColor: (c: string) => void;
-  size: number;
-  setSize: (n: number) => void;
-  labelField: string;
-  setLabelField: (s: string) => void;
-};
 
 const NodeTypeVisualSettings: React.FC<NodeTypeVisualSettingsProps> = ({
   backgroundColor,
