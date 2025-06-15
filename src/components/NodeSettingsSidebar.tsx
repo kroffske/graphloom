@@ -23,7 +23,6 @@ export function NodeSettingsSidebar({ open, onClose }: { open: boolean; onClose:
   );
 
   useEffect(() => {
-    // Sync form state to currently selected node
     setLabel(node?.label || "");
     setColor(typeof node?.attributes.color === "string" ? node?.attributes.color : "");
   }, [node?.label, node?.attributes.color]);
@@ -32,17 +31,17 @@ export function NodeSettingsSidebar({ open, onClose }: { open: boolean; onClose:
 
   const onSave = (e: React.FormEvent) => {
     e.preventDefault();
-    setNodes(nodes =>
-      nodes.map(n =>
-        n.id === node.id
-          ? {
-              ...n,
-              label,
-              attributes: { ...n.attributes, color },
-            }
-          : n
-      )
+    // Use updated array directly, not an updater function
+    const newNodes = nodes.map(n =>
+      n.id === node.id
+        ? {
+            ...n,
+            label,
+            attributes: { ...n.attributes, color },
+          }
+        : n
     );
+    setNodes(newNodes);
     toast.success("Node settings saved");
     onClose();
   };
@@ -103,3 +102,4 @@ export function NodeSettingsSidebar({ open, onClose }: { open: boolean; onClose:
     </Sidebar>
   );
 }
+
