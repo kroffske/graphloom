@@ -16,12 +16,25 @@ const GraphD3Node = ({
   onSelect?: (id: string) => void;
 }) => {
   const iconRegistry = useIconRegistry();
-  const appearance = node.appearance || {};
-  const iconType = appearance.icon || node.type;
+  // Force type to include iconColor/borderEnabled/borderColor
+  const appearance: {
+    icon?: string;
+    color?: string;
+    size?: number;
+    labelField?: string;
+    backgroundColor?: string;
+    lineColor?: string;
+    showIconCircle?: boolean;
+    iconCircleColor?: string;
+    iconOrder?: string[];
+    iconColor?: string;
+    borderEnabled?: boolean;
+    borderColor?: string;
+  } = node.appearance || {};
 
-  // New pattern for icon color and border
+  const iconType = appearance.icon || node.type;
   const iconColor = appearance.iconColor || "#222";
-  const borderColor = (typeof appearance.borderEnabled === "boolean" && !appearance.borderEnabled)
+  const borderColor = typeof appearance.borderEnabled === "boolean" && !appearance.borderEnabled
     ? "transparent"
     : (appearance.borderColor || "#e5e7eb");
   const nodeSize = appearance.size ?? 64;

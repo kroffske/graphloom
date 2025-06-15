@@ -44,6 +44,7 @@ type EdgeTypeAppearanceMap = Record<string, {
   icon?: string;          // (future: edge icon or style)
 }>;
 
+// --- Tweak NodeTypeAppearanceMap so these props are ALWAYS allowed ---
 type NodeTypeAppearanceMap = Record<string, {
   icon?: string;
   color?: string;
@@ -54,7 +55,7 @@ type NodeTypeAppearanceMap = Record<string, {
   showIconCircle?: boolean;
   iconCircleColor?: string;
   iconOrder?: string[];
-  // --- CUSTOM APPEARANCE SUPPORT ---
+  // --- Always included keys below (so TS recognizes everywhere) ---
   iconColor?: string;
   borderEnabled?: boolean;
   borderColor?: string;
