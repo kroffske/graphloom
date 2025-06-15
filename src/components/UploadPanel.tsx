@@ -315,11 +315,11 @@ const UploadPanel = () => {
           </div>
           {/* New: Node Type Appearance Settings with right-side preset JSON config */}
           <div className="w-full flex flex-col md:flex-row gap-6 mt-2">
-            <div className="w-full md:w-2/3 flex-shrink-0">
+            {/* Make the settings panel and config panel each take half width */}
+            <div className="w-full md:w-1/2 flex-shrink-0">
               <NodeTypeAppearanceSettings />
             </div>
-            {/* --- JSON config panel on right --- */}
-            <div className="w-full md:w-1/3 flex flex-col">
+            <div className="w-full md:w-1/2 flex flex-col min-w-[240px] max-w-[520px]">
               <div className="flex items-center justify-between mb-2">
                 <span className="font-semibold text-base">Preset JSON Config</span>
                 <Button
@@ -332,7 +332,7 @@ const UploadPanel = () => {
               <Textarea
                 value={JSON.stringify(nodeTypeAppearances, null, 2)}
                 readOnly
-                className="bg-muted resize-none font-mono text-xs min-h-[300px] max-h-[440px] h-full"
+                className="bg-muted resize-none font-mono text-xs min-h-[300px] max-h-[600px] h-full"
                 style={{ minWidth: "170px" }}
               />
             </div>
