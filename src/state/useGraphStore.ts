@@ -8,7 +8,7 @@ import type {
   GraphEdgeAppearanceMap,
 } from "@/types/graph";
 
-type GraphStore = {
+export type GraphStore = {
   nodes: GraphNode[];
   edges: GraphEdge[];
   selectedNodeId: string | null;
