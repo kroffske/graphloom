@@ -1,10 +1,10 @@
+
 import React from "react";
 import * as Papa from "papaparse";
 import { useGraphStore } from "@/state/useGraphStore";
 import { SAMPLE_TAB_CSVS } from "./SampleTabs";
 import UploadCsvSection from "./UploadCsvSection";
 import MainSettingsSection from "./MainSettingsSection";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 // --- Copy helpers from UploadCsvSection ---
 function castToSupportedType(val: unknown): string | number | boolean {
@@ -61,7 +61,6 @@ function parseCsvData(nodesCsv: string, edgesCsv: string) {
 
 const UploadPanel = () => {
   const { setNodes, setEdges } = useGraphStore();
-  const [tab, setTab] = React.useState<"upload" | "settings">("upload");
 
   // Always fill Example data on mount
   React.useEffect(() => {
@@ -81,29 +80,17 @@ const UploadPanel = () => {
     setEdges(edges);
   };
 
-  // --- Layout: Tabbed panel for upload & settings ---
+  // --- Show Upload/Examples and Settings SIDE BY SIDE, responsive layout ---
   return (
-    <div className="w-full flex flex-col items-start gap-0">
-      <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)} className="w-full">
-        <TabsList className="w-full mb-0 bg-background gap-2 px-0 pt-0 border-none">
-          <TabsTrigger value="upload" className="flex-1 text-base py-2">
-            Upload & Examples
-          </TabsTrigger>
-          <TabsTrigger value="settings" className="flex-1 text-base py-2">
-            Settings
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="upload" className="p-0 w-full">
-          <div className="w-full flex flex-col md:flex-row gap-6">
-            <UploadCsvSection onExample={handleFillExample} />
-          </div>
-        </TabsContent>
-        <TabsContent value="settings" className="p-0 w-full">
-          <div className="w-full flex justify-center">
-            <MainSettingsSection onFillExample={handleFillExample} />
-          </div>
-        </TabsContent>
-      </Tabs>
+    <div className="w-full flex flex-col gap-8 md:gap-10 md:flex-row justify-center items-stretch">
+      {/* Upload & Examples section */}
+      <div className="flex-shrink-0 w-full md:w-[420px] max-w-full">
+        <UploadCsvSection onExample={handleFillExample} />
+      </div>
+      {/* Main Settings section */}
+      <div className="flex-1 min-w-[340px] max-w-4xl">
+        <MainSettingsSection onFillExample={handleFillExample} />
+      </div>
     </div>
   );
 };
