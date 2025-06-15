@@ -29,8 +29,15 @@ const GraphD3Node = ({
   const showIconCircle = !!appearance.showIconCircle;
   const iconCircleColor = appearance.iconCircleColor || "#ededed";
   const backgroundColor = appearance.backgroundColor || nodeColor || "#fff";
-  // Force border color to transparent for icon circles:
-  const borderColor = showIconCircle ? "transparent" : (appearance.lineColor || "#b2bec6");
+  // Border logic:
+  // - Icon circle: transparent.
+  // - Box mode: transparent border unless selected (= blue border for focus).
+  let borderColor: string;
+  if (showIconCircle) {
+    borderColor = "transparent";
+  } else {
+    borderColor = selected ? "#3b82f6" : "transparent";
+  }
 
   const label =
     labelField === "label"
@@ -39,7 +46,6 @@ const GraphD3Node = ({
       ? String(node.attributes[labelField])
       : node.label;
 
-  // Key: In circle mode, render minimal vertical flex, transparent background, no border/shadow, and wrap click/focus only around the icon+text.
   if (showIconCircle) {
     return (
       <button
@@ -95,7 +101,7 @@ const GraphD3Node = ({
     );
   }
 
-  // Legacy "box" UI
+  // Legacy "box" UI (show border only if selected, otherwise transparent)
   return (
     <div
       className={`flex flex-col items-center px-3 py-2 rounded-lg shadow-md cursor-pointer outline-none border-2
