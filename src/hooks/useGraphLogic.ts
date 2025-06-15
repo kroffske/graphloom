@@ -8,7 +8,7 @@ import {
   Connection,
   NodeChange,
 } from "@xyflow/react";
-import { useGraphStore } from "@/state/useGraphStore";
+import { useGraphStore, GraphStore } from "@/state/useGraphStore";
 import { shallow } from "zustand/shallow";
 
 /**
@@ -23,7 +23,7 @@ export function useGraphLogic() {
     setEdges,
     selectNode,
   } = useGraphStore(
-    (state) => ({
+    (state: GraphStore) => ({
       nodes: state.nodes,
       edges: state.edges,
       setNodes: state.setNodes,
@@ -99,19 +99,19 @@ export function useGraphLogic() {
     (changes: NodeChange[]) => {
       onNodesChange(changes);
 
-      // We only update the store when the dragging stops to avoid too many updates
-      const positionChanges = changes.filter(
-        (change) =>
+      // We use reduce for a type-safe way to build the map of position changes
+      const changeMap = changes.reduce((acc, change) => {
+        if (
           change.type === "position" &&
           change.position &&
           change.dragging === false
-      );
+        ) {
+          acc.set(change.id, change.position);
+        }
+        return acc;
+      }, new Map<string, { x: number; y: number }>());
 
-      if (positionChanges.length > 0) {
-        const changeMap = new Map(
-          positionChanges.map((c) => [c.id, c.position])
-        );
-
+      if (changeMap.size > 0) {
         setNodes((currentStoreNodes) =>
           currentStoreNodes.map((node) => {
             if (changeMap.has(node.id)) {

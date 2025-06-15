@@ -3,7 +3,7 @@ import * as d3 from "d3";
 import { useD3DragNodes } from "@/hooks/useD3DragNodes";
 import { useD3ZoomAndPan } from "@/hooks/useD3ZoomAndPan";
 import GraphD3NodeMount from "@/components/GraphD3NodeMount";
-import { useGraphStore } from "@/state/useGraphStore";
+import { useGraphStore, GraphStore } from "@/state/useGraphStore";
 import { resolveLabelTemplate } from "@/utils/labelTemplate";
 import { shallow } from "zustand/shallow";
 
@@ -96,7 +96,7 @@ export function useD3SvgGraph({
 }: UseD3SvgGraphProps) {
   // Get edge selection API
   const { selectedEdgeId, selectEdge, edgeAppearances, showEdgeLabels, edgeTypeAppearances } = useGraphStore(
-    (state) => ({
+    (state: GraphStore) => ({
       selectedEdgeId: state.selectedEdgeId,
       selectEdge: state.selectEdge,
       edgeAppearances: state.edgeAppearances,

@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from "react";
-import { useGraphStore } from "@/state/useGraphStore";
+import { useGraphStore, GraphStore } from "@/state/useGraphStore";
 import { useGraphLogic } from "@/hooks/useGraphLogic";
 import GraphRenderer from "./GraphRenderer";
 import GraphTooltipManager from "./GraphTooltipManager";
@@ -26,7 +25,7 @@ const GraphCanvas = () => {
     edges: storeEdges,
     hoveredEdgeId,
   } = useGraphStore(
-    (state) => ({
+    (state: GraphStore) => ({
       nodes: state.nodes,
       edges: state.edges,
       hoveredEdgeId: state.hoveredEdgeId,
