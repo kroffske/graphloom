@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from "react";
 import {
   Sidebar,
@@ -11,6 +12,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
 import { useGraphStore } from "@/state/useGraphStore";
 import { toast } from "sonner";
 import {
@@ -19,20 +21,32 @@ import {
   TabsTrigger,
   TabsContent,
 } from "@/components/ui/tabs";
+import { useIconRegistry } from "./IconRegistry";
 
 export function NodeSettingsSidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { selectedNodeId, nodes, setNodes } = useGraphStore();
   const node = nodes.find(n => n.id === selectedNodeId);
+  const iconRegistry = useIconRegistry();
+  const iconKeys = Object.keys(iconRegistry);
+
+  // General state
   const [label, setLabel] = useState(node?.label || "");
   const [color, setColor] = useState(
     typeof node?.attributes.color === "string" ? node?.attributes.color : ""
   );
+  // Appearance state
   const [tab, setTab] = useState("general");
+  const [appearance, setAppearance] = useState<NonNullable<typeof node>["appearance"]>(
+    node?.appearance || {}
+  );
+  // Local for size slider (default 64)
+  const sizeValue = appearance?.size ?? 64;
 
   useEffect(() => {
     setLabel(node?.label || "");
     setColor(typeof node?.attributes.color === "string" ? node?.attributes.color : "");
-  }, [node?.label, node?.attributes.color]);
+    setAppearance(node?.appearance || {});
+  }, [node?.label, node?.attributes.color, node?.appearance]);
 
   if (!open || !node) return null;
 
@@ -44,6 +58,7 @@ export function NodeSettingsSidebar({ open, onClose }: { open: boolean; onClose:
             ...n,
             label,
             attributes: { ...n.attributes, color },
+            appearance: { ...appearance },
           }
         : n
     );
@@ -51,6 +66,30 @@ export function NodeSettingsSidebar({ open, onClose }: { open: boolean; onClose:
     toast.success("Node settings saved");
     onClose();
   };
+
+  // Render icon picker
+  function IconPicker({ value, onChange }: { value?: string; onChange: (v: string) => void }) {
+    return (
+      <div className="grid grid-cols-3 gap-2 mt-2">
+        {iconKeys.map((k) => {
+          const Icon = iconRegistry[k];
+          return (
+            <button
+              type="button"
+              key={k}
+              onClick={() => onChange(k)}
+              className={`flex items-center justify-center rounded border-2 p-2 ${
+                value === k ? "border-primary" : "border-muted"
+              } bg-background hover:bg-accent`}
+              aria-label={k}
+            >
+              <Icon className="w-7 h-7" filled={value === k} />
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
 
   return (
     <Sidebar
@@ -67,8 +106,9 @@ export function NodeSettingsSidebar({ open, onClose }: { open: boolean; onClose:
           <SidebarGroupLabel>Edit Node</SidebarGroupLabel>
           <SidebarGroupContent>
             <Tabs value={tab} onValueChange={setTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-3">
+              <TabsList className="grid w-full grid-cols-3 mb-3">
                 <TabsTrigger value="general">General</TabsTrigger>
+                <TabsTrigger value="appearance">Appearance</TabsTrigger>
                 <TabsTrigger value="advanced">Advanced</TabsTrigger>
               </TabsList>
               <TabsContent value="general">
@@ -100,6 +140,68 @@ export function NodeSettingsSidebar({ open, onClose }: { open: boolean; onClose:
                   </button>
                 </form>
               </TabsContent>
+              <TabsContent value="appearance">
+                <form className="flex flex-col gap-5 mt-1" onSubmit={onSave}>
+                  {/* Icon picker */}
+                  <div>
+                    <Label>Icon</Label>
+                    <IconPicker
+                      value={appearance.icon || node.type}
+                      onChange={(icon) =>
+                        setAppearance((prev) => ({ ...prev, icon }))
+                      }
+                    />
+                  </div>
+                  {/* Color */}
+                  <div>
+                    <Label htmlFor="appearance-color">Node Color</Label>
+                    <Input
+                      id="appearance-color"
+                      value={appearance.color || ""}
+                      onChange={e =>
+                        setAppearance((p) => ({ ...p, color: e.target.value }))
+                      }
+                      placeholder="e.g. #1a1a1a"
+                    />
+                  </div>
+                  {/* Size */}
+                  <div>
+                    <Label htmlFor="appearance-size">Node Size ({appearance.size ?? 64}px)</Label>
+                    <Slider
+                      id="appearance-size"
+                      min={40}
+                      max={120}
+                      step={2}
+                      value={[sizeValue]}
+                      onValueChange={([size]) =>
+                        setAppearance((p) => ({ ...p, size }))
+                      }
+                      className="w-full"
+                    />
+                  </div>
+                  {/* Label field */}
+                  <div>
+                    <Label htmlFor="appearance-label-field">Label Field</Label>
+                    <Input
+                      id="appearance-label-field"
+                      value={appearance.labelField || "label"}
+                      onChange={e =>
+                        setAppearance((p) => ({
+                          ...p,
+                          labelField: e.target.value,
+                        }))
+                      }
+                      placeholder='e.g. "label", "name", "attribute"'
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="mt-2 bg-primary text-white rounded px-4 py-2 hover:bg-primary/80"
+                  >
+                    Save
+                  </button>
+                </form>
+              </TabsContent>
               <TabsContent value="advanced">
                 <div className="p-2 text-sm text-muted-foreground">
                   Advanced settings coming soon.
@@ -121,3 +223,4 @@ export function NodeSettingsSidebar({ open, onClose }: { open: boolean; onClose:
     </Sidebar>
   );
 }
+

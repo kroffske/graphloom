@@ -140,8 +140,8 @@ const GraphD3Canvas: React.FC = () => {
         const mountPoint = document.getElementById(`d3-node-${n.id}`);
         if (mountPoint) {
           // Mount or replace with React component
-          import("react-dom").then((ReactDOM) => {
-            ReactDOM.createRoot(mountPoint).render(
+          import("react-dom/client").then((ReactDOMClient) => {
+            ReactDOMClient.createRoot(mountPoint).render(
               <GraphD3Node
                 node={n}
                 selected={selectedNodeId === n.id}
