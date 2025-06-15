@@ -9,13 +9,29 @@ import {
   Connection,
 } from "@xyflow/react";
 import { useGraphStore } from "@/state/useGraphStore";
+import { shallow } from "zustand/shallow";
 
 /**
  * Manages all logic for graph state, including synchronization and node hover handling.
  */
 export function useGraphLogic() {
   // Zustand store (source of truth for CSV upload, but not for interactive graph anymore)
-  const { nodes: storeNodes, edges: storeEdges, setNodes, setEdges, selectNode } = useGraphStore();
+  const {
+    nodes: storeNodes,
+    edges: storeEdges,
+    setNodes,
+    setEdges,
+    selectNode,
+  } = useGraphStore(
+    (state) => ({
+      nodes: state.nodes,
+      edges: state.edges,
+      setNodes: state.setNodes,
+      setEdges: state.setEdges,
+      selectNode: state.selectNode,
+    }),
+    shallow
+  );
 
   // Local state for hovered node (for tooltip)
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
@@ -143,4 +159,3 @@ export function useGraphLogic() {
     setHoveredNodeId,
   };
 }
-
