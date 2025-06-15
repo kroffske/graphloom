@@ -1,8 +1,6 @@
-
-import React, { useRef } from "react";
-import { useD3Layout } from "@/hooks/useD3Layout";
+import React, { useEffect } from "react";
+import GraphD3NodeMount from "./GraphD3NodeMount";
 import { useD3SvgGraph } from "@/hooks/useD3SvgGraph";
-import GraphD3SvgFrame from "./GraphD3SvgFrame";
 
 type GraphD3SvgLayerProps = {
   nodes: any[];
@@ -19,84 +17,74 @@ type GraphD3SvgLayerProps = {
   setDragging: (d: any) => void;
   captureSimulationPositions: (simNodes: any[]) => void;
   initialPositions?: Record<string, { x: number; y: number }>;
-  // NEW: edge context menu handler
+  /**
+   * Optional: show context menu for edge (edgeId, event)
+   * You can plug in a UI or logic to display/hide a menu.
+   */
   onEdgeContextMenu?: (edgeId: string, event: MouseEvent | React.MouseEvent) => void;
+  setHoveredEdgeId?: (id: string | null) => void;
+  setEdgeMousePos?: (pos: { x: number; y: number } | null) => void;
 };
 
-const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = (props) => {
-  const {
-    nodes,
-    edges,
-    layoutMode,
-    manualPositions,
-    setManualPositions,
-    saveManualPosition,
-    hiddenNodeIds,
-    setHiddenNodeIds,
-    setHoveredNodeId,
-    setContextNodeId,
-    dragging,
-    setDragging,
-    captureSimulationPositions,
-    initialPositions,
-    onEdgeContextMenu,
-  } = props;
-
-  const svgRef = useRef<SVGSVGElement | null>(null);
-  const svgGroupRef = useRef<SVGGElement | null>(null);
-  const linkRef = useRef<SVGGElement | null>(null);
-  const nodeGroupRef = useRef<SVGGElement | null>(null);
-
-  const { simulation, simNodes, simEdges } = useD3Layout(
-    layoutMode,
-    nodes,
-    edges,
-    manualPositions,
-    initialPositions
-  );
-
+const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
+  nodes,
+  edges,
+  layoutMode,
+  manualPositions,
+  setManualPositions,
+  saveManualPosition,
+  hiddenNodeIds,
+  setHiddenNodeIds,
+  setHoveredNodeId,
+  setContextNodeId,
+  dragging,
+  setDragging,
+  captureSimulationPositions,
+  initialPositions,
+  onEdgeContextMenu,
+  setHoveredEdgeId,
+  setEdgeMousePos,
+}) => {
+  // useD3SvgGraph handles all D3 drawing, pass along new handlers
   useD3SvgGraph({
-    svgRef,
-    svgGroupRef,
-    nodes,
-    edges,
-    layoutMode,
-    manualPositions,
-    setManualPositions,
-    saveManualPosition,
-    hiddenNodeIds,
-    setHiddenNodeIds,
-    setHoveredNodeId,
-    setContextNodeId,
-    dragging,
-    setDragging,
-    captureSimulationPositions,
-    initialPositions,
-    simulation,
-    simNodes,
-    simEdges,
-    // D3 no longer renders/handles edges; context menu handled in React
+    svgRef: React.useRef<SVGSVGElement>(),
+    svgGroupRef: React.useRef<SVGGElement>(null),
+    nodes: nodes,
+    edges: edges,
+    layoutMode: layoutMode,
+    manualPositions: manualPositions,
+    setManualPositions: setManualPositions,
+    saveManualPosition: saveManualPosition,
+    hiddenNodeIds: hiddenNodeIds,
+    setHiddenNodeIds: setHiddenNodeIds,
+    setHoveredNodeId: setHoveredNodeId,
+    setContextNodeId: setContextNodeId,
+    dragging: dragging,
+    setDragging: setDragging,
+    captureSimulationPositions: captureSimulationPositions,
+    initialPositions: initialPositions,
+    onEdgeContextMenu,
+    setHoveredEdgeId,
+    setEdgeMousePos,
+    simulation: null,
+    simNodes: nodes,
+    simEdges: edges,
   });
+  const svgRef = React.useRef<SVGSVGElement>(null);
+  const nodeGroupRef = React.useRef<SVGGElement>(null);
 
-  // Pass svgRef down to GraphD3SvgFrame
   return (
-    <GraphD3SvgFrame
-      svgRef={svgRef}
-      simEdges={simEdges}
-      simNodes={simNodes}
-      layoutMode={layoutMode}
-      simulation={simulation}
-      linkRef={linkRef}
-      nodeGroupRef={nodeGroupRef}
-      hiddenNodeIds={hiddenNodeIds}
-      setHiddenNodeIds={setHiddenNodeIds}
-      setContextNodeId={setContextNodeId}
-      setHoveredNodeId={setHoveredNodeId}
-      // Pass edge context menu down
-      onEdgeContextMenu={onEdgeContextMenu}
-    />
+    <svg
+      ref={svgRef}
+      width="100%"
+      height="100%"
+      viewBox="0 0 900 530"
+      className="block"
+    >
+      {/* D3 draws everything inside nodeGroupRef */}
+      <g ref={nodeGroupRef} />
+    </svg>
   );
 };
 
 export default GraphD3SvgLayer;
-
