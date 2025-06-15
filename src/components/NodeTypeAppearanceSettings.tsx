@@ -98,15 +98,6 @@ export default function NodeTypeAppearanceSettings() {
     toast("Reset to default");
   }
 
-  function handleCopyPreset() {
-    try {
-      navigator.clipboard.writeText(JSON.stringify(nodeTypeAppearances, null, 2));
-      toast.success("Appearance preset JSON copied!");
-    } catch {
-      toast.error("Unable to copy JSON!");
-    }
-  }
-
   function IconPicker({
     value,
     onChange,
@@ -198,150 +189,129 @@ export default function NodeTypeAppearanceSettings() {
     );
   }
 
-  // Layout: Responsive flex-col on mobile, flex-row on desktop
+  // Layout: Just the settings column, no right-side JSON here
   return (
-    <section className="border border-border rounded-lg bg-card shadow p-5 flex flex-col md:flex-row gap-6 mt-2 w-full">
-      {/* --- Editor left column --- */}
-      <div className="w-full md:w-2/3 flex-shrink-0">
-        <div className="font-semibold text-lg mb-2 flex items-center gap-2">
-          Node Type Appearance Settings
+    <section className="w-full">
+      <div className="font-semibold text-lg mb-2 flex items-center gap-2">
+        Node Type Appearance Settings
+      </div>
+      <form className="flex flex-col gap-2" onSubmit={handleSave}>
+        {/* Node type selector */}
+        <div>
+          <Label htmlFor="node-type">Node Type</Label>
+          <select
+            className="input px-2 py-1 rounded bg-muted border"
+            id="node-type"
+            value={selectedType}
+            onChange={e => setSelectedType(e.target.value)}
+          >
+            {nodeTypeKeys.map(key => (
+              <option key={key} value={key}>
+                {NODE_TYPE_LABELS[key]}
+              </option>
+            ))}
+          </select>
         </div>
-        <form className="flex flex-col gap-2" onSubmit={handleSave}>
-          {/* Node type selector */}
-          <div>
-            <Label htmlFor="node-type">Node Type</Label>
-            <select
-              className="input px-2 py-1 rounded bg-muted border"
-              id="node-type"
-              value={selectedType}
-              onChange={e => setSelectedType(e.target.value)}
-            >
-              {nodeTypeKeys.map(key => (
-                <option key={key} value={key}>
-                  {NODE_TYPE_LABELS[key]}
-                </option>
-              ))}
-            </select>
-          </div>
-          <Tabs value={tab} onValueChange={setTab} className="w-full mt-1">
-            <TabsList className="grid w-full grid-cols-3 mb-2">
-              <TabsTrigger value="appearance">Appearance</TabsTrigger>
-              <TabsTrigger value="general">General</TabsTrigger>
-              <TabsTrigger value="advanced">Advanced</TabsTrigger>
-            </TabsList>
-            <TabsContent value="appearance">
-              <div className="flex flex-col gap-4">
-                {/* Icon Picker */}
-                <div>
-                  <Label>Icon</Label>
-                  <IconPicker
-                    value={icon}
-                    onChange={setIcon}
-                    order={iconOrder}
-                    setOrder={setIconOrder}
+        <Tabs value={tab} onValueChange={setTab} className="w-full mt-1">
+          <TabsList className="grid w-full grid-cols-3 mb-2">
+            <TabsTrigger value="appearance">Appearance</TabsTrigger>
+            <TabsTrigger value="general">General</TabsTrigger>
+            <TabsTrigger value="advanced">Advanced</TabsTrigger>
+          </TabsList>
+          <TabsContent value="appearance">
+            <div className="flex flex-col gap-4">
+              {/* Icon Picker */}
+              <div>
+                <Label>Icon</Label>
+                <IconPicker
+                  value={icon}
+                  onChange={setIcon}
+                  order={iconOrder}
+                  setOrder={setIconOrder}
+                />
+                <div className="flex items-center mt-2">
+                  <Label htmlFor="show-icon-circle" className="mb-0 mr-2">Show Icon Circle</Label>
+                  <Switch
+                    id="show-icon-circle"
+                    checked={!!showIconCircle}
+                    onCheckedChange={setShowIconCircle}
                   />
-                  <div className="flex items-center mt-2">
-                    <Label htmlFor="show-icon-circle" className="mb-0 mr-2">Show Icon Circle</Label>
-                    <Switch
-                      id="show-icon-circle"
-                      checked={!!showIconCircle}
-                      onCheckedChange={setShowIconCircle}
+                  {showIconCircle && (
+                    <Input
+                      id="icon-circle-color"
+                      className="ml-3 max-w-[100px]"
+                      type="text"
+                      value={iconCircleColor}
+                      onChange={e => setIconCircleColor(e.target.value)}
+                      placeholder="#e9e9e9"
                     />
-                    {showIconCircle && (
-                      <Input
-                        id="icon-circle-color"
-                        className="ml-3 max-w-[100px]"
-                        type="text"
-                        value={iconCircleColor}
-                        onChange={e => setIconCircleColor(e.target.value)}
-                        placeholder="#e9e9e9"
-                      />
-                    )}
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor="node-bg-color">Node Background Color</Label>
-                  <Input
-                    id="node-bg-color"
-                    value={backgroundColor}
-                    onChange={e => setBackgroundColor(e.target.value)}
-                    placeholder="#RRGGBBAA"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="node-line-color">Node Border Color</Label>
-                  <Input
-                    id="node-line-color"
-                    value={lineColor}
-                    onChange={e => setLineColor(e.target.value)}
-                    placeholder="#RRGGBB"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="appearance-size">
-                    Node Size ({size ?? 64}px)
-                  </Label>
-                  <Slider
-                    id="appearance-size"
-                    min={40}
-                    max={120}
-                    step={2}
-                    value={[size]}
-                    onValueChange={([s]) => setSize(s)}
-                    className="w-full"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="appearance-label-field">Label Field</Label>
-                  <Input
-                    id="appearance-label-field"
-                    value={labelField}
-                    onChange={e => setLabelField(e.target.value)}
-                    placeholder='e.g. "label", "name", "attribute"'
-                  />
+                  )}
                 </div>
               </div>
-            </TabsContent>
-            <TabsContent value="general">
-              <div className="p-2 text-sm text-muted-foreground">
-                General settings coming soon.
+              <div>
+                <Label htmlFor="node-bg-color">Node Background Color</Label>
+                <Input
+                  id="node-bg-color"
+                  value={backgroundColor}
+                  onChange={e => setBackgroundColor(e.target.value)}
+                  placeholder="#RRGGBBAA"
+                />
               </div>
-            </TabsContent>
-            <TabsContent value="advanced">
-              <div className="p-2 text-sm text-muted-foreground">
-                Advanced settings coming soon.
+              <div>
+                <Label htmlFor="node-line-color">Node Border Color</Label>
+                <Input
+                  id="node-line-color"
+                  value={lineColor}
+                  onChange={e => setLineColor(e.target.value)}
+                  placeholder="#RRGGBB"
+                />
               </div>
-            </TabsContent>
-          </Tabs>
-          <div className="flex gap-2 mt-2">
-            <Button type="submit" className="w-fit">Save</Button>
-            <Button type="button" variant="outline" className="w-fit" onClick={handleReset}>
-              Reset to Default
-            </Button>
-          </div>
-        </form>
-        <p className="text-xs text-muted-foreground mt-2">
-          These settings affect all nodes of this type. You can still override them for individual nodes.
-        </p>
-      </div>
-      {/* --- JSON config right column --- */}
-      <div className="w-full md:w-1/3">
-        <div className="flex items-center justify-between mb-2">
-          <span className="font-semibold text-base">Preset JSON Config</span>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleCopyPreset}
-            type="button"
-          >Copy</Button>
+              <div>
+                <Label htmlFor="appearance-size">
+                  Node Size ({size ?? 64}px)
+                </Label>
+                <Slider
+                  id="appearance-size"
+                  min={40}
+                  max={120}
+                  step={2}
+                  value={[size]}
+                  onValueChange={([s]) => setSize(s)}
+                  className="w-full"
+                />
+              </div>
+              <div>
+                <Label htmlFor="appearance-label-field">Label Field</Label>
+                <Input
+                  id="appearance-label-field"
+                  value={labelField}
+                  onChange={e => setLabelField(e.target.value)}
+                  placeholder='e.g. "label", "name", "attribute"'
+                />
+              </div>
+            </div>
+          </TabsContent>
+          <TabsContent value="general">
+            <div className="p-2 text-sm text-muted-foreground">
+              General settings coming soon.
+            </div>
+          </TabsContent>
+          <TabsContent value="advanced">
+            <div className="p-2 text-sm text-muted-foreground">
+              Advanced settings coming soon.
+            </div>
+          </TabsContent>
+        </Tabs>
+        <div className="flex gap-2 mt-2">
+          <Button type="submit" className="w-fit">Save</Button>
+          <Button type="button" variant="outline" className="w-fit" onClick={handleReset}>
+            Reset to Default
+          </Button>
         </div>
-        <Textarea
-          value={JSON.stringify(nodeTypeAppearances, null, 2)}
-          readOnly
-          className="bg-muted resize-none font-mono text-xs min-h-[300px] max-h-[440px] h-full"
-        />
-      </div>
+      </form>
+      <p className="text-xs text-muted-foreground mt-2">
+        These settings affect all nodes of this type. You can still override them for individual nodes.
+      </p>
     </section>
   );
 }
-
