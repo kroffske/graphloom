@@ -12,7 +12,7 @@ export function useD3ZoomAndPan({ svgRef, svgGroup }: UseD3ZoomAndPanProps) {
     const svg = d3.select(svgRef.current);
     const zoom = d3
       .zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.25, 1.75])
+      .scaleExtent([0.05, 1.75]) // more zoomed-out: allow as far as 0.05x
       .on("zoom", (event) => {
         svgGroup.attr("transform", event.transform);
       });
