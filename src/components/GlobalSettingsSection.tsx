@@ -1,4 +1,4 @@
-import React, { useRef, useMemo, useState, useEffect } from "react";
+import React, { useRef, useMemo, useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import AppearancePresetsSection from "@/components/AppearancePresetsSection";
 import { Settings, Import, Save } from "lucide-react";
@@ -167,16 +167,14 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
     setIsDirty(true);
   }
 
-  // Modified handlePresetSave to ALSO create/overwrite the custom preset
-  function handlePresetSave() {
+  // Expose this handler so child forms can call it
+  const handlePresetSave = useCallback(() => {
     try {
       const data = JSON.parse(editableJson);
       if (typeof data !== "object" || !data) throw new Error();
-      // For each key, set appearance
       Object.entries(data).forEach(([type, config]) => {
         setNodeTypeAppearance(type, config);
       });
-      // Save as custom preset (Both in useState and persist in localStorage)
       persistCustomPreset(data);
       setCustomPreset({
         name: "Custom",
@@ -189,9 +187,9 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
     } catch (err) {
       toast.error("Invalid JSON format or content.");
     }
-  }
+  }, [editableJson, setNodeTypeAppearance, setCustomPreset, setIsDirty, setSelectedPresetKey]);
 
-  // --- Handler to load a selected preset ---
+  // Handler to load a selected preset
   function handlePresetSelect(presetConfig: Record<string, any>, presetKey: string) {
     // Overwrite nodeTypeAppearances for every type in presetConfig
     Object.entries(presetConfig).forEach(([type, config]) => {
@@ -265,7 +263,10 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
         </div>
         <div className="w-full flex flex-col md:flex-row gap-6 mt-2">
           <div className="w-full md:w-1/2 flex-shrink-0">
-            <NodeTypeAppearanceSettings />
+            {/* Pass saveCustomPresetFromJson to NodeTypeAppearanceSettings */}
+            <NodeTypeAppearanceSettings
+              onSaveCustomPresetFromJson={handlePresetSave}
+            />
           </div>
           <div className="w-full md:w-1/2 flex flex-col min-w-[240px] max-w-[520px]">
             <div className="flex items-center justify-between mb-2 gap-2">
@@ -305,3 +306,6 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
 };
 
 export default GlobalSettingsSection;
+
+// NOTE: This file is getting too long (308+ lines). 
+// Please consider asking me to refactor it into smaller files for maintainability after these changes.

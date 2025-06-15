@@ -19,7 +19,11 @@ const FRIENDLY_TYPE_LABELS: Record<string, string> = {
   "external-system": "External System",
 };
 
-const NodeTypeAppearanceForm: React.FC = () => {
+type NodeTypeAppearanceFormProps = {
+  onSaveCustomPresetFromJson?: () => void;
+};
+
+const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({ onSaveCustomPresetFromJson }) => {
   const iconRegistry = useIconRegistry();
   const iconKeys = Object.keys(iconRegistry);
 
@@ -125,6 +129,10 @@ const NodeTypeAppearanceForm: React.FC = () => {
       iconOrder,
     });
     toast.success(`Saved default appearance for ${selectedLabel}`);
+    // Auto-save preset JSON as a custom preset
+    if (onSaveCustomPresetFromJson) {
+      onSaveCustomPresetFromJson();
+    }
   }
 
   function handleReset() {
