@@ -1,10 +1,10 @@
-
 import React, { useRef, useCallback, useState } from "react";
 import { useD3GraphState } from "@/hooks/useD3GraphState";
 import GraphD3Toolbar from "./GraphD3Toolbar";
 import GraphD3SvgLayer from "./GraphD3SvgLayer";
 import GraphTooltipManager from "./GraphTooltipManager";
 import EdgeContextMenu from "./EdgeContextMenu";
+import { useGraphStore } from "@/state/useGraphStore";
 
 /**
  * This D3 graph canvas component now composes specialized pieces for simulation and rendering.
@@ -121,16 +121,21 @@ const GraphD3Canvas: React.FC = () => {
     return result;
   }, [filteredNodes]);
 
-  // Edge context menu handler
-  const handleEdgeContextMenu = useCallback(
+  // Get selectEdge from store
+  const { selectEdge } = useGraphStore();
+
+  // NEW: select edge before showing context menu
+  const handleEdgeContextMenu = React.useCallback(
     (edgeId: string, event: React.MouseEvent | MouseEvent) => {
       event.preventDefault();
       event.stopPropagation();
+      // Select edge before showing menu
+      selectEdge(edgeId);
       let clientX = (event as MouseEvent).clientX;
       let clientY = (event as MouseEvent).clientY;
       setEdgeMenu({ edgeId, x: clientX, y: clientY });
     },
-    []
+    [selectEdge]
   );
 
   return (
@@ -177,4 +182,3 @@ const GraphD3Canvas: React.FC = () => {
 };
 
 export default GraphD3Canvas;
-
