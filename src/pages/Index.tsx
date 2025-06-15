@@ -1,14 +1,21 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { IconRegistryProvider } from "@/components/IconRegistry";
 import GraphCanvas from "@/components/GraphCanvas";
 import UploadPanel from "@/components/UploadPanel";
 import InspectorPanel from "@/components/InspectorPanel";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useGraphStore } from "@/state/useGraphStore";
+import { NodeSettingsSidebar } from "@/components/NodeSettingsSidebar";
 
 const Index = () => {
   const { selectedNodeId } = useGraphStore();
+  const [settingsSidebarOpen, setSettingsSidebarOpen] = useState(false);
+
+  React.useEffect(() => {
+    if (selectedNodeId) setSettingsSidebarOpen(true);
+    else setSettingsSidebarOpen(false);
+  }, [selectedNodeId]);
 
   return (
     <IconRegistryProvider>
@@ -29,6 +36,11 @@ const Index = () => {
           </main>
           {/* Inspector Panel */}
           <InspectorPanel />
+          {/* Node Settings Sidebar */}
+          <NodeSettingsSidebar
+            open={Boolean(selectedNodeId && settingsSidebarOpen)}
+            onClose={() => setSettingsSidebarOpen(false)}
+          />
         </div>
       </div>
     </IconRegistryProvider>
@@ -36,3 +48,4 @@ const Index = () => {
 };
 
 export default Index;
+
