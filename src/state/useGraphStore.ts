@@ -1,3 +1,4 @@
+
 import { create } from "zustand";
 
 // Graph Node & Edge structures (loosely modeled)
@@ -71,4 +72,34 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     set((state) => ({
       manualPositions: { ...state.manualPositions, [id]: pos },
     })),
+  // === New: Incremental node updates (merge/update existing, don't do full replaces) ===
+  incrementalUpdateNodes: (changedNodes: GraphNode[]) => {
+    set((state) => {
+      const newNodes = [...state.nodes];
+      changedNodes.forEach((incoming) => {
+        const idx = newNodes.findIndex((n) => n.id === incoming.id);
+        if (idx === -1) {
+          newNodes.push(incoming);
+        } else {
+          newNodes[idx] = { ...newNodes[idx], ...incoming };
+        }
+      });
+      return { nodes: newNodes };
+    });
+  },
+  incrementalUpdateEdges: (changedEdges: GraphEdge[]) => {
+    set((state) => {
+      const newEdges = [...state.edges];
+      changedEdges.forEach((incoming) => {
+        const idx = newEdges.findIndex((e) => e.id === incoming.id);
+        if (idx === -1) {
+          newEdges.push(incoming);
+        } else {
+          newEdges[idx] = { ...newEdges[idx], ...incoming };
+        }
+      });
+      return { edges: newEdges };
+    });
+  },
 }));
+
