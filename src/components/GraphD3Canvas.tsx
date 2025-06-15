@@ -1,3 +1,4 @@
+
 import React, { useRef, useCallback, useState } from "react";
 import { useD3GraphState } from "@/hooks/useD3GraphState";
 import GraphD3Toolbar from "./GraphD3Toolbar";
@@ -47,6 +48,9 @@ const GraphD3Canvas: React.FC = () => {
   // Positions ref for D3 force/visible nodes
   const lastSimPositionsRef = useRef<Record<string, { x: number; y: number }>>({});
 
+  // Track if we've initialized the time range to prevent infinite loops
+  const timeRangeInitialized = useRef(false);
+
   // Calculate min/max timestamps from edges for the slider
   const [minTs, maxTs] = React.useMemo(() => {
     const timestamps = edges.map(e => e.timestamp).filter((ts): ts is number => typeof ts === 'number' && !isNaN(ts));
@@ -54,12 +58,18 @@ const GraphD3Canvas: React.FC = () => {
     return [Math.min(...timestamps), Math.max(...timestamps)];
   }, [edges]);
 
-  // Initialize time range when edges with timestamps are loaded
+  // Stable setTimeRange callback to prevent dependency issues
+  const stableSetTimeRange = useCallback((range: [number, number]) => {
+    setTimeRange(range);
+  }, [setTimeRange]);
+
+  // Initialize time range when edges with timestamps are loaded - but only once
   React.useEffect(() => {
-    if (minTs < maxTs && !timeRange) {
-        setTimeRange([minTs, maxTs]);
+    if (minTs < maxTs && !timeRange && !timeRangeInitialized.current) {
+      timeRangeInitialized.current = true;
+      stableSetTimeRange([minTs, maxTs]);
     }
-  }, [minTs, maxTs, timeRange, setTimeRange]);
+  }, [minTs, maxTs, timeRange, stableSetTimeRange]);
 
   // Filtering logic
   const filteredNodes = React.useMemo(
@@ -101,9 +111,9 @@ const GraphD3Canvas: React.FC = () => {
     [captureSimulationPositions]
   );
 
-  const handleMouseMove = (event: React.MouseEvent) => {
+  const handleMouseMove = useCallback((event: React.MouseEvent) => {
     setMousePosition({ x: event.clientX, y: event.clientY });
-  };
+  }, []);
 
   // Keyboard shortcuts for hiding
   React.useEffect(() => {
@@ -161,9 +171,6 @@ const GraphD3Canvas: React.FC = () => {
     return result;
   }, [filteredNodes]);
 
-  // Get selectEdge from store - this is already done above now
-  // const { selectEdge } = useGraphStore();
-
   // NEW: select edge before showing context menu
   const handleEdgeContextMenu = React.useCallback(
     (edgeId: string, event: React.MouseEvent | MouseEvent) => {
@@ -212,7 +219,7 @@ const GraphD3Canvas: React.FC = () => {
                 min={minTs}
                 max={maxTs}
                 value={timeRange}
-                onChange={setTimeRange}
+                onChange={stableSetTimeRange}
             />
         </div>
       )}
