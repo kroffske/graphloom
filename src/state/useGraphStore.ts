@@ -26,6 +26,11 @@ export type GraphEdge = {
   source: string;
   target: string;
   type?: string;
+  appearance?: {
+    color?: string;      // Edge color
+    width?: number;      // Edge line thickness
+    label?: string;      // Optional label
+  };
 };
 
 type NodeTypeAppearanceMap = Record<string, {
@@ -40,15 +45,23 @@ type NodeTypeAppearanceMap = Record<string, {
   iconOrder?: string[];
 }>;
 
+type EdgeAppearanceMap = Record<string, {
+  color?: string;
+  width?: number;
+  label?: string;
+}>;
+
 type GraphStore = {
   nodes: GraphNode[];
   edges: GraphEdge[];
   selectedNodeId: string | null;
+  selectedEdgeId: string | null;
   hiddenNodeIds: Set<string>;
   manualPositions: Record<string, { x: number; y: number }>;
   setNodes: (nodes: GraphNode[]) => void;
   setEdges: (edges: GraphEdge[]) => void;
   selectNode: (id: string | null) => void;
+  selectEdge: (id: string | null) => void;
   hideNode: (id: string) => void;
   showNode: (id: string) => void;
   showAllHiddenNodes: () => void;
@@ -59,17 +72,25 @@ type GraphStore = {
   nodeTypeAppearances: NodeTypeAppearanceMap;
   setNodeTypeAppearance: (type: string, appearance: NodeTypeAppearanceMap[string]) => void;
   resetNodeTypeAppearance: (type: string) => void;
+
+  // New: edge appearance and selection
+  edgeAppearances: EdgeAppearanceMap;
+  setEdgeAppearance: (id: string, appearance: EdgeAppearanceMap[string]) => void;
+  showEdgeLabels: boolean;
+  toggleEdgeLabels: () => void;
 };
 
 export const useGraphStore = create<GraphStore>((set, get) => ({
   nodes: [],
   edges: [],
   selectedNodeId: null,
+  selectedEdgeId: null,
   hiddenNodeIds: new Set(),
   manualPositions: {},
   setNodes: (nodes) => set({ nodes }),
   setEdges: (edges) => set({ edges }),
   selectNode: (id) => set({ selectedNodeId: id }),
+  selectEdge: (id) => set({ selectedEdgeId: id }),
   hideNode: (id) => {
     set((state) => {
       const hiddenNodeIds = new Set(state.hiddenNodeIds);
@@ -129,4 +150,17 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       delete newMap[type];
       return { nodeTypeAppearances: newMap };
     }),
+
+  // Edge appearance management
+  edgeAppearances: {},
+  setEdgeAppearance: (id, appearance) =>
+    set((state) => ({
+      edgeAppearances: { ...state.edgeAppearances, [id]: { ...state.edgeAppearances[id], ...appearance } },
+      edges: state.edges.map((e) =>
+        e.id === id ? { ...e, appearance: { ...state.edgeAppearances[id], ...appearance } } : e
+      ),
+    })),
+
+  showEdgeLabels: true,
+  toggleEdgeLabels: () => set((state) => ({ showEdgeLabels: !state.showEdgeLabels })),
 }));
