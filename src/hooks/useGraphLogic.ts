@@ -1,3 +1,4 @@
+
 import { useEffect, useMemo, useRef, useCallback, useState } from "react";
 import {
   useNodesState,
@@ -9,7 +10,6 @@ import {
   NodeChange,
 } from "@xyflow/react";
 import { useGraphStore, GraphStore } from "@/state/useGraphStore";
-import { shallow } from "zustand/shallow";
 
 /**
  * Manages all logic for graph state, including synchronization and node hover handling.
@@ -29,8 +29,7 @@ export function useGraphLogic() {
       setNodes: state.setNodes,
       setEdges: state.setEdges,
       selectNode: state.selectNode,
-    }),
-    shallow
+    })
   );
 
   // Local state for hovered node (for tooltip)

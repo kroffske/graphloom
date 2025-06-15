@@ -8,7 +8,6 @@ import {
 } from "@xyflow/react";
 import { getNodeColor, getNodeTypes } from "./GraphConfig";
 import { useGraphStore, GraphStore } from "@/state/useGraphStore";
-import { shallow } from "zustand/shallow";
 
 type GraphRendererProps = {
   rfNodes: any[];
@@ -35,8 +34,7 @@ const GraphRenderer: React.FC<GraphRendererProps> = ({
     (state: GraphStore) => ({
       nodes: state.nodes,
       selectNode: state.selectNode,
-    }),
-    shallow
+    })
   );
 
   const nodeTypes = useMemo(

@@ -1,9 +1,9 @@
+
 import React, { useState, useEffect } from "react";
 import { useGraphStore, GraphStore } from "@/state/useGraphStore";
 import { useGraphLogic } from "@/hooks/useGraphLogic";
 import GraphRenderer from "./GraphRenderer";
 import GraphTooltipManager from "./GraphTooltipManager";
-import { shallow } from "zustand/shallow";
 
 /**
  * The composition root for the graph area: handles layout and orchestrates
@@ -29,8 +29,7 @@ const GraphCanvas = () => {
       nodes: state.nodes,
       edges: state.edges,
       hoveredEdgeId: state.hoveredEdgeId,
-    }),
-    shallow
+    })
   );
 
   const [position, setPosition] = useState<{ x: number; y: number } | null>(
