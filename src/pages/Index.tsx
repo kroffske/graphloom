@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { IconRegistryProvider } from "@/components/IconRegistry";
-import GraphCanvas from "@/components/GraphCanvas";
+import GraphD3Canvas from "@/components/GraphD3Canvas";
 import UploadPanel from "@/components/UploadPanel";
 import InspectorPanel from "@/components/InspectorPanel";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -52,7 +52,8 @@ const Index = () => {
                 <UploadPanel />
               </TabsContent>
               <TabsContent value="graph" className="p-0 h-full w-full">
-                <GraphCanvas />
+                {/* SWAP: Old GraphCanvas -> New GraphD3Canvas */}
+                <GraphD3Canvas />
               </TabsContent>
             </main>
             {/* Inspector Panel and Sidebar stay always visible */}
@@ -69,4 +70,3 @@ const Index = () => {
 };
 
 export default Index;
-
