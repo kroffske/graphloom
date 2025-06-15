@@ -1,4 +1,3 @@
-
 import React from "react";
 import { GraphNode } from "@/state/useGraphStore";
 import { useIconRegistry } from "./IconRegistry";
@@ -53,6 +52,7 @@ const GraphD3Node = ({
   // For layout: svg circle is nodeSize, keep icon slightly smaller
   const radius = nodeSize / 2;
   const iconSize = nodeSize * 0.54; // center in circle comfortably
+  const iconClass = `select-none mx-auto ${iconSize ? `w-[${iconSize}px] h-[${iconSize}px]` : "w-8 h-8"}`;
 
   // Label sits just below the circle, not too far, and not overlapping
   // Container set to relative for proper stacking of circle/icon/label
@@ -104,11 +104,10 @@ const GraphD3Node = ({
         >
           {Icon && (
             <Icon
-              className="w-8 h-8"
+              className={iconClass}
               aria-label={iconType}
               filled={true}
               color={iconColor}
-              style={{ width: iconSize, height: iconSize }}
             />
           )}
         </div>
@@ -134,3 +133,5 @@ const GraphD3Node = ({
 };
 
 export default GraphD3Node;
+
+// Error fixed: removed 'style' prop from Icon component.
