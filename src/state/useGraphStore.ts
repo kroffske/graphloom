@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { NodeTypeAppearanceMap, EdgeTypeAppearanceMap } from "@/types/appearance";
 
 // Graph Node & Edge structures (loosely modeled)
 export type GraphNode = {
@@ -40,32 +41,6 @@ export type GraphEdge = {
     labelField?: string; // Optional label field (used for display/custom label source)
   };
 };
-
-// New: edge type appearance settings!
-type EdgeTypeAppearanceMap = Record<string, {
-  color?: string;
-  width?: number;
-  labelField?: string;    // which edge attr is shown as label
-  icon?: string;          // (future: edge icon or style)
-}>;
-
-// --- Tweak NodeTypeAppearanceMap so these props are ALWAYS allowed ---
-type NodeTypeAppearanceMap = Record<string, {
-  icon?: string;
-  color?: string;
-  size?: number;
-  labelField?: string;
-  backgroundColor?: string;
-  lineColor?: string;
-  showIconCircle?: boolean;
-  iconCircleColor?: string;
-  iconOrder?: string[];
-  // --- Always included keys below (so TS recognizes everywhere) ---
-  iconColor?: string;
-  borderEnabled?: boolean;
-  borderColor?: string;
-  borderWidth?: number;
-}>;
 
 // UPDATED: include labelField here too!
 type EdgeAppearanceMap = Record<string, {
