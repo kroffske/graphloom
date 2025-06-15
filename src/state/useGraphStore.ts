@@ -84,17 +84,21 @@ type GraphStore = {
   nodeTypeAppearances: NodeTypeAppearanceMap;
   setNodeTypeAppearance: (type: string, appearance: NodeTypeAppearanceMap[string]) => void;
   resetNodeTypeAppearance: (type: string) => void;
-
   // Edge type appearance
   edgeTypeAppearances: EdgeTypeAppearanceMap;
   setEdgeTypeAppearance: (type: string, appearance: EdgeTypeAppearanceMap[string]) => void;
   resetEdgeTypeAppearance: (type: string) => void;
-
   // New: edge appearance and selection
   edgeAppearances: EdgeAppearanceMap;
   setEdgeAppearance: (id: string, appearance: EdgeAppearanceMap[string]) => void;
   showEdgeLabels: boolean;
   toggleEdgeLabels: () => void;
+
+  // Add: persistent uploaded file names & setters
+  nodeFilename: string | null;
+  setNodeFilename: (filename: string | null) => void;
+  edgeFilename: string | null;
+  setEdgeFilename: (filename: string | null) => void;
 };
 
 export const useGraphStore = create<GraphStore>((set, get) => ({
@@ -191,4 +195,8 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
 
   showEdgeLabels: true,
   toggleEdgeLabels: () => set((state) => ({ showEdgeLabels: !state.showEdgeLabels })),
+  nodeFilename: null,
+  edgeFilename: null,
+  setNodeFilename: (filename) => set({ nodeFilename: filename }),
+  setEdgeFilename: (filename) => set({ edgeFilename: filename }),
 }));
