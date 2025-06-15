@@ -1,5 +1,5 @@
-import React, { useEffect } from "react";
-import GraphD3NodeMount from "./GraphD3NodeMount";
+
+import React, { useRef } from "react";
 import { useD3SvgGraph } from "@/hooks/useD3SvgGraph";
 
 type GraphD3SvgLayerProps = {
@@ -17,10 +17,6 @@ type GraphD3SvgLayerProps = {
   setDragging: (d: any) => void;
   captureSimulationPositions: (simNodes: any[]) => void;
   initialPositions?: Record<string, { x: number; y: number }>;
-  /**
-   * Optional: show context menu for edge (edgeId, event)
-   * You can plug in a UI or logic to display/hide a menu.
-   */
   onEdgeContextMenu?: (edgeId: string, event: MouseEvent | React.MouseEvent) => void;
   setHoveredEdgeId?: (id: string | null) => void;
   setEdgeMousePos?: (pos: { x: number; y: number } | null) => void;
@@ -45,24 +41,28 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
   setHoveredEdgeId,
   setEdgeMousePos,
 }) => {
-  // useD3SvgGraph handles all D3 drawing, pass along new handlers
+  // Define these refs ONCE and reuse them everywhere
+  const svgRef = useRef<SVGSVGElement>(null);
+  const svgGroupRef = useRef<SVGGElement>(null);
+
+  // useD3SvgGraph handles all D3 drawing, pass along new handlers using *the same refs*
   useD3SvgGraph({
-    svgRef: React.useRef<SVGSVGElement>(),
-    svgGroupRef: React.useRef<SVGGElement>(null),
-    nodes: nodes,
-    edges: edges,
-    layoutMode: layoutMode,
-    manualPositions: manualPositions,
-    setManualPositions: setManualPositions,
-    saveManualPosition: saveManualPosition,
-    hiddenNodeIds: hiddenNodeIds,
-    setHiddenNodeIds: setHiddenNodeIds,
-    setHoveredNodeId: setHoveredNodeId,
-    setContextNodeId: setContextNodeId,
-    dragging: dragging,
-    setDragging: setDragging,
-    captureSimulationPositions: captureSimulationPositions,
-    initialPositions: initialPositions,
+    svgRef,
+    svgGroupRef,
+    nodes,
+    edges,
+    layoutMode,
+    manualPositions,
+    setManualPositions,
+    saveManualPosition,
+    hiddenNodeIds,
+    setHiddenNodeIds,
+    setHoveredNodeId,
+    setContextNodeId,
+    dragging,
+    setDragging,
+    captureSimulationPositions,
+    initialPositions,
     onEdgeContextMenu,
     setHoveredEdgeId,
     setEdgeMousePos,
@@ -70,8 +70,6 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
     simNodes: nodes,
     simEdges: edges,
   });
-  const svgRef = React.useRef<SVGSVGElement>(null);
-  const nodeGroupRef = React.useRef<SVGGElement>(null);
 
   return (
     <svg
@@ -82,9 +80,10 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
       className="block"
     >
       {/* D3 draws everything inside nodeGroupRef */}
-      <g ref={nodeGroupRef} />
+      <g ref={svgGroupRef} />
     </svg>
   );
 };
 
 export default GraphD3SvgLayer;
+
