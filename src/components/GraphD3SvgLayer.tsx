@@ -28,11 +28,23 @@ const EDGE_COLOR = "#64748b";
 const WIDTH = 900;
 const HEIGHT = 530;
 
+// Helper: return equally spaced fallback positions for manual mode.
+function getFallbackXY(idx: number, total: number) {
+  // Place nodes in grid if no position info (simple, predictable)
+  const perRow = Math.ceil(Math.sqrt(total));
+  const spacingX = WIDTH / (perRow + 1);
+  const spacingY = HEIGHT / (perRow + 1);
+  const x = spacingX * (1 + (idx % perRow));
+  const y = spacingY * (1 + Math.floor(idx / perRow));
+  return { x, y };
+}
+
 // Helper: choose layout
 function computeLayout(
   mode: "force" | "circle" | "hierarchy" | "manual",
   nodes: any[],
-  edges: any[]
+  edges: any[],
+  manualPositions: Record<string, { x: number; y: number }> // add manualPositions here
 ) {
   if (mode === "force") {
     return d3LayoutForce(nodes, edges, NODE_RADIUS, WIDTH, HEIGHT);
@@ -41,11 +53,18 @@ function computeLayout(
   } else if (mode === "hierarchy") {
     return d3LayoutHierarchy(nodes, edges, WIDTH, HEIGHT);
   } else if (mode === "manual") {
-    // just pass through, x/y comes from manualPositions
-    const simNodes = nodes.map((n) => ({
-      ...n,
-      ...(n.x !== undefined && n.y !== undefined ? { x: n.x, y: n.y } : {}),
-    }));
+    // Use manualPositions if possible; fallback to provided node positions; fallback to grid.
+    const total = nodes.length;
+    const simNodes = nodes.map((n, i) => {
+      if (manualPositions[n.id]) {
+        return { ...n, ...manualPositions[n.id] };
+      } else if (typeof n.x === "number" && typeof n.y === "number") {
+        return { ...n, x: n.x, y: n.y };
+      } else {
+        const xy = getFallbackXY(i, total);
+        return { ...n, ...xy };
+      }
+    });
     const simEdges = edges.map((e) => ({ ...e }));
     return {
       simulation: { on: () => {}, stop: () => {} },
@@ -57,6 +76,7 @@ function computeLayout(
   return d3LayoutForce(nodes, edges, NODE_RADIUS, WIDTH, HEIGHT);
 }
 
+// ------------------- START COMPONENT -----------------------
 const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
   nodes,
   edges,
@@ -77,15 +97,17 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
   useEffect(() => {
     if (!svgRef.current || !nodes.length) return;
 
-    // Merge manual positions in manual mode
-    const mergedNodes = nodes.map((n) =>
-      layoutMode === "manual" && manualPositions[n.id]
-        ? { ...n, ...manualPositions[n.id] }
-        : { ...n }
-    );
+    // For manual mode: always pre-merge manual and fallback positions:
+    // We now let computeLayout handle this.
+    const mergedNodes = nodes; // do not pre-merge, just forward
 
-    // Pick layout function
-    const { simulation, simNodes, simEdges } = computeLayout(layoutMode, mergedNodes, edges);
+    // Pick layout function with manualPositions as argument
+    const { simulation, simNodes, simEdges } = computeLayout(
+      layoutMode,
+      mergedNodes,
+      edges,
+      manualPositions // pass down
+    );
 
     // D3 element selection and clearing
     const svg = d3.select(svgRef.current);
@@ -184,7 +206,11 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
         event.key.startsWith("Arrow")
       ) {
         event.preventDefault();
-        const { x = d.x ?? 0, y = d.y ?? 0 } = manualPositions[d.id] || d;
+        // keyboard nudge logic for manual mode
+        // Always use manualPositions if present, fallback to d.x/d.y
+        const manual = manualPositions[d.id];
+        const x = manual?.x ?? d.x ?? 0;
+        const y = manual?.y ?? d.y ?? 0;
         let step = event.shiftKey ? 1 : 10;
         let nx = x,
           ny = y;
@@ -299,3 +325,4 @@ export default GraphD3SvgLayer;
 // --- 
 // This file is getting quite long (over 200 lines).
 // Consider asking Lovable to refactor it into smaller files for easier maintenance.
+
