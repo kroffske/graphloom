@@ -14,7 +14,9 @@ const FRIENDLY_TYPE_LABELS: Record<string, string> = {
   "data-store": "Data Store",
   event: "Event",
   decision: "Decision",
-  "external-system": "External System"
+  "external-system": "External System",
+  user: "User",
+  pc: "PC"
 };
 
 type NodeTypeAppearanceFormProps = {
@@ -59,23 +61,26 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
     nodeTypeLabels: stableNodeTypeLabels
   } = useNodeAppearanceSettings(selectedType, presetJsonString);
 
+  // Now with explicit fields for NEW settings
   const [icon, setIcon] = useState<string>(selectedAppearance.icon || selectedType);
+  const [iconColor, setIconColor] = useState<string>(selectedAppearance.iconColor || "#222");
+  const [borderColor, setBorderColor] = useState<string>(selectedAppearance.borderColor ?? "#e5e7eb");
+  const [borderEnabled, setBorderEnabled] = useState<boolean>(selectedAppearance.borderEnabled ?? false);
   const [backgroundColor, setBackgroundColor] = useState<string>(selectedAppearance.backgroundColor || "");
   const [lineColor, setLineColor] = useState<string>(selectedAppearance.lineColor || "");
   const [size, setSize] = useState<number>(selectedAppearance.size || 64);
   const [labelField, setLabelField] = useState<string>(selectedAppearance.labelField || "label");
-  const [showIconCircle, setShowIconCircle] = useState<boolean>(!!selectedAppearance.showIconCircle);
-  const [iconCircleColor, setIconCircleColor] = useState<string>(selectedAppearance.iconCircleColor || "#e9e9e9");
   const [iconOrder, setIconOrder] = useState<string[]>(iconKeys);
 
   useEffect(() => {
     setIcon(selectedAppearance.icon || selectedType);
+    setIconColor(selectedAppearance.iconColor || "#222");
+    setBorderColor(selectedAppearance.borderColor ?? "#e5e7eb");
+    setBorderEnabled(selectedAppearance.borderEnabled ?? false);
     setBackgroundColor(selectedAppearance.backgroundColor || "");
     setLineColor(selectedAppearance.lineColor || "");
     setSize(selectedAppearance.size ?? 64);
     setLabelField(selectedAppearance.labelField || "label");
-    setShowIconCircle(!!selectedAppearance.showIconCircle);
-    setIconCircleColor(selectedAppearance.iconCircleColor || "#e9e9e9");
     setIconOrder(currOrder => {
       const currSet = new Set(currOrder);
       const toAdd = iconKeys.filter(k => !currSet.has(k));
@@ -87,12 +92,13 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
     if (e) e.preventDefault();
     setAppearanceForType(selectedType, {
       icon,
+      iconColor,
+      borderColor,
+      borderEnabled,
       backgroundColor,
       lineColor,
       size,
       labelField,
-      showIconCircle,
-      iconCircleColor,
       iconOrder
     });
     toast.success(`Saved default appearance for ${stableNodeTypeLabels[selectedType] || selectedType}`);
@@ -107,7 +113,6 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
   const attributesSample = { label: "ID-1", name: "My Name", full_name: "My Full Name" };
   const joinedLabel = resolveLabel(labelField, attributesSample, "Sample");
 
-  // Enhanced node icon preview
   const IconComponent = iconRegistry[icon];
 
   return (
@@ -118,13 +123,13 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
           <span
             className="ml-2 inline-flex items-center justify-center rounded-full border"
             style={{
-              background: showIconCircle ? iconCircleColor : backgroundColor || "#ede",
-              borderColor: lineColor || "#e5e7eb",
+              background: backgroundColor || "#ede",
+              borderColor: borderEnabled ? borderColor : "transparent",
               width: 28, height: 28,
               borderWidth: 2,
             }}
           >
-            <IconComponent filled={true} className="w-5 h-5" color={iconCircleColor} />
+            <IconComponent filled={true} className="w-5 h-5" color={iconColor} />
           </span>
         )}
       </div>
@@ -140,8 +145,9 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
         <NodeTypeIconSettings
           iconRegistry={iconRegistry}
           icon={icon} setIcon={setIcon}
-          showIconCircle={showIconCircle} setShowIconCircle={setShowIconCircle}
-          iconCircleColor={iconCircleColor} setIconCircleColor={setIconCircleColor}
+          iconColor={iconColor} setIconColor={setIconColor}
+          borderColor={borderColor} setBorderColor={setBorderColor}
+          borderEnabled={borderEnabled} setBorderEnabled={setBorderEnabled}
           iconOrder={iconOrder} setIconOrder={setIconOrder}
         />
         <NodeTypeVisualSettings
