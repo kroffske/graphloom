@@ -1,6 +1,8 @@
+
 import { create } from "zustand";
 import { NodeTypeAppearanceMap, EdgeTypeAppearanceMap } from "@/types/appearance";
-import { GraphNode, GraphEdge, GraphEdgeAppearance } from "@/types/graph";
+export type { GraphNode, GraphEdge, GraphEdgeAppearance } from "@/types/graph";
+import type { GraphNode, GraphEdge, GraphEdgeAppearance } from "@/types/graph";
 
 // UPDATED: include labelField here too!
 type GraphEdgeAppearanceMap = Record<string, GraphEdgeAppearance>;
