@@ -62,7 +62,7 @@ export function useD3SvgGraph({
   onEdgeContextMenu,
 }: UseD3SvgGraphProps) {
   // Get edge selection API
-  const { selectedEdgeId, selectEdge, edgeAppearances, showEdgeLabels } = useGraphStore();
+  const { selectedEdgeId, selectEdge, edgeAppearances, showEdgeLabels, edgeTypeAppearances } = useGraphStore();
 
   useD3ZoomAndPan({
     svgRef,
@@ -86,13 +86,13 @@ export function useD3SvgGraph({
       .append("line")
       .attr("stroke", (d: any) => {
         // Use appearance or fallback
-        const id = d.id;
-        const appearance = { ...(d.appearance || {}), ...(edgeAppearances[id] || {}) };
+        const typeApp = edgeTypeAppearances[d.type || 'default'] || {};
+        const appearance = { ...typeApp, ...(d.appearance || {}), ...(edgeAppearances[d.id] || {}) };
         return appearance.color || "#64748b";
       })
       .attr("stroke-width", (d: any) => {
-        const id = d.id;
-        const appearance = { ...(d.appearance || {}), ...(edgeAppearances[id] || {}) };
+        const typeApp = edgeTypeAppearances[d.type || 'default'] || {};
+        const appearance = { ...typeApp, ...(d.appearance || {}), ...(edgeAppearances[d.id] || {}) };
         return appearance.width || 2;
       })
       .attr("opacity", (d: any) => (selectedEdgeId === d.id ? 1 : 0.7))
@@ -258,8 +258,8 @@ export function useD3SvgGraph({
         link
           .attr("opacity", (d: any) => (selectedEdgeId === d.id ? 1 : 0.7))
           .attr("stroke-width", (d: any) => {
-            const id = d.id;
-            const appearance = { ...(d.appearance || {}), ...(edgeAppearances[id] || {}) };
+            const typeApp = edgeTypeAppearances[d.type || 'default'] || {};
+            const appearance = { ...typeApp, ...(d.appearance || {}), ...(edgeAppearances[d.id] || {}) };
             const width = appearance.width || 2;
             return selectedEdgeId === d.id ? width + 2 : width;
           })
@@ -291,10 +291,10 @@ export function useD3SvgGraph({
       link
         .attr("opacity", (d: any) => (selectedEdgeId === d.id ? 1 : 0.7))
         .attr("stroke-width", (d: any) => {
-          const id = d.id;
-          const appearance = { ...(d.appearance || {}), ...(edgeAppearances[id] || {}) };
-          const width = appearance.width || 2;
-          return selectedEdgeId === d.id ? width + 2 : width;
+            const typeApp = edgeTypeAppearances[d.type || 'default'] || {};
+            const appearance = { ...typeApp, ...(d.appearance || {}), ...(edgeAppearances[d.id] || {}) };
+            const width = appearance.width || 2;
+            return selectedEdgeId === d.id ? width + 2 : width;
         })
         .attr("filter", (d: any) =>
           selectedEdgeId === d.id ? "drop-shadow(0 0 4px #60a5fa)" : null
@@ -323,8 +323,6 @@ export function useD3SvgGraph({
     captureSimulationPositions,
     simulation,
     initialPositions,
-    // REMOVE: selectEdge, selectedEdgeId, edgeAppearances, onEdgeContextMenu
-    // (selection and appearance updates are handled below in a separate effect)
   ]);
 
   // ----- NEW: Selection and appearance highlighting only (does not change graph structure) -----
@@ -335,8 +333,8 @@ export function useD3SvgGraph({
     links
       .attr("opacity", (d: any) => (selectedEdgeId === d.id ? 1 : 0.7))
       .attr("stroke-width", (d: any) => {
-        const id = d.id;
-        const appearance = { ...(d.appearance || {}), ...(edgeAppearances[id] || {}) };
+        const typeApp = edgeTypeAppearances[d.type || 'default'] || {};
+        const appearance = { ...typeApp, ...(d.appearance || {}), ...(edgeAppearances[d.id] || {}) };
         const width = appearance.width || 2;
         return selectedEdgeId === d.id ? width + 2 : width;
       })
@@ -344,9 +342,9 @@ export function useD3SvgGraph({
         selectedEdgeId === d.id ? "drop-shadow(0 0 4px #60a5fa)" : null
       )
       .attr("stroke", (d: any) => {
-        const id = d.id;
-        const appearance = { ...(d.appearance || {}), ...(edgeAppearances[id] || {}) };
+        const typeApp = edgeTypeAppearances[d.type || 'default'] || {};
+        const appearance = { ...typeApp, ...(d.appearance || {}), ...(edgeAppearances[d.id] || {}) };
         return appearance.color || "#64748b";
       });
-  }, [svgRef, selectedEdgeId, edgeAppearances]);
+  }, [svgRef, selectedEdgeId, edgeAppearances, edgeTypeAppearances]);
 }

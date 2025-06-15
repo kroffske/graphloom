@@ -21,7 +21,7 @@ const GraphD3EdgeLayer: React.FC<GraphD3EdgeLayerProps> = ({
   linkRef,
   onEdgeContextMenu,
 }) => {
-  const { selectedEdgeId, selectEdge, edgeAppearances, showEdgeLabels, setHoveredEdgeId } = useGraphStore();
+  const { selectedEdgeId, selectEdge, edgeAppearances, showEdgeLabels, setHoveredEdgeId, edgeTypeAppearances } = useGraphStore();
 
   // Dynamic rendering is handled by D3 in force mode; call edge setup externally.
   if (useDynamic) return <g ref={linkRef} />;
@@ -33,8 +33,10 @@ const GraphD3EdgeLayer: React.FC<GraphD3EdgeLayerProps> = ({
         const t = typeof e.target === "object" ? e.target : nodes.find((n) => n.id === e.target);
         if (!s || !t) return null;
 
-        // Get appearance (per-edge or store override)
-        const edgeApp = { ...e.appearance, ...edgeAppearances[e.id] };
+        // Get appearance (type-based, then per-edge override)
+        const edgeType = e.type || 'default';
+        const typeApp = edgeTypeAppearances[edgeType] || {};
+        const edgeApp = { ...typeApp, ...e.appearance, ...edgeAppearances[e.id] };
         const color = edgeApp.color || DEFAULT_EDGE_COLOR;
         const width = edgeApp.width || DEFAULT_EDGE_WIDTH;
         const isSelected = selectedEdgeId === e.id;
@@ -42,6 +44,11 @@ const GraphD3EdgeLayer: React.FC<GraphD3EdgeLayerProps> = ({
         // Center for label (midpoint)
         const midX = (s.x + t.x) / 2;
         const midY = (s.y + t.y) / 2;
+
+        let edgeLabel = edgeApp.label;
+        if (!edgeLabel && edgeApp.labelField && e.attributes && e.attributes[edgeApp.labelField]) {
+          edgeLabel = String(e.attributes[edgeApp.labelField]);
+        }
 
         return (
           <g key={e.id}>
@@ -86,7 +93,7 @@ const GraphD3EdgeLayer: React.FC<GraphD3EdgeLayerProps> = ({
               }}
             />
             {/* Show label if enabled and available */}
-            {showEdgeLabels && (edgeApp.label || e.label) && (
+            {showEdgeLabels && edgeLabel && (
               <text
                 x={midX}
                 y={midY}
@@ -106,7 +113,7 @@ const GraphD3EdgeLayer: React.FC<GraphD3EdgeLayerProps> = ({
                 }}
               >
                 <tspan fill="#334155" stroke="white" strokeWidth="1.5" style={{ paintOrder: "stroke fill" }}>
-                  {edgeApp.label || e.label}
+                  {edgeLabel}
                 </tspan>
               </text>
             )}

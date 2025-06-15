@@ -119,8 +119,12 @@ export function useAppearanceManager() {
 
   // --- Edge Type Logic ---
   const edgeTypeKeys = useMemo(
-    () => Array.from(new Set(edges.map((e) => e.type || "default"))).sort(),
-    [edges]
+    () => {
+      const fromEdges = edges.map((e) => e.type || "default");
+      const fromAppearances = Object.keys(edgeTypeAppearances ?? {});
+      return Array.from(new Set([...fromEdges, ...fromAppearances])).sort()
+    },
+    [edges, edgeTypeAppearances]
   );
   const [selectedEdgeType, setSelectedEdgeType] = useState<string>("");
   useEffect(() => {
