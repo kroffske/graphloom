@@ -1,3 +1,4 @@
+
 // FIX: Use named import instead of default import for zustand
 import { create } from "zustand";
 
@@ -12,9 +13,13 @@ export type GraphNode = {
   // Appearance options
   appearance?: {
     icon?: string; // nodeType key
-    color?: string; // hex or color name
+    color?: string; // legacy color/name primary
     size?: number; // px, default 64
     labelField?: string; // key to show (else "label")
+    backgroundColor?: string; // New: background color with alpha
+    lineColor?: string; // New: border/line color (stroke)
+    showIconCircle?: boolean; // New: show icon in circle?
+    iconCircleColor?: string; // New: color of icon circle
   };
 };
 
@@ -42,3 +47,4 @@ export const useGraphStore = create<GraphStore>((set) => ({
   setEdges: (edges) => set({ edges }),
   selectNode: (id) => set({ selectedNodeId: id }),
 }));
+

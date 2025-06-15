@@ -5,9 +5,39 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { useIconRegistry } from "./IconRegistry";
 import { GraphNode, useGraphStore } from "@/state/useGraphStore";
+
+// Helper: Color input supporting alpha
+function ColorSwatchInput({ label, value, onChange, id, allowAlpha = false }: { label: string, value: string, onChange: (v: string) => void, id: string, allowAlpha?: boolean }) {
+  return (
+    <div>
+      <Label htmlFor={id} className="mb-1">{label}</Label>
+      <div className="flex items-center gap-2">
+        <input
+          id={id}
+          type="color"
+          value={value && /^#([0-9a-fA-F]{6,8})$/.test(value) ? value.length === 9 ? value : `${value}ff` : "#000000"}
+          className="w-8 h-8 border rounded"
+          onChange={(e) => {
+            let hex = e.target.value;
+            if (!allowAlpha && hex.length > 7) hex = hex.slice(0, 7);
+            onChange(hex);
+          }}
+        />
+        <Input
+          id={id + "-hex"}
+          className="max-w-[105px]"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={allowAlpha ? "#RRGGBBAA" : "#RRGGBB"}
+        />
+      </div>
+    </div>
+  );
+}
 
 export default function NodeSettingsForm({ node, onSaveSuccess }: { node: GraphNode; onSaveSuccess?: () => void }) {
   const { nodes, setNodes } = useGraphStore();
@@ -80,6 +110,8 @@ export default function NodeSettingsForm({ node, onSaveSuccess }: { node: GraphN
         <TabsTrigger value="appearance">Appearance</TabsTrigger>
         <TabsTrigger value="advanced">Advanced</TabsTrigger>
       </TabsList>
+
+      {/* GENERAL TAB */}
       <TabsContent value="general">
         <form className="flex flex-col gap-4 mt-1" onSubmit={onSave}>
           <div>
@@ -104,8 +136,10 @@ export default function NodeSettingsForm({ node, onSaveSuccess }: { node: GraphN
           <Button type="submit" className="mt-2 w-fit">Save</Button>
         </form>
       </TabsContent>
+      {/* APPEARANCE TAB */}
       <TabsContent value="appearance">
         <form className="flex flex-col gap-5 mt-1" onSubmit={onSave}>
+          {/* ICON SECTION */}
           <div>
             <Label>Icon</Label>
             <IconPicker
@@ -113,17 +147,46 @@ export default function NodeSettingsForm({ node, onSaveSuccess }: { node: GraphN
               onChange={(icon) => setAppearance((prev) => ({ ...prev, icon }))}
             />
           </div>
+
+          {/* ICON CIRCLE SETTINGS */}
           <div>
-            <Label htmlFor="appearance-color">Node Color</Label>
-            <Input
-              id="appearance-color"
-              value={appearance.color || ""}
-              onChange={(e) =>
-                setAppearance((p) => ({ ...p, color: e.target.value }))
-              }
-              placeholder="e.g. #1a1a1a"
+            <div className="flex items-center justify-between mb-1">
+              <Label htmlFor="show-icon-circle" className="mb-0">Show Icon Circle</Label>
+              <Switch
+                id="show-icon-circle"
+                checked={!!appearance.showIconCircle}
+                onCheckedChange={(v) =>
+                  setAppearance((p) => ({ ...p, showIconCircle: v }))
+                }
+              />
+            </div>
+            {appearance.showIconCircle && (
+              <ColorSwatchInput
+                label="Icon Circle Color"
+                value={appearance.iconCircleColor || "#e9e9e9"}
+                onChange={v => setAppearance((p) => ({ ...p, iconCircleColor: v }))}
+                id="icon-circle-color"
+              />
+            )}
+          </div>
+
+          {/* COLORS */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <ColorSwatchInput
+              label="Node Background Color"
+              value={appearance.backgroundColor || ""}
+              onChange={v => setAppearance((p) => ({ ...p, backgroundColor: v }))}
+              id="background-color"
+              allowAlpha
+            />
+            <ColorSwatchInput
+              label="Node Border Color"
+              value={appearance.lineColor || ""}
+              onChange={v => setAppearance((p) => ({ ...p, lineColor: v }))}
+              id="line-color"
             />
           </div>
+          {/* SIZE */}
           <div>
             <Label htmlFor="appearance-size">
               Node Size ({appearance.size ?? 64}px)
@@ -157,6 +220,7 @@ export default function NodeSettingsForm({ node, onSaveSuccess }: { node: GraphN
           <Button type="submit" className="mt-2 w-fit">Save</Button>
         </form>
       </TabsContent>
+      {/* ADVANCED TAB */}
       <TabsContent value="advanced">
         <div className="p-2 text-sm text-muted-foreground">
           Advanced settings coming soon.
@@ -165,4 +229,3 @@ export default function NodeSettingsForm({ node, onSaveSuccess }: { node: GraphN
     </Tabs>
   );
 }
-
