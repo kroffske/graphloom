@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect } from "react";
 import {
   Sidebar,
@@ -22,6 +20,7 @@ import {
   TabsContent,
 } from "@/components/ui/tabs";
 import { useIconRegistry } from "./IconRegistry";
+import DraggableIcon from "./DraggableIcon";
 
 export function NodeSettingsSidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { selectedNodeId, nodes, setNodes } = useGraphStore();
@@ -74,17 +73,14 @@ export function NodeSettingsSidebar({ open, onClose }: { open: boolean; onClose:
         {iconKeys.map((k) => {
           const Icon = iconRegistry[k];
           return (
-            <button
-              type="button"
+            <DraggableIcon
               key={k}
-              onClick={() => onChange(k)}
-              className={`flex items-center justify-center rounded border-2 p-2 ${
-                value === k ? "border-primary" : "border-muted"
-              } bg-background hover:bg-accent`}
+              Icon={Icon}
+              filled={value === k}
               aria-label={k}
-            >
-              <Icon className="w-7 h-7" filled={value === k} />
-            </button>
+              selected={value === k}
+              onSelect={() => onChange(k)}
+            />
           );
         })}
       </div>
@@ -223,4 +219,3 @@ export function NodeSettingsSidebar({ open, onClose }: { open: boolean; onClose:
     </Sidebar>
   );
 }
-

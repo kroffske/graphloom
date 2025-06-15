@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from "react";
 import { useGraphStore, GraphNode } from "@/state/useGraphStore";
 import { Input } from "@/components/ui/input";
@@ -8,6 +7,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { useIconRegistry } from "./IconRegistry";
 import { Button } from "@/components/ui/button";
+import DraggableIcon from "./DraggableIcon";
 
 export default function NodeSettingsTab() {
   const { nodes, setNodes } = useGraphStore();
@@ -53,17 +53,14 @@ export default function NodeSettingsTab() {
         {iconKeys.map((k) => {
           const Icon = iconRegistry[k];
           return (
-            <button
-              type="button"
+            <DraggableIcon
               key={k}
-              onClick={() => onChange(k)}
-              className={`flex items-center justify-center rounded border-2 p-2 ${
-                value === k ? "border-primary" : "border-muted"
-              } bg-background hover:bg-accent`}
+              Icon={Icon}
+              filled={value === k}
               aria-label={k}
-            >
-              <Icon className="w-7 h-7" filled={value === k} />
-            </button>
+              selected={value === k}
+              onSelect={() => onChange(k)}
+            />
           );
         })}
       </div>
