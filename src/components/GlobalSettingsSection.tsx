@@ -76,13 +76,33 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
     setNodeTypeAppearance,
   } = useGraphStore();
 
-  // --- Appearance Preset Selection State ---
-  // Augment list to include a 'custom' preset if it exists
   const [customPreset, setCustomPreset] = useState<CustomPreset | null>(() => getPersistedCustomPreset());
-  // selectedPresetKey points to Preset key, can be any preset or "custom"
   const [selectedPresetKey, setSelectedPresetKey] = useState<string | undefined>(undefined);
 
-  // --- Helper: find selected preset's name ---
+  // --- Always show ALL node types (with custom, else defaults) in preset JSON ---
+  const completePresetObject = useMemo(() => {
+    // Get all known types (union of built-in and any custom appearances)
+    const typeKeys = [
+      ...new Set([
+        ...Object.keys(NODE_TYPE_LABELS),
+        ...Object.keys(nodeTypeAppearances ?? {}),
+      ]),
+    ];
+    // Compose full object with user config overriding defaults
+    const result: Record<string, any> = {};
+    for (const type of typeKeys) {
+      // If type config exists, merge over the default
+      const config = nodeTypeAppearances?.[type] || {};
+      result[type] = {
+        ...DEFAULTS,
+        icon: config.icon ?? type, // If unset, default the icon to type name
+        ...config,
+      };
+    }
+    return result;
+  }, [nodeTypeAppearances]);
+
+  // --- Augment list to include a 'custom' preset if it exists ---
   const displayedPresets = useMemo(() => {
     const presets = [...appearancePresets];
     if (customPreset) {
@@ -91,7 +111,22 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
     return presets;
   }, [customPreset]);
 
-  // Find selected preset object by key; fallback to 'Custom'
+  // Ensure selectedPresetKey always has a value - choose first available if missing
+  useEffect(() => {
+    if (!selectedPresetKey) {
+      // If for any reason there's no selected preset, pick the first one
+      if (displayedPresets.length > 0) {
+        setSelectedPresetKey(displayedPresets[0].key);
+      }
+    } else {
+      // If current selected key is not in presets (e.g. deleted), switch to first available
+      if (!displayedPresets.find(p => p.key === selectedPresetKey) && displayedPresets.length > 0) {
+        setSelectedPresetKey(displayedPresets[0].key);
+      }
+    }
+  }, [displayedPresets, selectedPresetKey]);
+
+  // Find selected preset object by key; fallback to null
   const selectedPresetObj = useMemo(() => {
     if (!selectedPresetKey) return null;
     return displayedPresets.find((p) => p.key === selectedPresetKey) || null;
@@ -153,43 +188,17 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
     e.target.value = "";
   }
 
-  // --- Always show ALL node types (with custom, else defaults) in preset JSON ---
-  const completePresetObject = useMemo(() => {
-    // Get all known types (union of built-in and any custom appearances)
-    const typeKeys = [
-      ...new Set([
-        ...Object.keys(NODE_TYPE_LABELS),
-        ...Object.keys(nodeTypeAppearances ?? {}),
-      ]),
-    ];
-    // Compose full object with user config overriding defaults
-    const result: Record<string, any> = {};
-    for (const type of typeKeys) {
-      // If type config exists, merge over the default
-      const config = nodeTypeAppearances?.[type] || {};
-      result[type] = {
-        ...DEFAULTS,
-        icon: config.icon ?? type, // If unset, default the icon to type name
-        ...config,
-      };
-    }
-    return result;
-  }, [nodeTypeAppearances]);
-
-  // Local editable JSON state
   const [editableJson, setEditableJson] = useState<string>(
     JSON.stringify(completePresetObject, null, 2),
   );
-  // Track if user edited
   const [isDirty, setIsDirty] = useState(false);
-  // When the preset object changes (e.g. after changes/reset), update JSON view if NOT dirty
+
   useEffect(() => {
     if (!isDirty) {
       setEditableJson(JSON.stringify(completePresetObject, null, 2));
     }
   }, [completePresetObject, isDirty]);
 
-  // Handler for copying JSON config
   function handleCopyPreset() {
     try {
       navigator.clipboard.writeText(editableJson);
@@ -204,7 +213,6 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
     setIsDirty(true);
   }
 
-  // Expose this handler so child forms can call it
   const handlePresetSave = useCallback(() => {
     try {
       const data = JSON.parse(editableJson);
@@ -218,9 +226,7 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
         key: CUSTOM_PRESET_KEY,
         config: data,
       });
-      // --- NEW: Apply to all nodes for immediate update ---
       updateAllNodeAppearances(data);
-
       toast.success("Preset JSON saved!");
       setIsDirty(false);
       setSelectedPresetKey(CUSTOM_PRESET_KEY);
@@ -236,14 +242,11 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
     updateAllNodeAppearances,
   ]);
 
-  // Handler to load a selected preset
   function handlePresetSelect(presetConfig: Record<string, any>, presetKey: string) {
     Object.entries(presetConfig).forEach(([type, config]) => {
       setNodeTypeAppearance(type, config);
     });
-    // --- NEW: Apply to all nodes for immediate update ---
     updateAllNodeAppearances(presetConfig);
-
     toast.success("Preset loaded!");
     setEditableJson(
       JSON.stringify(
@@ -256,25 +259,21 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
       )
     );
     setIsDirty(false);
-    if (presetKey === CUSTOM_PRESET_KEY) {
-      setSelectedPresetKey(CUSTOM_PRESET_KEY);
-    } else {
-      setSelectedPresetKey(presetKey);
-    }
+    setSelectedPresetKey(presetKey);
   }
 
-  // Handler to load a selected preset by *key* from dropdown
   function handlePresetKeyDropdownChange(presetKey: string) {
+    if (presetKey === selectedPresetKey) return;
     const preset = displayedPresets.find((p) => p.key === presetKey);
     if (preset) {
       handlePresetSelect(preset.config, preset.key);
     }
   }
 
-  // On mount, try to load persisted custom preset once
   useEffect(() => {
     const loaded = getPersistedCustomPreset();
     if (loaded) setCustomPreset(loaded);
+    // Don't set initial preset key here, handled by useEffect above
   }, []);
 
   return (
@@ -285,7 +284,6 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
           <span className="font-semibold text-xl">Global Settings</span>
         </div>
         <div className="flex flex-row items-center gap-3 mb-2">
-          {/* Dropdown for selecting preset */}
           <AppearancePresetDropdown
             presets={displayedPresets}
             selectedKey={selectedPresetKey}
@@ -367,5 +365,5 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
 
 export default GlobalSettingsSection;
 
-// NOTE: This file is getting too long (363+ lines).
+// NOTE: This file is getting too long (372+ lines).
 // Please consider asking me to refactor it into smaller files for maintainability after these changes.
