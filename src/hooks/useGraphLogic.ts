@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo, useRef, useCallback, useState } from "react";
 import {
   useNodesState,
@@ -98,21 +97,36 @@ export function useGraphLogic() {
   const handleNodesChange = useCallback(
     (changes) => {
       onNodesChange(changes);
-      setTimeout(() => {
-        setNodes(
-          rfNodes.map((n) => {
-            // Store last known positions on Zustand node objects
-            const srcData = storeNodes.find((node) => node.id === n.id);
-            return {
-              ...(srcData || { id: n.id, type: "entity", label: n.id, attributes: {} }),
-              x: n.position.x,
-              y: n.position.y,
-            };
+
+      // We only update the store when the dragging stops to avoid too many updates
+      const positionChanges = changes.filter(
+        (change) =>
+          change.type === "position" &&
+          change.position &&
+          change.dragging === false
+      );
+
+      if (positionChanges.length > 0) {
+        const changeMap = new Map(
+          positionChanges.map((c) => [c.id, c.position])
+        );
+
+        setNodes((currentStoreNodes) =>
+          currentStoreNodes.map((node) => {
+            if (changeMap.has(node.id)) {
+              const newPosition = changeMap.get(node.id)!;
+              return {
+                ...node,
+                x: newPosition.x,
+                y: newPosition.y,
+              };
+            }
+            return node;
           })
         );
-      });
+      }
     },
-    [onNodesChange, setNodes, rfNodes, storeNodes]
+    [onNodesChange, setNodes]
   );
 
   // On edge create: add to both RF and Zustand
