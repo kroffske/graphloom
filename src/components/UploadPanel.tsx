@@ -1,3 +1,4 @@
+
 import React, { useCallback, useRef, useEffect } from "react";
 import * as Papa from "papaparse";
 import { toast } from "sonner";
@@ -239,35 +240,8 @@ const UploadPanel = () => {
   // Layout: Stack vertically on mobile, horizontally on desktop
   return (
     <div className="w-full flex flex-col md:flex-row md:items-start gap-6">
-      <section
-        onDrop={onDrop}
-        onDragOver={e => e.preventDefault()}
-        className="w-full flex flex-col items-center justify-center gap-3 border-2 border-dashed border-primary/40 rounded-lg p-6 bg-card/80 shadow mb-4 transition hover:border-primary cursor-pointer md:max-w-[420px]"
-        tabIndex={0}
-        aria-label="Upload CSV files"
-        onClick={() => fileInputRef.current?.click()}
-        role="button"
-        onKeyDown={e => { if (e.key === "Enter" || e.key === " ") fileInputRef.current?.click(); }}
-      >
-        <span className="text-lg font-bold text-foreground mb-1">Upload Graph Data</span>
-        <span className="text-sm text-muted-foreground">
-          Drag & drop <b>nodes.csv</b> and <b>edges.csv</b> here, or click to browse
-        </span>
-        <input
-          ref={fileInputRef}
-          multiple
-          type="file"
-          accept=".csv"
-          className="hidden"
-          onChange={onFiles}
-          aria-label="Upload CSV files input"
-        />
-      </section>
-      <div className="flex flex-col md:gap-3 gap-4 md:mt-0 mt-[-1.2rem] w-full max-w-[420px]">
-        <SampleTabs onFillExample={fillExample} />
-      </div>
-      {/* ---- Global Settings Area (inline, no Sheet/panel) ---- */}
-      <div className="w-full mt-6 flex flex-col gap-5 px-1 max-w-2xl">
+      {/* ---- Global Settings Area (now leftmost column) ---- */}
+      <div className="w-full md:w-[370px] min-w-[270px] mt-0 flex flex-col gap-5 px-1 max-w-2xl">
         <section className="border border-border rounded-lg bg-card/80 shadow p-5 flex flex-col gap-4">
           <div className="flex flex-row items-center gap-2 mb-1">
             <Settings className="w-5 h-5 text-muted-foreground" />
@@ -303,8 +277,38 @@ const UploadPanel = () => {
           </p>
         </section>
       </div>
+      {/* ---- Upload Graph Data ---- */}
+      <section
+        onDrop={onDrop}
+        onDragOver={e => e.preventDefault()}
+        className="w-full flex flex-col items-center justify-center gap-3 border-2 border-dashed border-primary/40 rounded-lg p-6 bg-card/80 shadow mb-4 transition hover:border-primary cursor-pointer md:max-w-[420px]"
+        tabIndex={0}
+        aria-label="Upload CSV files"
+        onClick={() => fileInputRef.current?.click()}
+        role="button"
+        onKeyDown={e => { if (e.key === "Enter" || e.key === " ") fileInputRef.current?.click(); }}
+      >
+        <span className="text-lg font-bold text-foreground mb-1">Upload Graph Data</span>
+        <span className="text-sm text-muted-foreground">
+          Drag & drop <b>nodes.csv</b> and <b>edges.csv</b> here, or click to browse
+        </span>
+        <input
+          ref={fileInputRef}
+          multiple
+          type="file"
+          accept=".csv"
+          className="hidden"
+          onChange={onFiles}
+          aria-label="Upload CSV files input"
+        />
+      </section>
+      {/* ---- Example Sample Tabs ---- */}
+      <div className="flex flex-col md:gap-3 gap-4 md:mt-0 mt-[-1.2rem] w-full max-w-[420px]">
+        <SampleTabs onFillExample={fillExample} />
+      </div>
     </div>
   );
 };
 
 export default UploadPanel;
+
