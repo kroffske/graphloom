@@ -1,8 +1,6 @@
-
 import React from "react";
 import { useGraphStore } from "@/state/useGraphStore";
 import { DEFAULT_EDGE_COLOR, DEFAULT_EDGE_WIDTH } from "@/config/graphConstants";
-import { resolveLabel as resolveJoinedLabel } from "@/utils/labelJoin";
 import { resolveLabelTemplate } from "@/utils/labelTemplate";
 
 type GraphD3EdgeLayerProps = {
@@ -61,8 +59,6 @@ const GraphD3EdgeLayer: React.FC<GraphD3EdgeLayerProps> = ({
               target: t, // pass full target node
             };
             edgeLabel = resolveLabelTemplate(edgeApp.labelTemplate, context, fallbackId);
-          } else if (edgeApp.labelField) {
-            edgeLabel = resolveJoinedLabel(edgeApp.labelField, e.attributes, fallbackId);
           }
         }
 

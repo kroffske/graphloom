@@ -1,9 +1,7 @@
-
 export type NodeTypeAppearance = {
   icon?: string;
   color?: string; // legacy primary color
   size?: number;
-  labelField?: string;
   labelTemplate?: string;
   backgroundColor?: string;
   lineColor?: string; // legacy border color
@@ -21,7 +19,6 @@ export type NodeTypeAppearance = {
 export type EdgeTypeAppearance = {
   color?: string;
   width?: number;
-  labelField?: string;
   labelTemplate?: string;
   icon?: string; // for future use
 };

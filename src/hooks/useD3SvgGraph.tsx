@@ -4,7 +4,6 @@ import { useD3DragNodes } from "@/hooks/useD3DragNodes";
 import { useD3ZoomAndPan } from "@/hooks/useD3ZoomAndPan";
 import GraphD3NodeMount from "@/components/GraphD3NodeMount";
 import { useGraphStore } from "@/state/useGraphStore";
-import { resolveLabel as resolveJoinedLabel } from "@/utils/labelJoin";
 import { resolveLabelTemplate } from "@/utils/labelTemplate";
 
 // Break out the shape constants since they may be used outside the hook as well
@@ -30,9 +29,6 @@ type UseD3SvgGraphProps = {
   setDragging: (d: any) => void;
   captureSimulationPositions: (simNodes: any[]) => void;
   initialPositions?: Record<string, { x: number; y: number }>;
-  simulation: any;
-  simNodes: any[];
-  simEdges: any[];
   /**
    * Optional: show context menu for edge (edgeId, event)
    * You can plug in a UI or logic to display/hide a menu.
@@ -66,8 +62,6 @@ function getEdgeLabel(
         target: targetNode,
       };
       label = resolveLabelTemplate(edgeApp.labelTemplate, context, fallbackId);
-    } else if (edgeApp.labelField) {
-      label = resolveJoinedLabel(edgeApp.labelField, d.attributes, fallbackId);
     }
   }
   return label || "";

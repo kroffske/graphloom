@@ -2,7 +2,6 @@ import React from "react";
 import type { GraphNode } from "@/types/graph";
 import { useIconRegistry } from "./IconRegistry";
 import { useGraphStore } from "@/state/useGraphStore";
-import { resolveLabel as resolveJoinedLabel } from "@/utils/labelJoin";
 import { resolveLabelTemplate } from "@/utils/labelTemplate";
 
 /**
@@ -35,7 +34,6 @@ const GraphD3Node = ({
   const borderColor = appearance.borderColor || "#e5e7eb";
   const borderEnabled = Boolean(appearance.borderEnabled);
   const nodeSize = appearance.size ?? 64;
-  const labelField = appearance.labelField || "label";
   const labelTemplate = appearance.labelTemplate;
   const Icon = iconRegistry[iconType];
 
@@ -53,7 +51,7 @@ const GraphD3Node = ({
   // Label extraction
   const label = labelTemplate
     ? resolveLabelTemplate(labelTemplate, { ...node, ...node.attributes }, node.label)
-    : resolveJoinedLabel(labelField, node.attributes, node.label);
+    : node.label;
 
   // For layout: svg circle is nodeSize, keep icon slightly smaller
   const radius = nodeSize / 2;
