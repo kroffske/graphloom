@@ -1,7 +1,13 @@
 
 // EXPANDED: Lucide icons group with more choices (add more as needed)
 export const ICON_GROUPS: Record<string, string[]> = {
-  "Classic": ["entity", "process", "data-store", "event", "decision", "external-system"],
+  "Classic": [
+    "entity", "process", "data-store", "event", "decision", "external-system",
+    // 18 new icons
+    "api", "service", "microservice", "webhook", "cache", "queue", "stream",
+    "warehouse", "server", "load-balancer", "gateway", "firewall", "workflow",
+    "rule", "connector", "monitor", "alert", "security"
+  ],
   "Lucide": [
     "user", "activity", "alert-circle", "airplay", "air-vent", "alarm-clock", "align-center", "align-justify", "anchor",
     "archive", "archive-x", "award", "baby", "battery", "bell", "bell-off", "book", "bookmark", "box", "briefcase", "building", "calendar", "camera", "car", "check", "chevron-down",

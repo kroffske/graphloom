@@ -6,7 +6,27 @@ import DataStoreIcon from "./NodeIcons/DataStoreIcon";
 import EventIcon from "./NodeIcons/EventIcon";
 import DecisionIcon from "./NodeIcons/DecisionIcon";
 import ExternalSystemIcon from "./NodeIcons/ExternalSystemIcon";
+import ApiIcon from "./NodeIcons/ApiIcon";
+import ServiceIcon from "./NodeIcons/ServiceIcon";
+import MicroserviceIcon from "./NodeIcons/MicroserviceIcon";
+import WebhookIcon from "./NodeIcons/WebhookIcon";
+import CacheIcon from "./NodeIcons/CacheIcon";
+import QueueIcon from "./NodeIcons/QueueIcon";
+import StreamIcon from "./NodeIcons/StreamIcon";
+import WarehouseIcon from "./NodeIcons/WarehouseIcon";
+import ServerIcon from "./NodeIcons/ServerIcon";
+import LoadBalancerIcon from "./NodeIcons/LoadBalancerIcon";
+import GatewayIcon from "./NodeIcons/GatewayIcon";
+import FirewallIcon from "./NodeIcons/FirewallIcon";
+import WorkflowIcon from "./NodeIcons/WorkflowIcon";
+import RuleIcon from "./NodeIcons/RuleIcon";
+import ConnectorIcon from "./NodeIcons/ConnectorIcon";
+import MonitorIcon from "./NodeIcons/MonitorIcon";
+import AlertIcon from "./NodeIcons/AlertIcon";
+import SecurityIcon from "./NodeIcons/SecurityIcon";
+
 import { icons } from "lucide-react";
+import { ICON_GROUPS } from "@/config/iconConstants";
 
 export type IconRegistryType = {
   [nodeType: string]: React.ComponentType<{
@@ -26,17 +46,28 @@ const classicIcons: IconRegistryType = {
   event: EventIcon,
   decision: DecisionIcon,
   "external-system": ExternalSystemIcon,
+  // New Icons
+  api: ApiIcon,
+  service: ServiceIcon,
+  microservice: MicroserviceIcon,
+  webhook: WebhookIcon,
+  cache: CacheIcon,
+  queue: QueueIcon,
+  stream: StreamIcon,
+  warehouse: WarehouseIcon,
+  server: ServerIcon,
+  "load-balancer": LoadBalancerIcon,
+  gateway: GatewayIcon,
+  firewall: FirewallIcon,
+  workflow: WorkflowIcon,
+  rule: RuleIcon,
+  connector: ConnectorIcon,
+  monitor: MonitorIcon,
+  alert: AlertIcon,
+  security: SecurityIcon,
 };
 
-const lucideIconNames = [
-    "user", "activity", "alert-circle", "airplay", "air-vent", "alarm-clock", "align-center", "align-justify", "anchor",
-    "award", "baby", "battery", "bell", "book", "bookmark", "briefcase", "building", "calendar", "camera", "car", "check", "chevron-down",
-    "circle", "cloud", "code", "coffee", "compass", "computer", "cpu", "database", "dice", "disc", "dollar-sign", "download", "edit", "eye",
-    "file", "flag", "folder", "gift", "globe", "grid", "heart", "home", "image", "key", "layers", "layout", "lightbulb", "link", "list", "lock",
-    "map", "menu", "message-square", "mic", "moon", "music", "paperclip", "phone", "pie-chart", "play", "plus", "printer", "refresh-cw", "save",
-    "scissors", "search", "settings", "share", "shield", "shopping-cart", "shuffle", "sliders", "star", "sun", "tag", "thumbs-up", "trash", "trending-up",
-    "tv", "umbrella", "unlock", "upload", "user-check", "users", "video", "watch", "wifi", "zap"
-];
+const lucideIconNames = ICON_GROUPS.Lucide;
 
 const lucideIcons: IconRegistryType = {};
 lucideIconNames.forEach(name => {
