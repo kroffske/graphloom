@@ -6,14 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { useIconRegistry } from "./IconRegistry";
 import DraggableIcon from "./DraggableIcon";
-import { Textarea } from "@/components/ui/textarea";
 
 // --- Dynamic: Node Type labels ---
-// Friendly names for built-ins; fallback to type key for unknowns
 const FRIENDLY_TYPE_LABELS: Record<string, string> = {
   entity: "Entity",
   process: "Process",
@@ -41,12 +38,9 @@ export default function NodeTypeAppearanceSettings() {
   } = useGraphStore();
 
   // ---- DYNAMIC NODE TYPES ----
-  // Always use all type keys from the store's nodeTypeAppearances (after preset/json load)
-  // Fallback: if empty, use classic built-in types for initial UX
   const nodeTypeKeys: string[] = useMemo(() => {
     const keys = Object.keys(nodeTypeAppearances ?? {});
     if (keys.length > 0) return keys;
-    // fallback to built-ins for new users, if needed:
     return [
       "entity",
       "process",
@@ -56,7 +50,6 @@ export default function NodeTypeAppearanceSettings() {
       "external-system",
     ];
   }, [nodeTypeAppearances]);
-  // Label dictionary is always auto-built
   const nodeTypeLabels: Record<string, string> = useMemo(() => {
     const labels: Record<string, string> = {};
     nodeTypeKeys.forEach(
@@ -64,10 +57,8 @@ export default function NodeTypeAppearanceSettings() {
     );
     return labels;
   }, [nodeTypeKeys]);
-
   // Select first available node type by default
   const [selectedType, setSelectedType] = useState(nodeTypeKeys[0] || "");
-  // Update selectedType if keys change (e.g. after preset/json loaded)
   React.useEffect(() => {
     if (!nodeTypeKeys.includes(selectedType) && nodeTypeKeys[0]) {
       setSelectedType(nodeTypeKeys[0]);
@@ -75,8 +66,6 @@ export default function NodeTypeAppearanceSettings() {
   }, [nodeTypeKeys, selectedType]);
   const selectedLabel = nodeTypeLabels[selectedType] || selectedType;
 
-  // Local state for editing
-  const [tab, setTab] = useState("appearance");
   // Get current appearance for type, or provide defaults
   const appearance = nodeTypeAppearances?.[selectedType] || {};
 
@@ -218,7 +207,7 @@ export default function NodeTypeAppearanceSettings() {
     );
   }
 
-  // Layout: Just the settings column, no right-side JSON here
+  // --- SIMPLIFIED LAYOUT: no subtabs, all controls visible in single panel ---
   return (
     <section className="w-full">
       <div className="font-semibold text-lg mb-2 flex items-center gap-2">
@@ -241,97 +230,79 @@ export default function NodeTypeAppearanceSettings() {
             ))}
           </select>
         </div>
-        <Tabs value={tab} onValueChange={setTab} className="w-full mt-1">
-          <TabsList className="grid w-full grid-cols-3 mb-2">
-            <TabsTrigger value="appearance">Appearance</TabsTrigger>
-            <TabsTrigger value="general">General</TabsTrigger>
-            <TabsTrigger value="advanced">Advanced</TabsTrigger>
-          </TabsList>
-          <TabsContent value="appearance">
-            <div className="flex flex-col gap-4">
-              {/* Icon Picker */}
-              <div>
-                <Label>Icon</Label>
-                <IconPicker
-                  value={icon}
-                  onChange={setIcon}
-                  order={iconOrder}
-                  setOrder={setIconOrder}
-                />
-                <div className="flex items-center mt-2">
-                  <Label htmlFor="show-icon-circle" className="mb-0 mr-2">Show Icon Circle</Label>
-                  <Switch
-                    id="show-icon-circle"
-                    checked={!!showIconCircle}
-                    onCheckedChange={setShowIconCircle}
-                  />
-                  {showIconCircle && (
-                    <Input
-                      id="icon-circle-color"
-                      className="ml-3 max-w-[100px]"
-                      type="text"
-                      value={iconCircleColor}
-                      onChange={e => setIconCircleColor(e.target.value)}
-                      placeholder="#e9e9e9"
-                    />
-                  )}
-                </div>
-              </div>
-              <div>
-                <Label htmlFor="node-bg-color">Node Background Color</Label>
+        {/* Controls for node appearance settings */}
+        <div className="flex flex-col gap-4 mt-3">
+          {/* Icon Picker */}
+          <div>
+            <Label>Icon</Label>
+            <IconPicker
+              value={icon}
+              onChange={setIcon}
+              order={iconOrder}
+              setOrder={setIconOrder}
+            />
+            <div className="flex items-center mt-2">
+              <Label htmlFor="show-icon-circle" className="mb-0 mr-2">Show Icon Circle</Label>
+              <Switch
+                id="show-icon-circle"
+                checked={!!showIconCircle}
+                onCheckedChange={setShowIconCircle}
+              />
+              {showIconCircle && (
                 <Input
-                  id="node-bg-color"
-                  value={backgroundColor}
-                  onChange={e => setBackgroundColor(e.target.value)}
-                  placeholder="#RRGGBBAA"
+                  id="icon-circle-color"
+                  className="ml-3 max-w-[100px]"
+                  type="text"
+                  value={iconCircleColor}
+                  onChange={e => setIconCircleColor(e.target.value)}
+                  placeholder="#e9e9e9"
                 />
-              </div>
-              <div>
-                <Label htmlFor="node-line-color">Node Border Color</Label>
-                <Input
-                  id="node-line-color"
-                  value={lineColor}
-                  onChange={e => setLineColor(e.target.value)}
-                  placeholder="#RRGGBB"
-                />
-              </div>
-              <div>
-                <Label htmlFor="appearance-size">
-                  Node Size ({size ?? 64}px)
-                </Label>
-                <Slider
-                  id="appearance-size"
-                  min={40}
-                  max={120}
-                  step={2}
-                  value={[size]}
-                  onValueChange={([s]) => setSize(s)}
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <Label htmlFor="appearance-label-field">Label Field</Label>
-                <Input
-                  id="appearance-label-field"
-                  value={labelField}
-                  onChange={e => setLabelField(e.target.value)}
-                  placeholder='e.g. "label", "name", "attribute"'
-                />
-              </div>
+              )}
             </div>
-          </TabsContent>
-          <TabsContent value="general">
-            <div className="p-2 text-sm text-muted-foreground">
-              General settings coming soon.
-            </div>
-          </TabsContent>
-          <TabsContent value="advanced">
-            <div className="p-2 text-sm text-muted-foreground">
-              Advanced settings coming soon.
-            </div>
-          </TabsContent>
-        </Tabs>
-        <div className="flex gap-2 mt-2">
+          </div>
+          <div>
+            <Label htmlFor="node-bg-color">Node Background Color</Label>
+            <Input
+              id="node-bg-color"
+              value={backgroundColor}
+              onChange={e => setBackgroundColor(e.target.value)}
+              placeholder="#RRGGBBAA"
+            />
+          </div>
+          <div>
+            <Label htmlFor="node-line-color">Node Border Color</Label>
+            <Input
+              id="node-line-color"
+              value={lineColor}
+              onChange={e => setLineColor(e.target.value)}
+              placeholder="#RRGGBB"
+            />
+          </div>
+          <div>
+            <Label htmlFor="appearance-size">
+              Node Size ({size ?? 64}px)
+            </Label>
+            <Slider
+              id="appearance-size"
+              min={40}
+              max={120}
+              step={2}
+              value={[size]}
+              onValueChange={([s]) => setSize(s)}
+              className="w-full"
+            />
+          </div>
+          <div>
+            <Label htmlFor="appearance-label-field">Label Field</Label>
+            <Input
+              id="appearance-label-field"
+              value={labelField}
+              onChange={e => setLabelField(e.target.value)}
+              placeholder='e.g. "label", "name", "attribute"'
+            />
+          </div>
+        </div>
+        <div className="flex gap-2 mt-4">
           <Button type="submit" className="w-fit">Save</Button>
           <Button type="button" variant="outline" className="w-fit" onClick={handleReset}>
             Reset to Default
@@ -344,4 +315,3 @@ export default function NodeTypeAppearanceSettings() {
     </section>
   );
 }
-
