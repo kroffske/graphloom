@@ -18,10 +18,31 @@ function getFallbackXY(idx: number, total: number) {
   return { x, y };
 }
 
-export function useD3Layout(layoutMode: "force" | "circle" | "hierarchy" | "manual", nodes: any[], edges: any[], manualPositions: Record<string, { x: number; y: number }>) {
+/**
+ * Add a new prop: initialPositions (map of node.id -> {x, y}).
+ */
+export function useD3Layout(
+  layoutMode: "force" | "circle" | "hierarchy" | "manual",
+  nodes: any[],
+  edges: any[],
+  manualPositions: Record<string, { x: number; y: number }>,
+  initialPositions?: Record<string, { x: number; y: number }>
+) {
   return useMemo(() => {
     if (layoutMode === "force") {
-      return d3LayoutForce(nodes, edges, NODE_RADIUS, WIDTH, HEIGHT);
+      // Seed each node with x/y from initialPositions if available!
+      const nodesWithXY = nodes.map((n) => {
+        if (
+          initialPositions &&
+          initialPositions[n.id] &&
+          typeof initialPositions[n.id].x === "number" &&
+          typeof initialPositions[n.id].y === "number"
+        ) {
+          return { ...n, x: initialPositions[n.id].x, y: initialPositions[n.id].y };
+        }
+        return { ...n };
+      });
+      return d3LayoutForce(nodesWithXY, edges, NODE_RADIUS, WIDTH, HEIGHT);
     }
     if (layoutMode === "circle") {
       return d3LayoutCircle(nodes, edges, WIDTH, HEIGHT);
@@ -47,6 +68,6 @@ export function useD3Layout(layoutMode: "force" | "circle" | "hierarchy" | "manu
       simNodes,
       simEdges,
     };
-  }, [layoutMode, nodes, edges, manualPositions]);
+  }, [layoutMode, nodes, edges, manualPositions, initialPositions]);
 }
 

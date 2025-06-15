@@ -29,6 +29,9 @@ const GraphD3Canvas: React.FC = () => {
   const [dragging, setDragging] = React.useState<null | { id: string; offsetX: number; offsetY: number }>(null);
   const [hiddenNodeIds, setHiddenNodeIds] = React.useState<Set<string>>(new Set());
 
+  // Positions ref for D3 force/visible nodes
+  const lastSimPositionsRef = useRef<Record<string, { x: number; y: number }>>({});
+
   // Filtering logic
   const filteredNodes = React.useMemo(
     () => nodes.filter((n) => !hiddenNodeIds.has(n.id)),
@@ -40,6 +43,23 @@ const GraphD3Canvas: React.FC = () => {
     [edges, filteredNodeIds]
   );
   const hoveredNode = nodes.find((n) => n.id === hoveredNodeId);
+
+  // Store simulation positions on each tick (via GraphD3SvgLayer's callback)
+  const handleCaptureSimulationPositions = useCallback(
+    (simNodes: any[]) => {
+      // Only update positions for visible nodes
+      const pos: Record<string, { x: number; y: number }> = {};
+      simNodes.forEach((n: any) => {
+        if (typeof n.x === "number" && typeof n.y === "number") {
+          pos[n.id] = { x: n.x, y: n.y };
+        }
+      });
+      lastSimPositionsRef.current = pos;
+      // Also call main state capture if needed
+      captureSimulationPositions(simNodes);
+    },
+    [captureSimulationPositions]
+  );
 
   // Keyboard shortcuts for hiding
   React.useEffect(() => {
@@ -67,15 +87,34 @@ const GraphD3Canvas: React.FC = () => {
     (mode: "force" | "circle" | "hierarchy" | "manual") => {
       if (mode === "manual" && layoutMode !== "manual") {
         // Capture current positions and set them as manual positions
-        const simPositions = getLastSimulationPositions();
+        const simPositions = lastSimPositionsRef.current;
         if (Object.keys(simPositions).length > 0) {
           setManualPositions(simPositions);
         }
       }
       setLayoutMode(mode);
     },
-    [layoutMode, getLastSimulationPositions, setManualPositions]
+    [layoutMode, setManualPositions]
   );
+
+  // PREVENT LAYOUT RESET: store last positions of visible nodes on hide/show
+  // When nodes/edges or hiddenNodeIds changes, always inject last positions for force layout
+
+  // Save a snapshot of the last visible node positions for seeding D3 force sim
+  // Pass this on to useD3Layout as 'initialPositions' (only for force mode!)
+  const d3InitialPositions = React.useMemo(() => {
+    // Only for filtered nodes (those being displayed)
+    const result: Record<string, { x: number; y: number }> = {};
+    filteredNodes.forEach((n) => {
+      // Try our ref, then the node's own x/y (in case reloaded)
+      if (lastSimPositionsRef.current[n.id]) {
+        result[n.id] = lastSimPositionsRef.current[n.id];
+      } else if (typeof n.x === "number" && typeof n.y === "number") {
+        result[n.id] = { x: n.x, y: n.y };
+      }
+    });
+    return result;
+  }, [filteredNodes]);
 
   return (
     <div className="relative w-full h-[70vh] bg-background border rounded-lg overflow-hidden shadow-lg">
@@ -97,7 +136,8 @@ const GraphD3Canvas: React.FC = () => {
         setContextNodeId={setContextNodeId}
         dragging={dragging}
         setDragging={setDragging}
-        captureSimulationPositions={captureSimulationPositions}
+        captureSimulationPositions={handleCaptureSimulationPositions}
+        initialPositions={layoutMode === "force" ? d3InitialPositions : undefined}
       />
       {contextNodeId && (
         <div className="fixed z-50 left-36 top-32 pointer-events-none"></div>
@@ -108,3 +148,4 @@ const GraphD3Canvas: React.FC = () => {
 };
 
 export default GraphD3Canvas;
+
