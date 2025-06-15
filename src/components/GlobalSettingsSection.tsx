@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useGraphStore } from "@/state/useGraphStore";
 import { toast } from "sonner";
 import { appearancePresets } from "@/data/appearancePresets";
+import AppearancePresetDropdown from "./AppearancePresetDropdown";
 
 // Node type labels for all built-in types (should match those in NodeTypeAppearanceSettings)
 const NODE_TYPE_LABELS: Record<string, string> = {
@@ -262,6 +263,14 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
     }
   }
 
+  // Handler to load a selected preset by *key* from dropdown
+  function handlePresetKeyDropdownChange(presetKey: string) {
+    const preset = displayedPresets.find((p) => p.key === presetKey);
+    if (preset) {
+      handlePresetSelect(preset.config, preset.key);
+    }
+  }
+
   // On mount, try to load persisted custom preset once
   useEffect(() => {
     const loaded = getPersistedCustomPreset();
@@ -275,11 +284,13 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
           <Settings className="w-5 h-5 text-muted-foreground" />
           <span className="font-semibold text-xl">Global Settings</span>
         </div>
-        {/* Selected Appearance Preset indicator */}
         <div className="flex flex-row items-center gap-3 mb-2">
-          <span className="text-sm font-medium text-muted-foreground">
-            Selected Appearance Preset:
-          </span>
+          {/* Dropdown for selecting preset */}
+          <AppearancePresetDropdown
+            presets={displayedPresets}
+            selectedKey={selectedPresetKey}
+            onSelect={handlePresetKeyDropdownChange}
+          />
           <span className="inline-flex items-center rounded bg-primary/10 text-primary font-semibold px-3 py-0.5 text-sm">
             {selectedPresetObj?.name ?? "—"}
           </span>
@@ -304,17 +315,15 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
           />
         </div>
         <div className="flex flex-col gap-3">
-          {/* Only ONE heading, not duplicated */}
           <span className="font-semibold text-base mt-1 mb-0.5">Appearance Presets</span>
           <AppearancePresetsSection
             onPresetSelect={handlePresetSelect}
             selectedPresetKey={selectedPresetKey}
-            appearancePresets={displayedPresets}  // Pass dynamic list
+            appearancePresets={displayedPresets}
           />
         </div>
         <div className="w-full flex flex-col md:flex-row gap-6 mt-2">
           <div className="w-full md:w-1/2 flex-shrink-0">
-            {/* Pass saveCustomPresetFromJson to NodeTypeAppearanceSettings */}
             <NodeTypeAppearanceSettings
               onSaveCustomPresetFromJson={handlePresetSave}
             />
@@ -358,5 +367,5 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
 
 export default GlobalSettingsSection;
 
-// NOTE: This file is getting too long (349+ lines).
+// NOTE: This file is getting too long (363+ lines).
 // Please consider asking me to refactor it into smaller files for maintainability after these changes.
