@@ -1,5 +1,5 @@
 
-import React, { useRef } from "react";
+import React, { useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import AppearancePresetsSection from "@/components/AppearancePresetsSection";
 import { Settings, Import } from "lucide-react";
@@ -7,6 +7,27 @@ import NodeTypeAppearanceSettings from "@/components/NodeTypeAppearanceSettings"
 import { Textarea } from "@/components/ui/textarea";
 import { useGraphStore } from "@/state/useGraphStore";
 import { toast } from "sonner";
+
+// Node type labels for all built-in types (should match those in NodeTypeAppearanceSettings)
+const NODE_TYPE_LABELS: Record<string, string> = {
+  entity: "Entity",
+  process: "Process",
+  "data-store": "Data Store",
+  event: "Event",
+  decision: "Decision",
+  "external-system": "External System",
+};
+// Default appearance for any type
+const DEFAULTS = {
+  icon: undefined,
+  backgroundColor: "",
+  lineColor: "",
+  size: 64,
+  labelField: "label",
+  showIconCircle: false,
+  iconCircleColor: "#e9e9e9",
+  iconOrder: undefined,
+};
 
 type GlobalSettingsSectionProps = {
   onFillExample: () => void;
@@ -59,10 +80,33 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
     e.target.value = "";
   }
 
+  // --- Always show ALL node types (with custom, else defaults) in preset JSON ---
+  const completePresetObject = useMemo(() => {
+    // Get all known types (union of built-in and any custom appearances)
+    const typeKeys = [
+      ...new Set([
+        ...Object.keys(NODE_TYPE_LABELS),
+        ...Object.keys(nodeTypeAppearances ?? {}),
+      ]),
+    ];
+    // Compose full object with user config overriding defaults
+    const result: Record<string, any> = {};
+    for (const type of typeKeys) {
+      // If type config exists, merge over the default
+      const config = nodeTypeAppearances?.[type] || {};
+      result[type] = {
+        ...DEFAULTS,
+        icon: config.icon ?? type, // If unset, default the icon to type name
+        ...config,
+      };
+    }
+    return result;
+  }, [nodeTypeAppearances]);
+
   // Handler for copying JSON config
   function handleCopyPreset() {
     try {
-      navigator.clipboard.writeText(JSON.stringify(nodeTypeAppearances, null, 2));
+      navigator.clipboard.writeText(JSON.stringify(completePresetObject, null, 2));
       toast.success("Appearance preset JSON copied!");
     } catch {
       toast.error("Unable to copy JSON!");
@@ -114,7 +158,7 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
               >Copy</Button>
             </div>
             <Textarea
-              value={JSON.stringify(nodeTypeAppearances, null, 2)}
+              value={JSON.stringify(completePresetObject, null, 2)}
               readOnly
               className="bg-muted resize-none font-mono text-xs min-h-[300px] max-h-[600px] h-full"
               style={{ minWidth: "170px" }}
