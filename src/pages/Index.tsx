@@ -7,12 +7,11 @@ import InspectorPanel from "@/components/InspectorPanel";
 import ThemeToggle from "@/components/ThemeToggle";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import NodeSettingsTab from "@/components/NodeSettingsTab";
-// No more NodeSettingsSidebar import
+// No more NodeSettingsTab import
 
 const Index = () => {
-  // "mainTab" controls the main content area, now includes "settings"
-  const [mainTab, setMainTab] = useState<"upload" | "graph" | "settings">("graph");
+  // "mainTab" controls the main content area; remove "settings"
+  const [mainTab, setMainTab] = useState<"upload" | "graph">("graph");
 
   return (
     <IconRegistryProvider>
@@ -24,10 +23,10 @@ const Index = () => {
           </h1>
           <ThemeToggle />
         </header>
-        {/* Tabs for Upload, Graph & Node Settings */}
+        {/* Tabs for Upload & Graph Only */}
         <Tabs
           value={mainTab}
-          onValueChange={(v) => setMainTab(v as "upload" | "graph" | "settings")}
+          onValueChange={(v) => setMainTab(v as "upload" | "graph")}
           className="w-full"
         >
           <TabsList className="w-full mb-0 border-b border-border pt-2 px-2 bg-background">
@@ -37,11 +36,8 @@ const Index = () => {
             <TabsTrigger value="graph" className="flex-1 text-lg py-2">
               Graph
             </TabsTrigger>
-            <TabsTrigger value="settings" className="flex-1 text-lg py-2">
-              Node Settings
-            </TabsTrigger>
           </TabsList>
-          {/* Tab Content Container */}
+          {/* Main Content */}
           <SidebarProvider>
             <div className="flex-1 flex flex-row w-full min-h-0 max-h-[calc(100vh-70px)] overflow-hidden">
               <main className="flex-1 flex flex-col pl-7 pr-2 pt-6 pb-0 max-w-[calc(100vw-370px)]">
@@ -51,12 +47,9 @@ const Index = () => {
                 <TabsContent value="graph" className="p-0 h-full w-full">
                   <GraphD3Canvas />
                 </TabsContent>
-                <TabsContent value="settings" className="p-0 h-full w-full">
-                  <NodeSettingsTab />
-                </TabsContent>
               </main>
               <InspectorPanel />
-              {/* Remove NodeSettingsSidebar */}
+              {/* NodeSettingsSidebar removed */}
             </div>
           </SidebarProvider>
         </Tabs>
