@@ -18,9 +18,6 @@ function castToSupportedType(val: unknown): string | number | boolean {
   return String(val);
 }
 
-const RESERVED_NODE_KEYS = ["node_id", "node_type", "label"];
-const RESERVED_EDGE_KEYS = ["source", "target", "edge_type"];
-
 // Parse logic moved locally
 function parseCsvData(nodesCsv: string, edgesCsv: string) {
   const resultsNodes = Papa.parse(nodesCsv.trim(), { header: true, skipEmptyLines: true });
@@ -33,9 +30,7 @@ function parseCsvData(nodesCsv: string, edgesCsv: string) {
       nodeIds.add(nodeId);
       const attributes: Record<string, string | number | boolean> = {};
       Object.entries(row).forEach(([k, v]) => {
-        if (!RESERVED_NODE_KEYS.includes(k)) {
-          attributes[k] = castToSupportedType(v);
-        }
+        attributes[k] = castToSupportedType(v);
       });
       return {
         id: nodeId,
@@ -48,13 +43,11 @@ function parseCsvData(nodesCsv: string, edgesCsv: string) {
 
   const resultsEdges = Papa.parse(edgesCsv.trim(), { header: true, skipEmptyLines: true });
   const dataEdges = resultsEdges.data as any[];
-  // Now: include all CSV columns as edge "attributes", except our base keys
+  // Now: include all CSV columns as edge "attributes"
   const edges = dataEdges.map((row, i) => {
     const attributes: Record<string, string | number | boolean> = {};
     Object.entries(row).forEach(([k, v]) => {
-      if (!RESERVED_EDGE_KEYS.includes(k)) {
-        attributes[k] = castToSupportedType(v);
-      }
+      attributes[k] = castToSupportedType(v);
     });
     return {
       id: `e${i + 1}`,
@@ -117,9 +110,7 @@ const UploadCsvSection: React.FC<UploadCsvSectionProps> = ({ onExample }) => {
           ids.add(nodeId);
           const attributes: Record<string, string | number | boolean> = {};
           Object.entries(row).forEach(([k, v]) => {
-            if (!RESERVED_NODE_KEYS.includes(k)) {
-              attributes[k] = castToSupportedType(v);
-            }
+            attributes[k] = castToSupportedType(v);
           });
           return {
             id: nodeId,
@@ -160,9 +151,7 @@ const UploadCsvSection: React.FC<UploadCsvSectionProps> = ({ onExample }) => {
         const edges = data.map((row, i) => {
           const attributes: Record<string, string | number | boolean> = {};
           Object.entries(row).forEach(([k, v]) => {
-            if (!RESERVED_EDGE_KEYS.includes(k)) {
-              attributes[k] = castToSupportedType(v);
-            }
+            attributes[k] = castToSupportedType(v);
           });
           return {
             id: `e${i + 1}`,
