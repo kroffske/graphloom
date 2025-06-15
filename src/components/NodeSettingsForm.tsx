@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,6 +40,14 @@ function ColorSwatchInput({ label, value, onChange, id, allowAlpha = false }: { 
   );
 }
 
+// NEW UTILITY: reorder array by removing one index and inserting at a new index
+function reorder<T>(list: T[], startIndex: number, endIndex: number): T[] {
+  const result = Array.from(list);
+  const [removed] = result.splice(startIndex, 1);
+  result.splice(endIndex, 0, removed);
+  return result;
+}
+
 export default function NodeSettingsForm({ node, onSaveSuccess }: { node: GraphNode; onSaveSuccess?: () => void }) {
   const { nodes, setNodes } = useGraphStore();
   const [tab, setTab] = useState("general");
@@ -58,28 +67,96 @@ export default function NodeSettingsForm({ node, onSaveSuccess }: { node: GraphN
     setAppearance(node.appearance || {});
   }, [node]);
 
-  // Icon Picker
+  // Icon Picker: support draggable reordering
   const iconRegistry = useIconRegistry();
-  const iconKeys = Object.keys(iconRegistry);
-  // NEW: import DraggableIcon
-  // Put this at the top with other imports:
-  // import DraggableIcon from "./DraggableIcon";
+  const allIconKeys = Object.keys(iconRegistry);
+
+  // Store user's icon order in local state
+  const [iconOrder, setIconOrder] = useState<string[]>(allIconKeys);
+  // Recompute icon keys if registry changes
+  React.useEffect(() => {
+    setIconOrder((prev) => {
+      // preserve order of any previously ordered icons, append any new icons
+      const prevSet = new Set(prev);
+      const ordered = allIconKeys.filter((k) => prevSet.has(k));
+      const newOnes = allIconKeys.filter((k) => !prevSet.has(k));
+      return [...ordered, ...newOnes];
+    });
+  }, [allIconKeys.join(",")]);
+
+  // Drag state management for the icon grid
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   function IconPicker({ value, onChange }: { value?: string; onChange: (v: string) => void }) {
     return (
-      <div className="grid grid-cols-3 gap-2 mt-2">
-        {iconKeys.map((k) => {
+      <div className="grid grid-cols-3 gap-2 mt-2 relative select-none">
+        {iconOrder.map((k, idx) => {
           const Icon = iconRegistry[k];
+          const isDragging = dragIndex === idx;
+          const isDropTarget = dragOverIndex === idx && dragIndex !== null && dragIndex !== dragOverIndex;
           return (
-            <DraggableIcon
+            <div
               key={k}
-              Icon={Icon}
-              filled={value === k}
-              aria-label={k}
-              selected={value === k}
-              onSelect={() => onChange(k)}
-              // more drag props can be added as needed (currently for future extensibility)
-            />
+              className={`
+                relative
+                ${isDropTarget ? "ring-2 ring-blue-400 z-20" : ""}
+                ${isDragging ? "opacity-0" : ""}
+              `}
+              onDragOver={(e) => {
+                e.preventDefault();
+                if (dragIndex !== null && dragOverIndex !== idx) setDragOverIndex(idx);
+              }}
+              onDrop={e => {
+                e.preventDefault();
+                if (dragIndex !== null && dragIndex !== idx) {
+                  setIconOrder(order => reorder(order, dragIndex, idx));
+                  setDragIndex(null);
+                  setDragOverIndex(null);
+                }
+              }}
+              onDragLeave={e => {
+                if (dragOverIndex === idx) setDragOverIndex(null);
+              }}
+            >
+              <DraggableIcon
+                Icon={Icon}
+                aria-label={k}
+                filled={value === k}
+                selected={value === k}
+                onSelect={() => onChange(k)}
+                draggable
+                onDragStart={e => {
+                  setDragIndex(idx);
+                  setDragOverIndex(idx);
+                  // Optional: set drag image to blank for cross-platform smoothness
+                  const ghost = document.createElement('div');
+                  ghost.style.position = 'absolute';
+                  ghost.style.left = '-9999px';
+                  document.body.appendChild(ghost);
+                  e.dataTransfer.setDragImage(ghost, 0, 0);
+                }}
+                onDragEnd={e => {
+                  setDragIndex(null);
+                  setDragOverIndex(null);
+                  // Clean up any ghost
+                  setTimeout(() => {
+                    const ghosts = document.querySelectorAll('body > div');
+                    ghosts.forEach(g => {
+                      if ((g as HTMLElement).style.position === "absolute" && (g as HTMLElement).style.left === "-9999px") {
+                        g.remove();
+                      }
+                    });
+                  }, 10);
+                }}
+              />
+              {isDropTarget && (
+                <div
+                  className="absolute inset-0 rounded border-2 border-blue-500 pointer-events-none z-30"
+                  style={{ borderStyle: 'dashed' }}
+                />
+              )}
+            </div>
           );
         })}
       </div>
@@ -147,6 +224,9 @@ export default function NodeSettingsForm({ node, onSaveSuccess }: { node: GraphN
               value={appearance.icon || node.type}
               onChange={(icon) => setAppearance((prev) => ({ ...prev, icon }))}
             />
+            <div className="text-xs text-muted-foreground mt-2">
+              Drag and drop to reorder icons within the grid.
+            </div>
           </div>
 
           {/* ICON CIRCLE SETTINGS */}
@@ -230,3 +310,5 @@ export default function NodeSettingsForm({ node, onSaveSuccess }: { node: GraphN
     </Tabs>
   );
 }
+
+// ... done.
