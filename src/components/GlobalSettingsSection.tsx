@@ -1,8 +1,8 @@
 
-import React, { useRef, useMemo } from "react";
+import React, { useRef, useMemo, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import AppearancePresetsSection from "@/components/AppearancePresetsSection";
-import { Settings, Import } from "lucide-react";
+import { Settings, Import, Save } from "lucide-react";
 import NodeTypeAppearanceSettings from "@/components/NodeTypeAppearanceSettings";
 import { Textarea } from "@/components/ui/textarea";
 import { useGraphStore } from "@/state/useGraphStore";
@@ -35,7 +35,7 @@ type GlobalSettingsSectionProps = {
 
 const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
   const importInputRef = useRef<HTMLInputElement>(null);
-  const { setNodes, setEdges, nodes, edges, manualPositions, nodeTypeAppearances } = useGraphStore();
+  const { setNodes, setEdges, nodes, edges, manualPositions, nodeTypeAppearances, setNodeTypeAppearance } = useGraphStore();
 
   // Export current graph state as JSON
   function handleExport() {
@@ -103,13 +103,46 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
     return result;
   }, [nodeTypeAppearances]);
 
+  // Local editable JSON state
+  const [editableJson, setEditableJson] = useState<string>(
+    JSON.stringify(completePresetObject, null, 2),
+  );
+  // Track if user edited
+  const [isDirty, setIsDirty] = useState(false);
+  // When the preset object changes (e.g. after changes/reset), update JSON view if NOT dirty
+  useEffect(() => {
+    if (!isDirty) {
+      setEditableJson(JSON.stringify(completePresetObject, null, 2));
+    }
+  }, [completePresetObject, isDirty]);
+
   // Handler for copying JSON config
   function handleCopyPreset() {
     try {
-      navigator.clipboard.writeText(JSON.stringify(completePresetObject, null, 2));
+      navigator.clipboard.writeText(editableJson);
       toast.success("Appearance preset JSON copied!");
     } catch {
       toast.error("Unable to copy JSON!");
+    }
+  }
+
+  function handleJsonChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
+    setEditableJson(e.target.value);
+    setIsDirty(true);
+  }
+
+  function handlePresetSave() {
+    try {
+      const data = JSON.parse(editableJson);
+      if (typeof data !== "object" || !data) throw new Error();
+      // For each key, set appearance
+      Object.entries(data).forEach(([type, config]) => {
+        setNodeTypeAppearance(type, config);
+      });
+      toast.success("Preset JSON saved!");
+      setIsDirty(false);
+    } catch (err) {
+      toast.error("Invalid JSON format or content.");
     }
   }
 
@@ -148,20 +181,31 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
             <NodeTypeAppearanceSettings />
           </div>
           <div className="w-full md:w-1/2 flex flex-col min-w-[240px] max-w-[520px]">
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between mb-2 gap-2">
               <span className="font-semibold text-base">Preset JSON Config</span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleCopyPreset}
-                type="button"
-              >Copy</Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopyPreset}
+                  type="button"
+                >Copy</Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handlePresetSave}
+                  type="button"
+                >
+                  <Save className="w-4 h-4 mr-1" /> Save
+                </Button>
+              </div>
             </div>
             <Textarea
-              value={JSON.stringify(completePresetObject, null, 2)}
-              readOnly
+              value={editableJson}
+              onChange={handleJsonChange}
               className="bg-muted resize-none font-mono text-xs min-h-[300px] max-h-[600px] h-full"
               style={{ minWidth: "170px" }}
+              spellCheck={false}
             />
           </div>
         </div>
@@ -174,3 +218,4 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
 };
 
 export default GlobalSettingsSection;
+
