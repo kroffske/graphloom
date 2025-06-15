@@ -1,4 +1,3 @@
-
 import React from "react";
 import { GraphNode } from "@/state/useGraphStore";
 import { useIconRegistry } from "./IconRegistry";
@@ -30,7 +29,8 @@ const GraphD3Node = ({
   const showIconCircle = !!appearance.showIconCircle;
   const iconCircleColor = appearance.iconCircleColor || "#ededed";
   const backgroundColor = appearance.backgroundColor || nodeColor || "#fff";
-  const borderColor = appearance.lineColor || "#b2bec6";
+  // Force border color to transparent for icon circles:
+  const borderColor = showIconCircle ? "transparent" : (appearance.lineColor || "#b2bec6");
 
   const label =
     labelField === "label"
@@ -140,4 +140,3 @@ const GraphD3Node = ({
 };
 
 export default GraphD3Node;
-
