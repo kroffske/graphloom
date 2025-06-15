@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useGraphStore } from "@/state/useGraphStore";
 import { DEFAULT_EDGE_COLOR, DEFAULT_EDGE_WIDTH } from "@/config/graphConstants";
@@ -20,7 +21,7 @@ const GraphD3EdgeLayer: React.FC<GraphD3EdgeLayerProps> = ({
   linkRef,
   onEdgeContextMenu,
 }) => {
-  const { selectedEdgeId, selectEdge, edgeAppearances, showEdgeLabels } = useGraphStore();
+  const { selectedEdgeId, selectEdge, edgeAppearances, showEdgeLabels, setHoveredEdgeId } = useGraphStore();
 
   // Dynamic rendering is handled by D3 in force mode; call edge setup externally.
   if (useDynamic) return <g ref={linkRef} />;
@@ -53,11 +54,13 @@ const GraphD3EdgeLayer: React.FC<GraphD3EdgeLayerProps> = ({
               strokeWidth={isSelected ? width + 2 : width}
               opacity={isSelected ? 1 : 0.7}
               style={{
-                cursor: "context-menu",
+                cursor: "pointer",
                 strokeDasharray: isSelected ? "0" : undefined,
                 transition: "stroke 0.15s, stroke-width 0.15s, opacity 0.2s",
                 filter: isSelected ? "drop-shadow(0 0 4px #60a5fa)" : undefined,
               }}
+              onMouseEnter={() => setHoveredEdgeId(e.id)}
+              onMouseLeave={() => setHoveredEdgeId(null)}
               onClick={(ev) => {
                 ev.stopPropagation();
                 selectEdge(isSelected ? null : e.id);

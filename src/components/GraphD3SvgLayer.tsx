@@ -1,4 +1,3 @@
-
 import React, { useRef } from "react";
 import { useD3Layout } from "@/hooks/useD3Layout";
 import { useD3SvgGraph } from "@/hooks/useD3SvgGraph";
@@ -14,6 +13,7 @@ type GraphD3SvgLayerProps = {
   hiddenNodeIds: Set<string>;
   setHiddenNodeIds: (s: Set<string>) => void;
   setHoveredNodeId: (id: string | null) => void;
+  setHoveredEdgeId: (id: string | null) => void;
   setContextNodeId: (id: string | null) => void;
   dragging: any;
   setDragging: (d: any) => void;
@@ -34,6 +34,7 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = (props) => {
     hiddenNodeIds,
     setHiddenNodeIds,
     setHoveredNodeId,
+    setHoveredEdgeId,
     setContextNodeId,
     dragging,
     setDragging,
@@ -67,6 +68,7 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = (props) => {
     hiddenNodeIds,
     setHiddenNodeIds,
     setHoveredNodeId,
+    setHoveredEdgeId,
     setContextNodeId,
     dragging,
     setDragging,
@@ -75,7 +77,7 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = (props) => {
     simulation,
     simNodes,
     simEdges,
-    // D3 no longer renders/handles edges; context menu handled in React
+    onEdgeContextMenu: onEdgeContextMenu as any,
   });
 
   // Pass svgRef down to GraphD3SvgFrame
@@ -99,4 +101,3 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = (props) => {
 };
 
 export default GraphD3SvgLayer;
-

@@ -29,6 +29,8 @@ const GraphD3Canvas: React.FC = () => {
   const [contextNodeId, setContextNodeId] = React.useState<string | null>(null);
   const [dragging, setDragging] = React.useState<null | { id: string; offsetX: number; offsetY: number }>(null);
   const [hiddenNodeIds, setHiddenNodeIds] = React.useState<Set<string>>(new Set());
+  const { hoveredEdgeId, setHoveredEdgeId, selectEdge } = useGraphStore();
+  const [mousePosition, setMousePosition] = React.useState<{ x: number, y: number } | null>(null);
 
   // NEW: Edge context menu state
   const [edgeMenu, setEdgeMenu] = useState<{ edgeId: string; x: number; y: number } | null>(null);
@@ -47,6 +49,7 @@ const GraphD3Canvas: React.FC = () => {
     [edges, filteredNodeIds]
   );
   const hoveredNode = nodes.find((n) => n.id === hoveredNodeId);
+  const hoveredEdge = edges.find((e) => e.id === hoveredEdgeId);
 
   // Store simulation positions on each tick (via GraphD3SvgLayer's callback)
   const handleCaptureSimulationPositions = useCallback(
@@ -64,6 +67,10 @@ const GraphD3Canvas: React.FC = () => {
     },
     [captureSimulationPositions]
   );
+
+  const handleMouseMove = (event: React.MouseEvent) => {
+    setMousePosition({ x: event.clientX, y: event.clientY });
+  };
 
   // Keyboard shortcuts for hiding
   React.useEffect(() => {
@@ -121,8 +128,8 @@ const GraphD3Canvas: React.FC = () => {
     return result;
   }, [filteredNodes]);
 
-  // Get selectEdge from store
-  const { selectEdge } = useGraphStore();
+  // Get selectEdge from store - this is already done above now
+  // const { selectEdge } = useGraphStore();
 
   // NEW: select edge before showing context menu
   const handleEdgeContextMenu = React.useCallback(
@@ -139,7 +146,7 @@ const GraphD3Canvas: React.FC = () => {
   );
 
   return (
-    <div className="relative w-full h-full flex-1 bg-background border rounded-lg overflow-hidden shadow-lg p-0 m-0" style={{ minHeight: 0, minWidth: 0 }}>
+    <div className="relative w-full h-full flex-1 bg-background border rounded-lg overflow-hidden shadow-lg p-0 m-0" style={{ minHeight: 0, minWidth: 0 }} onMouseMove={handleMouseMove}>
       <GraphD3Toolbar
         layoutMode={layoutMode}
         setLayoutMode={handleSetLayoutMode}
@@ -156,6 +163,7 @@ const GraphD3Canvas: React.FC = () => {
           hiddenNodeIds={hiddenNodeIds}
           setHiddenNodeIds={setHiddenNodeIds}
           setHoveredNodeId={setHoveredNodeId}
+          setHoveredEdgeId={setHoveredEdgeId}
           setContextNodeId={setContextNodeId}
           dragging={dragging}
           setDragging={setDragging}
@@ -176,7 +184,7 @@ const GraphD3Canvas: React.FC = () => {
       {contextNodeId && (
         <div className="fixed z-50 left-36 top-32 pointer-events-none"></div>
       )}
-      <GraphTooltipManager node={hoveredNode} />
+      <GraphTooltipManager hoveredNode={hoveredNode} hoveredEdge={hoveredEdge} position={mousePosition} />
     </div>
   );
 };
