@@ -6,6 +6,7 @@ import { useD3Layout } from "@/hooks/useD3Layout";
 import GraphD3EdgeLayer from "./GraphD3EdgeLayer";
 import GraphD3NodeLayer from "./GraphD3NodeLayer";
 import GraphD3NodeMount from "./GraphD3NodeMount";
+import { useGraphStore } from "@/state/useGraphStore";
 
 type GraphD3SvgLayerProps = {
   nodes: any[];
@@ -28,28 +29,31 @@ const WIDTH = 900;
 const HEIGHT = 530;
 const NODE_RADIUS = 36;
 
-const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
-  nodes,
-  edges,
-  layoutMode,
-  manualPositions,
-  setManualPositions,
-  saveManualPosition,
-  hiddenNodeIds,
-  setHiddenNodeIds,
-  setHoveredNodeId,
-  setContextNodeId,
-  dragging,
-  setDragging,
-  captureSimulationPositions,
-  initialPositions,
-}) => {
+const GraphD3SvgLayer: React.FC<any> = (props) => {
+  const {
+    nodes,
+    edges,
+    layoutMode,
+    manualPositions,
+    setManualPositions,
+    saveManualPosition,
+    hiddenNodeIds,
+    setHiddenNodeIds,
+    setHoveredNodeId,
+    setContextNodeId,
+    dragging,
+    setDragging,
+    captureSimulationPositions,
+    initialPositions,
+  } = props;
+
+  const { selectEdge } = useGraphStore();
+
   const svgRef = useRef<SVGSVGElement | null>(null);
   const svgGroupRef = useRef<SVGGElement | null>(null);
   const linkRef = useRef<SVGGElement | null>(null);
   const nodeGroupRef = useRef<SVGGElement | null>(null);
 
-  // Layout hook, now passes initialPositions!
   const { simulation, simNodes, simEdges } = useD3Layout(
     layoutMode,
     nodes,
@@ -58,9 +62,12 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
     initialPositions
   );
 
-  // -----
-  // Move the zoom-and-pan hook call OUTSIDE useEffect (to top-level)
-  // We make sure to always get latest ref for the svg group.
+  function handleBackgroundPointerDown(ev: React.MouseEvent) {
+    if (!ev.shiftKey && !ev.ctrlKey && !ev.metaKey) {
+      selectEdge(null);
+    }
+  }
+
   useD3ZoomAndPan({
     svgRef,
     svgGroup: svgGroupRef.current ? d3.select(svgGroupRef.current) : null,
@@ -69,17 +76,12 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
   useEffect(() => {
     if (!svgRef.current || !simNodes.length) return;
 
-    // D3 clear
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
 
-    // Main g for pan/zoom
     const svgGroup = svg.append("g");
     svgGroupRef.current = svgGroup.node() as SVGGElement;
 
-    // (Zoom handled via the hook at the component level!)
-
-    // Edges group (keep order)
     const link = svgGroup.append("g").attr("class", "edges").selectAll("line")
       .data(simEdges)
       .enter()
@@ -88,7 +90,6 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
       .attr("stroke-width", 2)
       .attr("opacity", 0.7);
 
-    // Nodes group
     const nodeLayer = svgGroup.append("g").attr("class", "nodes");
     const nodeG = nodeLayer
       .selectAll("g")
@@ -119,9 +120,7 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
       )
       .html((d) => `<div id="d3-node-${d.id}"></div>`);
 
-    // --- Drag ---
     if (layoutMode === "manual") {
-      // Manual mode: Only one node can be dragged at a time, and node position is set strictly to cursor.
       useD3DragNodes({
         nodeG,
         link,
@@ -154,7 +153,6 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
       });
     }
 
-    // Interactions
     nodeG
       .on("mouseenter", (_event, d) => setHoveredNodeId(d.id))
       .on("mouseleave", () => setHoveredNodeId(null))
@@ -181,9 +179,7 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
         if (event.key === "ArrowRight") nx += step;
         saveManualPosition(d.id, { x: nx, y: ny });
       }
-      // context menu and selection
       if (event.key === "Enter" || event.key === " ") {
-        // selection could go here
       }
       if (
         ((event.shiftKey && event.key === "F10") ||
@@ -194,7 +190,6 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
       }
     });
 
-    // Mount React node portals
     setTimeout(() => {
       simNodes.forEach((n) => {
         const mountPoint = document.getElementById(`d3-node-${n.id}`);
@@ -213,7 +208,6 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
       });
     }, 0);
 
-    // Animate on force mode
     if (layoutMode === "force") {
       simulation.on("tick", () => {
         captureSimulationPositions(simNodes);
@@ -246,7 +240,6 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
       captureSimulationPositions(simNodes);
     }
 
-    // Cleanup
     return () => {
       simulation.stop && simulation.stop();
       svg.on(".zoom", null);
@@ -287,8 +280,8 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
       }}
       aria-label="Graph Visualization"
       tabIndex={0}
+      onPointerDown={handleBackgroundPointerDown}
     >
-      {/* Draw edges for static layouts (force is handled by D3, empty group here) */}
       <GraphD3EdgeLayer
         edges={simEdges}
         nodes={simNodes}
