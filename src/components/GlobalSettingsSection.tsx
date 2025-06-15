@@ -90,7 +90,7 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
     return presets;
   }, [customPreset]);
 
-  // Find selected preset object by key; fallback to 'Custom' (for backward compatible first load)
+  // Find selected preset object by key; fallback to 'Custom'
   const selectedPresetObj = useMemo(() => {
     if (!selectedPresetKey) return null;
     return displayedPresets.find((p) => p.key === selectedPresetKey) || null;
@@ -267,16 +267,6 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
     const loaded = getPersistedCustomPreset();
     if (loaded) setCustomPreset(loaded);
   }, []);
-
-  // Augment presets: include custom as first (if it exists)
-  const displayedPresets = useMemo(() => {
-    const presets = [...appearancePresets];
-    if (customPreset) {
-      // Always prepend custom
-      return [customPreset, ...presets];
-    }
-    return presets;
-  }, [customPreset]);
 
   return (
     <div className="w-full md:w-[650px] min-w-[340px] mt-0 flex flex-col gap-5 px-1 max-w-4xl">
