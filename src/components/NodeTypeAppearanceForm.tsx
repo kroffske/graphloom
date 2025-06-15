@@ -1,13 +1,12 @@
-import React, { useState, useMemo } from "react";
-import { useGraphStore } from "@/state/useGraphStore";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Slider } from "@/components/ui/slider";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
+
+import React, { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { useIconRegistry } from "./IconRegistry";
-import IconPicker from "./IconPicker";
+import NodeTypeIconSettings from "./NodeTypeIconSettings";
+import NodeTypeVisualSettings from "./NodeTypeVisualSettings";
+import { useNodeAppearanceSettings } from "./hooks/useNodeAppearanceSettings";
+import { Label } from "@/components/ui/label";
 
 // Node type labels
 const FRIENDLY_TYPE_LABELS: Record<string, string> = {
@@ -27,21 +26,9 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({ onSaveC
   const iconRegistry = useIconRegistry();
   const iconKeys = Object.keys(iconRegistry);
 
-  const {
-    nodeTypeAppearances,
-    setNodeTypeAppearance,
-    resetNodeTypeAppearance,
-    nodes,
-  } = useGraphStore();
-
-  // --- Gather all known node types from: built-in, custom appearances, loaded preset (from window or config), and actual nodes
-  const [presetJsonString, setPresetJsonString] = useState<string>(
-    // Try to sync with editable JSON from config if available - fallback handled below
-    ""
-  );
-  // Hack: pull the editable JSON config if it's placed in window (by GlobalSettingsSection) for live sync
-  React.useEffect(() => {
-    // Listen for custom event to set preset JSON string if present
+  // Preset JSON for collecting all types
+  const [presetJsonString, setPresetJsonString] = useState<string>("");
+  useEffect(() => {
     function handlePresetJsonSync(e: any) {
       if (typeof e.detail === "string") setPresetJsonString(e.detail);
     }
@@ -49,58 +36,41 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({ onSaveC
     return () => window.removeEventListener("lovable-preset-json-sync", handlePresetJsonSync);
   }, []);
 
-  const nodeTypeKeys: string[] = useMemo(() => {
-    // Collect: built-in, appearance keys, present nodes, AND keys found in the config/preset JSON (if present)
-    const builtIn = ["entity", "process", "data-store", "event", "decision", "external-system"];
-    const fromAppearances = Object.keys(nodeTypeAppearances ?? {});
-    const fromNodes = nodes.map((n) => n.type);
-    let fromPresetJson: string[] = [];
-    // Safely parse preset JSON if string exists
-    if (presetJsonString) {
-      try {
-        const parsed = JSON.parse(presetJsonString);
-        if (parsed && typeof parsed === "object") {
-          fromPresetJson = Object.keys(parsed);
-        }
-      } catch {
-        // Ignore invalid JSON
-      }
-    }
-    // Deduplicate and return
-    return Array.from(new Set([...builtIn, ...fromAppearances, ...fromNodes, ...fromPresetJson]));
-  }, [nodeTypeAppearances, nodes, presetJsonString]);
+  // Appearance and relevant keys for all node types from store/hook
+  const {
+    nodeTypeKeys,
+    nodeTypeLabels,
+    appearance,
+    setNodeTypeAppearance,
+    resetNodeTypeAppearance,
+  } = useNodeAppearanceSettings(
+    // Always select a type. Will be updated below.
+    useMemo(() => "", []),
+    presetJsonString
+  );
 
-  const nodeTypeLabels: Record<string, string> = useMemo(() => {
-    const labels: Record<string, string> = {};
-    nodeTypeKeys.forEach(
-      (key) => (labels[key] = FRIENDLY_TYPE_LABELS[key] || key)
-    );
-    return labels;
-  }, [nodeTypeKeys]);
-  // Select first available node type by default
+  // Pick type (selector)
   const [selectedType, setSelectedType] = useState(nodeTypeKeys[0] || "");
-  React.useEffect(() => {
+  useEffect(() => {
     if (!nodeTypeKeys.includes(selectedType) && nodeTypeKeys[0]) {
       setSelectedType(nodeTypeKeys[0]);
     }
   }, [nodeTypeKeys, selectedType]);
-  const selectedLabel = nodeTypeLabels[selectedType] || selectedType;
 
-  // Get current appearance for type, or provide defaults
-  const appearance = nodeTypeAppearances?.[selectedType] || {};
-
-  // Mirror all values locally for editing
+  // Local form state for visuals/icons, mirror store nodeTypeAppearances shape
   const [icon, setIcon] = useState<string>(appearance.icon || selectedType);
   const [backgroundColor, setBackgroundColor] = useState<string>(appearance.backgroundColor || "");
   const [lineColor, setLineColor] = useState<string>(appearance.lineColor || "");
   const [size, setSize] = useState<number>(appearance.size || 64);
   const [labelField, setLabelField] = useState<string>(appearance.labelField || "label");
   const [showIconCircle, setShowIconCircle] = useState<boolean>(!!appearance.showIconCircle);
-  const [iconCircleColor, setIconCircleColor] = useState<string>(appearance.iconCircleColor || "#e9e9e9");
+  const [iconCircleColor, setIconCircleColor] = useState<string>(
+    appearance.iconCircleColor || "#e9e9e9"
+  );
   const [iconOrder, setIconOrder] = useState<string[]>(iconKeys);
 
-  // Resync local state if node type or appearance defaults change
-  React.useEffect(() => {
+  // Re-sync local state when type/appearance changes
+  useEffect(() => {
     setIcon(appearance.icon || selectedType);
     setBackgroundColor(appearance.backgroundColor || "");
     setLineColor(appearance.lineColor || "");
@@ -109,7 +79,6 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({ onSaveC
     setShowIconCircle(!!appearance.showIconCircle);
     setIconCircleColor(appearance.iconCircleColor || "#e9e9e9");
     setIconOrder((currOrder) => {
-      // Update with any new icons that have appeared
       const currSet = new Set(currOrder);
       const toAdd = iconKeys.filter((k) => !currSet.has(k));
       return [...currOrder.filter((k) => iconKeys.includes(k)), ...toAdd];
@@ -128,11 +97,8 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({ onSaveC
       iconCircleColor,
       iconOrder,
     });
-    toast.success(`Saved default appearance for ${selectedLabel}`);
-    // Auto-save preset JSON as a custom preset
-    if (onSaveCustomPresetFromJson) {
-      onSaveCustomPresetFromJson();
-    }
+    toast.success(`Saved default appearance for ${nodeTypeLabels[selectedType] || selectedType}`);
+    if (onSaveCustomPresetFromJson) onSaveCustomPresetFromJson();
   }
 
   function handleReset() {
@@ -146,7 +112,7 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({ onSaveC
         Node Type Appearance Settings
       </div>
       <form className="flex flex-col gap-2" onSubmit={handleSave}>
-        {/* Node type selector */}
+        {/* Type selector */}
         <div>
           <Label htmlFor="node-type">Node Type</Label>
           <select
@@ -162,79 +128,28 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({ onSaveC
             ))}
           </select>
         </div>
-        {/* Controls for node appearance settings */}
-        <div className="flex flex-col gap-4 mt-3">
-          {/* Icon Picker */}
-          <div>
-            <Label>Icon</Label>
-            <IconPicker
-              iconRegistry={iconRegistry}
-              value={icon}
-              onChange={setIcon}
-              order={iconOrder}
-              setOrder={setIconOrder}
-            />
-            <div className="flex items-center mt-2">
-              <Label htmlFor="show-icon-circle" className="mb-0 mr-2">Show Icon Circle</Label>
-              <Switch
-                id="show-icon-circle"
-                checked={!!showIconCircle}
-                onCheckedChange={setShowIconCircle}
-              />
-              {showIconCircle && (
-                <Input
-                  id="icon-circle-color"
-                  className="ml-3 max-w-[100px]"
-                  type="text"
-                  value={iconCircleColor}
-                  onChange={e => setIconCircleColor(e.target.value)}
-                  placeholder="#e9e9e9"
-                />
-              )}
-            </div>
-          </div>
-          <div>
-            <Label htmlFor="node-bg-color">Node Background Color</Label>
-            <Input
-              id="node-bg-color"
-              value={backgroundColor}
-              onChange={e => setBackgroundColor(e.target.value)}
-              placeholder="#RRGGBBAA"
-            />
-          </div>
-          <div>
-            <Label htmlFor="node-line-color">Node Border Color</Label>
-            <Input
-              id="node-line-color"
-              value={lineColor}
-              onChange={e => setLineColor(e.target.value)}
-              placeholder="#RRGGBB"
-            />
-          </div>
-          <div>
-            <Label htmlFor="appearance-size">
-              Node Size ({size ?? 64}px)
-            </Label>
-            <Slider
-              id="appearance-size"
-              min={40}
-              max={120}
-              step={2}
-              value={[size]}
-              onValueChange={([s]) => setSize(s)}
-              className="w-full"
-            />
-          </div>
-          <div>
-            <Label htmlFor="appearance-label-field">Label Field</Label>
-            <Input
-              id="appearance-label-field"
-              value={labelField}
-              onChange={e => setLabelField(e.target.value)}
-              placeholder='e.g. "label", "name", "attribute"'
-            />
-          </div>
-        </div>
+        {/* Appearance controls */}
+        <NodeTypeIconSettings
+          iconRegistry={iconRegistry}
+          icon={icon}
+          setIcon={setIcon}
+          showIconCircle={showIconCircle}
+          setShowIconCircle={setShowIconCircle}
+          iconCircleColor={iconCircleColor}
+          setIconCircleColor={setIconCircleColor}
+          iconOrder={iconOrder}
+          setIconOrder={setIconOrder}
+        />
+        <NodeTypeVisualSettings
+          backgroundColor={backgroundColor}
+          setBackgroundColor={setBackgroundColor}
+          lineColor={lineColor}
+          setLineColor={setLineColor}
+          size={size}
+          setSize={setSize}
+          labelField={labelField}
+          setLabelField={setLabelField}
+        />
         <div className="flex gap-2 mt-4">
           <Button type="submit" className="w-fit">Update node style</Button>
           <Button type="button" variant="outline" className="w-fit" onClick={handleReset}>
