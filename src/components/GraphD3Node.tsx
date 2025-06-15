@@ -1,3 +1,4 @@
+
 import React from "react";
 import { GraphNode } from "@/state/useGraphStore";
 import { useIconRegistry } from "./IconRegistry";
@@ -17,21 +18,24 @@ const GraphD3Node = ({
   const iconRegistry = useIconRegistry();
   const appearance = node.appearance || {};
   const iconType = appearance.icon || node.type;
+
+  // This is the "appearance color": appearance.color takes precedence, then attribute, then fallback. Used for icon and icon circle only.
   const nodeColor =
     appearance.color ||
     (typeof node.attributes.color === "string" ? node.attributes.color : undefined) ||
-    "var(--card)";
+    "#3483eb";
+
   const nodeSize = appearance.size ?? 64;
   const labelField = appearance.labelField || "label";
   const Icon = iconRegistry[iconType];
 
-  // New Appearance
   const showIconCircle = !!appearance.showIconCircle;
-  const iconCircleColor = appearance.iconCircleColor || "#ededed";
-  const backgroundColor = appearance.backgroundColor || nodeColor || "#fff";
+  // The icon circle color is the "nodeColor" (the custom color or node attribute color) if set, or fallback.
+  const iconCircleColor = nodeColor || "#ededed";
+  // Main node box background: only use appearance.backgroundColor (not nodeColor!)
+  const backgroundColor = appearance.backgroundColor || "#fff";
+
   // Border logic:
-  // - Icon circle: transparent.
-  // - Box mode: transparent border unless selected (= blue border for focus).
   let borderColor: string;
   if (showIconCircle) {
     borderColor = "transparent";
@@ -88,9 +92,11 @@ const GraphD3Node = ({
         >
           {Icon && (
             <Icon
-              className="w-7 h-7 text-[#30334a]"
+              className="w-7 h-7"
               aria-label={iconType}
               filled={true}
+              color={nodeColor}
+              // If you want the color to apply to both fill and stroke, SVG implementation of icons must respect the color prop.
             />
           )}
         </span>
@@ -121,7 +127,7 @@ const GraphD3Node = ({
         minHeight: nodeSize,
         outline: "none",
         pointerEvents: "all",
-        background: backgroundColor,
+        background: backgroundColor, // NO nodeColor here!
         borderColor: borderColor,
         borderRadius: 16,
         display: "flex",
@@ -135,6 +141,7 @@ const GraphD3Node = ({
             className="w-8 h-8 text-[#30334a]"
             aria-label={iconType}
             filled={true}
+            color={nodeColor}
           />
         )}
       </div>
@@ -146,3 +153,4 @@ const GraphD3Node = ({
 };
 
 export default GraphD3Node;
+
