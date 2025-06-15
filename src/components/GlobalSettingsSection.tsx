@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Settings } from "lucide-react";
@@ -130,8 +129,6 @@ const GlobalSettingsSection: React.FC<{ onFillExample: () => void }> = () => {
           nodeTypeKeys={nodeTypeKeys}
           nodeTypeLabels={nodeTypeLabels}
           nodeTypeAppearances={completePresetObject.nodeTypes || {}}
-          selectedNodeType={selectedNodeType}
-          onSelectedNodeTypeChange={handleNodeTypeSelect}
         />
         <AppearanceImportExport />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-4">

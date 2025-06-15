@@ -34,6 +34,31 @@ const DEFAULTS = {
   iconOrder: undefined,
 };
 
+const nodeAppearancesAreEqual = (a?: NodeTypeAppearance, b?: NodeTypeAppearance): boolean => {
+    if (!a && !b) return true;
+    if (!a || !b) return false;
+
+    if (a.icon !== b.icon) return false;
+    if (a.iconColor !== b.iconColor) return false;
+    if ((a.backgroundColor || '') !== (b.backgroundColor || '')) return false;
+    if (a.size !== b.size) return false;
+    if ((a.labelField || 'label') !== (b.labelField || 'label')) return false;
+    if (!!a.borderEnabled !== !!b.borderEnabled) return false;
+    
+    if (a.borderEnabled) {
+        if ((a.borderColor || '') !== (b.borderColor || '')) return false;
+        if (a.borderWidth !== b.borderWidth) return false;
+    }
+    return true;
+}
+
+const edgeAppearancesAreEqual = (a?: EdgeTypeAppearance, b?: EdgeTypeAppearance): boolean => {
+    if (!a && !b) return true;
+    if (!a || !b) return false;
+    return a.color === b.color && a.width === b.width && (a.labelField || '') === (b.labelField || '');
+}
+
+
 export function useAppearanceManager() {
   const {
     nodes,
@@ -246,7 +271,7 @@ export function useAppearanceManager() {
 
   const updateNodeTypeAppearance = useCallback((type: string, appearance: NodeTypeAppearance) => {
     const currentAppearance = useGraphStore.getState().nodeTypeAppearances[type];
-    if (currentAppearance && JSON.stringify(appearance) === JSON.stringify(currentAppearance)) {
+    if (nodeAppearancesAreEqual(appearance, currentAppearance)) {
       return;
     }
     setNodeTypeAppearance(type, appearance);
@@ -255,7 +280,7 @@ export function useAppearanceManager() {
 
   const updateEdgeTypeAppearance = useCallback((type: string, appearance: EdgeTypeAppearance) => {
     const currentAppearance = useGraphStore.getState().edgeTypeAppearances[type];
-    if (currentAppearance && JSON.stringify(appearance) === JSON.stringify(currentAppearance)) {
+    if (edgeAppearancesAreEqual(appearance, currentAppearance)) {
       return;
     }
     setEdgeTypeAppearance(type, appearance);
