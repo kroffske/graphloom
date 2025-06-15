@@ -56,8 +56,6 @@ const EdgeContextMenu: React.FC<EdgeContextMenuProps> = ({ edgeId, x, y, onClose
       onBlur={onClose}
     >
       <ContextMenuContent
-        side="right"
-        align="start"
         forceMount
         onInteractOutside={onClose}
         className="rounded-lg shadow-xl border bg-popover"
@@ -82,3 +80,4 @@ const EdgeContextMenu: React.FC<EdgeContextMenuProps> = ({ edgeId, x, y, onClose
 };
 
 export default EdgeContextMenu;
+
