@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import type { EdgeSettingsFormProps } from "@/types/forms";
+import { resolveLabelTemplate } from "@/utils/labelTemplate";
+import { resolveLabel as resolveJoinedLabel } from "@/utils/labelJoin";
 
 const COLORS = [
   "#64748b", // default (slate)
@@ -57,6 +59,7 @@ export default function EdgeSettingsForm({ edge }: EdgeSettingsFormProps) {
       })()
   );
   const [labelField, setLabelField] = useState(current.labelField ?? typeDefault.labelField ?? "");
+  const [labelTemplate, setLabelTemplate] = useState(current.labelTemplate ?? typeDefault.labelTemplate ?? "");
   const [color, setColor] = useState(current.color ?? typeDefault.color ?? "#64748b");
   const [width, setWidth] = useState(current.width ?? typeDefault.width ?? 2);
 
@@ -74,6 +77,7 @@ export default function EdgeSettingsForm({ edge }: EdgeSettingsFormProps) {
         })()
     );
     setLabelField(current.labelField ?? typeDefault.labelField ?? "");
+    setLabelTemplate(current.labelTemplate ?? typeDefault.labelTemplate ?? "");
     setColor(current.color ?? typeDefault.color ?? "#64748b");
     setWidth(current.width ?? typeDefault.width ?? 2);
   }, [edge.id, JSON.stringify(current), JSON.stringify(typeDefault)]);
@@ -83,6 +87,7 @@ export default function EdgeSettingsForm({ edge }: EdgeSettingsFormProps) {
     color: typeDefault.color ?? "#64748b",
     width: typeDefault.width ?? 2,
     labelField: typeDefault.labelField ?? "",
+    labelTemplate: typeDefault.labelTemplate ?? "",
   };
 
   // Detect if edge appearance differs from type default
@@ -90,25 +95,31 @@ export default function EdgeSettingsForm({ edge }: EdgeSettingsFormProps) {
     current.color !== undefined ||
     current.width !== undefined ||
     current.label !== undefined ||
-    current.labelField !== undefined;
+    current.labelField !== undefined ||
+    current.labelTemplate !== undefined;
 
   // The effective resolved appearance values for this edge (shown in a "preview")
   const effective = useMemo(() => {
-    const effectiveLabelField =
-      labelField.trim() !== "" ? labelField : typeDefaults.labelField;
-    const effectiveLabel =
-      label.trim() !== ""
-        ? label
-        : effectiveLabelField && edge.attributes
-          ? getAttributeValue(edge.attributes, effectiveLabelField)
-          : "";
+    const effectiveLabelField = labelField.trim() !== "" ? labelField : typeDefaults.labelField;
+    const effectiveLabelTemplate = labelTemplate.trim() !== "" ? labelTemplate : typeDefaults.labelTemplate;
+    
+    let effectiveLabel = "";
+    if (label.trim() !== "") {
+      effectiveLabel = label.trim();
+    } else if (effectiveLabelTemplate) {
+      effectiveLabel = resolveLabelTemplate(effectiveLabelTemplate, { ...edge, ...edge.attributes }, "...");
+    } else if (effectiveLabelField) {
+      effectiveLabel = resolveJoinedLabel(effectiveLabelField, edge.attributes, "");
+    }
+
     return {
       color,
       width,
       label: effectiveLabel,
       labelField: effectiveLabelField,
+      labelTemplate: effectiveLabelTemplate,
     };
-  }, [color, width, label, labelField, typeDefaults, edge.attributes]);
+  }, [color, width, label, labelField, labelTemplate, typeDefaults, edge]);
 
   function handleSave() {
     setEdgeAppearance(edge.id, {
@@ -116,6 +127,7 @@ export default function EdgeSettingsForm({ edge }: EdgeSettingsFormProps) {
       color,
       width,
       labelField: labelField.trim() || undefined,
+      labelTemplate: labelTemplate.trim() || undefined,
     });
   }
 
@@ -263,6 +275,22 @@ export default function EdgeSettingsForm({ edge }: EdgeSettingsFormProps) {
                 }
               </div>
             </div>
+            {/* Label Template */}
+            <div className="mb-2">
+              <Label className="text-xs mb-1 block">Label template <span className="text-muted-foreground">(optional)</span></Label>
+              <Input
+                value={labelTemplate}
+                onChange={(e) => setLabelTemplate(e.target.value)}
+                placeholder={typeDefaults.labelTemplate ? `e.g. ${typeDefaults.labelTemplate}` : "{source.label} -> {target.label}"}
+                className="w-full"
+              />
+              <div className="text-[11px] text-muted-foreground mt-0.5">
+                {typeDefaults.labelTemplate
+                  ? <>Type default: <span className="font-mono">{typeDefaults.labelTemplate}</span></>
+                  : <>Overrides label attribute field.</>
+                }
+              </div>
+            </div>
             {/* Custom label value */}
             <div className="mb-1">
               <Label className="text-xs mb-1 block">Custom label override <span className="text-muted-foreground">(optional)</span></Label>
@@ -273,7 +301,7 @@ export default function EdgeSettingsForm({ edge }: EdgeSettingsFormProps) {
                 className="w-full"
               />
               <div className="text-[11px] text-muted-foreground mt-0.5">
-                If blank, will use the attribute specified above.
+                If blank, will use the template or attribute specified above.
               </div>
             </div>
           </div>
@@ -296,8 +324,14 @@ export default function EdgeSettingsForm({ edge }: EdgeSettingsFormProps) {
                 )}
               </li>
               <li>
+                <span className="font-mono">labelTemplate</span>: <span>{effective.labelTemplate || <span className="italic text-muted-foreground">none</span>}</span>
+                {labelTemplate.trim() !== "" && (
+                  <span className="ml-1 italic text-muted-foreground">(customized)</span>
+                )}
+              </li>
+              <li>
                 <span className="font-mono">labelField</span>: <span>{effective.labelField || <span className="italic text-muted-foreground">none</span>}</span>
-                {labelField.trim() !== "" && (
+                {labelField.trim() !== "" && labelTemplate.trim() === "" && (
                   <span className="ml-1 italic text-muted-foreground">(customized)</span>
                 )}
               </li>

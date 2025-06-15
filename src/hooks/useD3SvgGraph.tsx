@@ -4,6 +4,8 @@ import { useD3DragNodes } from "@/hooks/useD3DragNodes";
 import { useD3ZoomAndPan } from "@/hooks/useD3ZoomAndPan";
 import GraphD3NodeMount from "@/components/GraphD3NodeMount";
 import { useGraphStore } from "@/state/useGraphStore";
+import { resolveLabel as resolveJoinedLabel } from "@/utils/labelJoin";
+import { resolveLabelTemplate } from "@/utils/labelTemplate";
 
 // Break out the shape constants since they may be used outside the hook as well
 export const WIDTH = 900;
@@ -37,6 +39,39 @@ type UseD3SvgGraphProps = {
    */
   onEdgeContextMenu?: (edgeId: string, event: MouseEvent) => void;
 };
+
+function getEdgeLabel(
+  d: any,
+  showEdgeLabels: boolean,
+  edgeTypeAppearances: any,
+  edgeAppearances: any,
+  nodes: any[]
+): string {
+  if (!showEdgeLabels) return "";
+  const typeApp = edgeTypeAppearances[d.type || "default"] || {};
+  const edgeApp = { ...typeApp, ...(d.appearance || {}), ...(edgeAppearances[d.id] || {}) };
+  const fallbackId = "";
+  let label = edgeApp.label;
+
+  if (label === undefined) {
+    if (edgeApp.labelTemplate) {
+      const sourceNode = typeof d.source === 'object' ? d.source : nodes.find(n => n.id === d.source);
+      const targetNode = typeof d.target === 'object' ? d.target : nodes.find(n => n.id === d.target);
+      const context = {
+        ...d,
+        ...d.attributes,
+        source_label: sourceNode?.label,
+        target_label: targetNode?.label,
+        source: sourceNode,
+        target: targetNode,
+      };
+      label = resolveLabelTemplate(edgeApp.labelTemplate, context, fallbackId);
+    } else if (edgeApp.labelField) {
+      label = resolveJoinedLabel(edgeApp.labelField, d.attributes, fallbackId);
+    }
+  }
+  return label || "";
+}
 
 export function useD3SvgGraph({
   svgRef,
@@ -80,10 +115,11 @@ export function useD3SvgGraph({
     svgGroupRef.current = svgGroup.node() as SVGGElement;
 
     // -- EDGE LAYER --
-    const link = svgGroup.append("g").attr("class", "edges").selectAll("line")
+    const linkG = svgGroup.append("g").attr("class", "edges").selectAll("g")
       .data(simEdges)
-      .enter()
-      .append("line")
+      .join("g");
+
+    const link = linkG.append("line")
       .attr("stroke", (d: any) => {
         // Use appearance or fallback
         const typeApp = edgeTypeAppearances[d.type || 'default'] || {};
@@ -126,6 +162,26 @@ export function useD3SvgGraph({
           setContextNodeId(d.id);
         }
       });
+    
+    const linkLabel = linkG.append("text")
+      .attr("text-anchor", "middle")
+      .attr("dominant-baseline", "middle")
+      .attr("font-size", 13)
+      .attr("fill", "#475569")
+      .style("user-select", "none")
+      .style("pointer-events", "none")
+      .style("text-shadow", "0 0 3px #fff, 0 0 8px #fff")
+      .style("font-weight", 500)
+      .style("paint-order", "stroke fill")
+      .attr("stroke", "#fff")
+      .attr("stroke-width", 4)
+      .attr("stroke-linejoin", "round")
+      .append("tspan")
+      .attr("fill", "#334155")
+      .attr("stroke", "white")
+      .attr("stroke-width", "1.5")
+      .style("paint-order", "stroke fill")
+      .text((d: any) => getEdgeLabel(d, showEdgeLabels, edgeTypeAppearances, edgeAppearances, simNodes));
 
     const nodeLayer = svgGroup.append("g").attr("class", "nodes");
     const nodeG = nodeLayer
@@ -253,6 +309,11 @@ export function useD3SvgGraph({
           .attr("y1", (d: any) => (d.source as any).y!)
           .attr("x2", (d: any) => (d.target as any).x!)
           .attr("y2", (d: any) => (d.target as any).y!);
+        
+        linkLabel
+          .attr("x", (d: any) => ((d.source as any).x! + (d.target as any).x!) / 2)
+          .attr("y", (d: any) => ((d.source as any).y! + (d.target as any).y!) / 2);
+
         nodeG.attr("transform", (d: any) => `translate(${d.x},${d.y})`);
         // // Optionally: visually indicate selection on D3 links after each tick
         link
@@ -285,6 +346,21 @@ export function useD3SvgGraph({
           const t: any = typeof d.target === "object" ? d.target : simNodes.find((n: any) => n.id === d.target);
           return t?.y ?? 0;
         });
+        
+      linkLabel
+        .attr("x", (d: any) => {
+          const s: any = typeof d.source === "object" ? d.source : simNodes.find((n: any) => n.id === d.source);
+          const t: any = typeof d.target === "object" ? d.target : simNodes.find((n: any) => n.id === d.target);
+          if (!s || !t) return 0;
+          return (s.x + t.x) / 2;
+        })
+        .attr("y", (d: any) => {
+          const s: any = typeof d.source === "object" ? d.source : simNodes.find((n: any) => n.id === d.source);
+          const t: any = typeof d.target === "object" ? d.target : simNodes.find((n: any) => n.id === d.target);
+          if (!s || !t) return 0;
+          return (s.y + t.y) / 2;
+        });
+
       nodeG.attr("transform", (d: any) => `translate(${d.x},${d.y})`);
       captureSimulationPositions(simNodes);
       // For static layouts, visually indicate selection state as well
@@ -346,5 +422,9 @@ export function useD3SvgGraph({
         const appearance = { ...typeApp, ...(d.appearance || {}), ...(edgeAppearances[d.id] || {}) };
         return appearance.color || "#64748b";
       });
-  }, [svgRef, selectedEdgeId, edgeAppearances, edgeTypeAppearances]);
+
+    const linkLabels = svg.selectAll("g.edges text tspan");
+    linkLabels.text((d: any) => getEdgeLabel(d, showEdgeLabels, edgeTypeAppearances, edgeAppearances, simNodes));
+
+  }, [svgRef, selectedEdgeId, edgeAppearances, edgeTypeAppearances, showEdgeLabels]);
 }

@@ -41,6 +41,7 @@ export default function EdgeTypeAppearanceForm({
   const [color, setColor] = useState(existing.color ?? "#64748b");
   const [width, setWidth] = useState(existing.width ?? 2);
   const [labelField, setLabelField] = useState(existing.labelField ?? "");
+  const [labelTemplate, setLabelTemplate] = useState(existing.labelTemplate ?? "");
 
   const isInitialMount = useRef(true);
   const prevType = useRef(type);
@@ -55,6 +56,7 @@ export default function EdgeTypeAppearanceForm({
     setColor(edgeTypeAppearances[type]?.color ?? "#64748b");
     setWidth(edgeTypeAppearances[type]?.width ?? 2);
     setLabelField(edgeTypeAppearances[type]?.labelField ?? "");
+    setLabelTemplate(edgeTypeAppearances[type]?.labelTemplate ?? "");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [type, edgeTypeAppearances]);
 
@@ -72,8 +74,9 @@ export default function EdgeTypeAppearanceForm({
       color,
       width,
       labelField: labelField.trim() || undefined,
+      labelTemplate: labelTemplate.trim() || undefined,
     });
-  }, [color, width, labelField, type]);
+  }, [color, width, labelField, labelTemplate, type]);
 
   function handleReset() {
     onReset(type);
@@ -81,6 +84,7 @@ export default function EdgeTypeAppearanceForm({
     setColor("#64748b");
     setWidth(2);
     setLabelField("");
+    setLabelTemplate("");
     toast("Reset to default");
   }
 
@@ -158,6 +162,19 @@ export default function EdgeTypeAppearanceForm({
           E.g. set to <span className="font-mono">cost</span> to show an
           attribute named <span className="font-mono">cost</span> as the label
           for this type of edge.
+        </span>
+      </div>
+      <div className="flex flex-col gap-2">
+        <label className="text-xs font-semibold mb-1 block">
+          Label template
+        </label>
+        <Input
+          value={labelTemplate}
+          onChange={(e) => setLabelTemplate(e.target.value)}
+          placeholder="e.g. {source.label} → {target.label}"
+        />
+        <span className="text-xs text-muted-foreground block mt-1">
+          Use {'{property}'} to insert values. Overrides label field.
         </span>
       </div>
       {/* Unified button layout */}

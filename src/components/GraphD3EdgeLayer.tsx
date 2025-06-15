@@ -2,6 +2,8 @@
 import React from "react";
 import { useGraphStore } from "@/state/useGraphStore";
 import { DEFAULT_EDGE_COLOR, DEFAULT_EDGE_WIDTH } from "@/config/graphConstants";
+import { resolveLabel as resolveJoinedLabel } from "@/utils/labelJoin";
+import { resolveLabelTemplate } from "@/utils/labelTemplate";
 
 type GraphD3EdgeLayerProps = {
   edges: any[];
@@ -45,9 +47,23 @@ const GraphD3EdgeLayer: React.FC<GraphD3EdgeLayerProps> = ({
         const midX = (s.x + t.x) / 2;
         const midY = (s.y + t.y) / 2;
 
-        let edgeLabel = edgeApp.label;
-        if (!edgeLabel && edgeApp.labelField && e.attributes && e.attributes[edgeApp.labelField]) {
-          edgeLabel = String(e.attributes[edgeApp.labelField]);
+        const fallbackId = "";
+        let edgeLabel = edgeApp.label; // Prio 1: custom override from inspector
+
+        if (edgeLabel === undefined) {
+          if (edgeApp.labelTemplate) {
+            const context = {
+              ...e,
+              ...e.attributes,
+              source_label: s.label,
+              target_label: t.label,
+              source, // pass full source node
+              target, // pass full target node
+            };
+            edgeLabel = resolveLabelTemplate(edgeApp.labelTemplate, context, fallbackId);
+          } else if (edgeApp.labelField) {
+            edgeLabel = resolveJoinedLabel(edgeApp.labelField, e.attributes, fallbackId);
+          }
         }
 
         return (
