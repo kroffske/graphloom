@@ -1,6 +1,7 @@
 import React from "react";
 import { GraphNode } from "@/state/useGraphStore";
 import { useIconRegistry } from "./IconRegistry";
+import { useGraphStore } from "@/state/useGraphStore";
 
 /**
  * Renders the node as a circular background (with optional transparency),
@@ -17,7 +18,14 @@ const GraphD3Node = ({
   onSelect?: (id: string) => void;
 }) => {
   const iconRegistry = useIconRegistry();
-  const appearance = node.appearance || {};
+  const { nodeTypeAppearances } = useGraphStore();
+
+  // Compute the final appearance
+  // Use per-node appearance if set, else fall back to type appearance, else default
+  const typeAppearance = nodeTypeAppearances?.[node.type] ?? {};
+  const appearance = node.appearance && Object.keys(node.appearance).length > 0
+    ? node.appearance
+    : typeAppearance;
 
   // Appearance props
   const iconType = appearance.icon || node.type;
