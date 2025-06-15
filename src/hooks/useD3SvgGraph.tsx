@@ -1,9 +1,11 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import * as d3 from "d3";
 import { useD3DragNodes } from "@/hooks/useD3DragNodes";
 import { useD3ZoomAndPan } from "@/hooks/useD3ZoomAndPan";
 import GraphD3NodeMount from "@/components/GraphD3NodeMount";
 import { useGraphStore } from "@/state/useGraphStore";
+import { useD3NodeRenderer } from "./useD3NodeRenderer";
+import { useD3EdgeRenderer } from "./useD3EdgeRenderer";
 
 // Break out the shape constants since they may be used outside the hook as well
 export const WIDTH = 900;
@@ -61,11 +63,9 @@ export function useD3SvgGraph({
   simNodes,
   simEdges,
   onEdgeContextMenu,
-  // NEW for hover
   setHoveredEdgeId,
   setEdgeMousePos,
 }: UseD3SvgGraphProps) {
-  // Get edge selection API
   const { selectedEdgeId, selectEdge, edgeAppearances, showEdgeLabels } = useGraphStore();
 
   useD3ZoomAndPan({
@@ -82,120 +82,47 @@ export function useD3SvgGraph({
     const svgGroup = svg.append("g");
     svgGroupRef.current = svgGroup.node() as SVGGElement;
 
-    // -- EDGE LAYER --
-    const link = svgGroup.append("g").attr("class", "edges").selectAll("line")
-      .data(simEdges)
-      .enter()
-      .append("line")
-      .attr("stroke", (d: any) => {
-        const id = d.id;
-        const appearance = { ...(d.appearance || {}), ...(edgeAppearances[id] || {}) };
-        return appearance.color || "#64748b";
-      })
-      .attr("stroke-width", (d: any) => {
-        const id = d.id;
-        const appearance = { ...(d.appearance || {}), ...(edgeAppearances[id] || {}) };
-        return appearance.width || 2;
-      })
-      .attr("opacity", (d: any) => (selectedEdgeId === d.id ? 1 : 0.7))
-      .attr("cursor", "context-menu")
-      .attr("tabindex", 0)
-      .attr("id", (d: any) => "edge-" + d.id)
-      .on("mousedown", function(event: any) { event.stopPropagation(); })
-      .on("mouseup", function(event: any) { event.stopPropagation(); })
-      .on("click", null)
-      .on("keydown", null)
-      .on("contextmenu", function(event: MouseEvent, d: any) {
-        event.preventDefault();
-        event.stopPropagation();
-        if (typeof selectEdge === "function") {
-          selectEdge(d.id);
-        }
-        if (onEdgeContextMenu) {
-          onEdgeContextMenu(d.id, event);
-        } else if (typeof setContextNodeId === "function") {
-          setContextNodeId(d.id);
-        }
-      })
-      .on("mouseenter", function(event: MouseEvent, d: any) {
-        if (setHoveredEdgeId) setHoveredEdgeId(d.id);
-        if (setEdgeMousePos) setEdgeMousePos({ x: event.clientX, y: event.clientY });
-      })
-      .on("mousemove", function(event: MouseEvent, d: any) {
-        if (setEdgeMousePos) setEdgeMousePos({ x: event.clientX, y: event.clientY });
-      })
-      .on("mouseleave", function() {
-        if (setHoveredEdgeId) setHoveredEdgeId(null);
-        if (setEdgeMousePos) setEdgeMousePos(null);
-      });
+    // --- Render edges layer ---
+    const link = useD3EdgeRenderer({
+      svgGroup,
+      simEdges,
+      simNodes,
+      selectedEdgeId,
+      selectEdge,
+      edgeAppearances,
+      onEdgeContextMenu,
+      setHoveredEdgeId,
+      setEdgeMousePos,
+    });
 
-    // ---- Restore NODE RENDERING (CIRCLES & foreignObject ICONS) ----
-    const nodeGroup = svgGroup.append("g").attr("class", "nodes");
+    // --- Render nodes layer ---
+    const nodeGroup = useD3NodeRenderer({
+      svgGroup,
+      simNodes,
+      hiddenNodeIds,
+      dragging,
+      setHoveredNodeId,
+      setContextNodeId,
+    });
 
-    // Render SVG circles for each node
-    nodeGroup.selectAll("circle")
-      .data(simNodes)
-      .enter()
-      .append("circle")
-      .attr("cx", (d: any) => d.x)
-      .attr("cy", (d: any) => d.y)
-      .attr("r", NODE_RADIUS)
-      .attr("fill", (d: any) => d.appearance?.backgroundColor || "#fff")
-      .attr("stroke", (d: any) => d.appearance?.lineColor || "#888")
-      .attr("stroke-width", (d: any) => d.id === (dragging?.id) ? 3 : 1.5)
-      .attr("opacity", (d: any) => hiddenNodeIds.has(d.id) ? 0.15 : 1)
-      .attr("pointer-events", "visiblePainted");
-
-    // Use a foreignObject for mounting React node content (for icon, etc)
-    nodeGroup.selectAll("foreignObject")
-      .data(simNodes)
-      .enter()
-      .append("foreignObject")
-      .attr("x", (d: any) => d.x - NODE_RADIUS)
-      .attr("y", (d: any) => d.y - NODE_RADIUS)
-      .attr("width", NODE_RADIUS * 2)
-      .attr("height", NODE_RADIUS * 2)
-      .attr("pointer-events", "none")
-      .attr("style", "overflow: visible; z-index: 2;")
-      .append("xhtml:div")
-      .attr("id", (d: any) => `d3-node-${d.id}`)
-      .style("width", `${NODE_RADIUS * 2}px`)
-      .style("height", `${NODE_RADIUS * 2}px`)
-      .style("display", "flex")
-      .style("justify-content", "center")
-      .style("align-items", "center")
-      .style("pointer-events", "auto");
-
-    // --- Node event handlers (hover, context menu) ---
-    nodeGroup.selectAll("circle")
-      .on("mouseenter", function (event: MouseEvent, d: any) {
-        setHoveredNodeId?.(d.id);
-      })
-      .on("mouseleave", function () {
-        setHoveredNodeId?.(null);
-      })
-      .on("contextmenu", function (event: MouseEvent, d: any) {
-        event.preventDefault();
-        event.stopPropagation();
-        setContextNodeId?.(d.id);
-      });
-
-    // UPDATE node positions on every simulation tick
+    // --- Node + edge update logic on tick / layout ---
     if (layoutMode === "force") {
       simulation.on("tick", () => {
         captureSimulationPositions(simNodes);
+        // Edge positions
         link
           .attr("x1", (d: any) => (d.source as any).x!)
           .attr("y1", (d: any) => (d.source as any).y!)
           .attr("x2", (d: any) => (d.target as any).x!)
           .attr("y2", (d: any) => (d.target as any).y!);
-        // Update node positions
+        // Node positions
         nodeGroup.selectAll("circle")
           .attr("cx", (d: any) => d.x)
           .attr("cy", (d: any) => d.y);
         nodeGroup.selectAll("foreignObject")
           .attr("x", (d: any) => d.x - NODE_RADIUS)
           .attr("y", (d: any) => d.y - NODE_RADIUS);
+
         link
           .attr("opacity", (d: any) => (selectedEdgeId === d.id ? 1 : 0.7))
           .attr("stroke-width", (d: any) => {
@@ -209,6 +136,7 @@ export function useD3SvgGraph({
           );
       });
     } else {
+      // Non-force layouts: set positions once
       link
         .attr("x1", (d: any) => {
           const s: any = typeof d.source === "object" ? d.source : simNodes.find((n: any) => n.id === d.source);
@@ -226,7 +154,7 @@ export function useD3SvgGraph({
           const t: any = typeof d.target === "object" ? d.target : simNodes.find((n: any) => n.id === d.target);
           return t?.y ?? 0;
         });
-      // Update node positions
+      // Node positions
       nodeGroup.selectAll("circle")
         .attr("cx", (d: any) => d.x)
         .attr("cy", (d: any) => d.y);
@@ -275,6 +203,7 @@ export function useD3SvgGraph({
     onEdgeContextMenu
   ]);
 
+  // Edge appearance update
   useEffect(() => {
     if (!svgRef.current) return;
     const svg = d3.select(svgRef.current);
