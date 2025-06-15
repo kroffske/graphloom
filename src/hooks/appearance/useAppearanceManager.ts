@@ -1,4 +1,3 @@
-
 import { useCallback, useMemo, useEffect, useState } from "react";
 import { appearancePresets } from "@/data/appearancePresets";
 import { toast } from "sonner";
@@ -198,7 +197,7 @@ export function useAppearanceManager() {
   );
 
   const handlePresetSaveFromJson = useCallback(
-    (jsonStr: string, onDone?: () => void) => {
+    (jsonStr: string, onDone?: () => void, showToast = true) => {
       try {
         const data = JSON.parse(jsonStr);
         let nodeTypes = data.nodeTypes || {};
@@ -223,7 +222,7 @@ export function useAppearanceManager() {
           config: newPresetConfig,
         });
         updateAllNodeAppearances(nodeTypes);
-        toast.success("Preset JSON saved!");
+        if (showToast) toast.success("Preset JSON saved!");
         if (onDone) onDone();
         setSelectedPresetKey(CUSTOM_PRESET_KEY);
         persistSelectedPresetKey(CUSTOM_PRESET_KEY);
@@ -268,10 +267,7 @@ export function useAppearanceManager() {
         nodeTypes: completePresetObject.nodeTypes,
         edgeTypes: completePresetObject.edgeTypes,
     };
-    const success = handlePresetSaveFromJson(JSON.stringify(presetToSave, null, 2));
-    if (success) {
-      toast.success(`Appearance saved to custom preset.`);
-    }
+    handlePresetSaveFromJson(JSON.stringify(presetToSave, null, 2), undefined, false);
   }, [completePresetObject, handlePresetSaveFromJson]);
 
   const updateNodeTypeAppearance = useCallback((type: string, appearance: NodeTypeAppearance) => {
