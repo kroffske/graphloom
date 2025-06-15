@@ -66,7 +66,7 @@ const NodeTypeVisualSettings: React.FC<NodeTypeVisualSettingsProps> = ({
           id="appearance-label-field"
           value={labelField}
           onChange={e => setLabelField(e.target.value)}
-          className="input px-2 py-1 rounded border mt-1"
+          className="input px-2 py-1 rounded border mt-1 bg-gray-900 text-gray-100 border-gray-700"
           placeholder='e.g. label,name,full_name'
           title="Separate field names by comma, space, dash, or underscore"
         />

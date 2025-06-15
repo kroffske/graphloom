@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -66,6 +65,7 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
   const [iconColor, setIconColor] = useState<string>(selectedAppearance.iconColor || "#222");
   const [borderColor, setBorderColor] = useState<string>(selectedAppearance.borderColor ?? "#e5e7eb");
   const [borderEnabled, setBorderEnabled] = useState<boolean>(selectedAppearance.borderEnabled ?? false);
+  const [borderWidth, setBorderWidth] = useState<number>(selectedAppearance.borderWidth ?? 2);
   const [backgroundColor, setBackgroundColor] = useState<string>(selectedAppearance.backgroundColor || "");
   const [lineColor, setLineColor] = useState<string>(selectedAppearance.lineColor || "");
   const [size, setSize] = useState<number>(selectedAppearance.size ?? 64);
@@ -77,6 +77,7 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
     setIconColor(selectedAppearance.iconColor || "#222");
     setBorderColor(selectedAppearance.borderColor ?? "#e5e7eb");
     setBorderEnabled(selectedAppearance.borderEnabled ?? false);
+    setBorderWidth(selectedAppearance.borderWidth ?? 2);
     setBackgroundColor(selectedAppearance.backgroundColor || "");
     setLineColor(selectedAppearance.lineColor || "");
     setSize(selectedAppearance.size ?? 64);
@@ -95,6 +96,7 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
       iconColor,
       borderColor,
       borderEnabled,
+      borderWidth,
       backgroundColor,
       lineColor,
       size,
@@ -153,6 +155,7 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
           iconColor={iconColor} setIconColor={setIconColor}
           borderColor={borderColor} setBorderColor={setBorderColor}
           borderEnabled={borderEnabled} setBorderEnabled={setBorderEnabled}
+          borderWidth={borderWidth} setBorderWidth={setBorderWidth}
           iconOrder={iconOrder} setIconOrder={setIconOrder}
         />
         <NodeTypeVisualSettings

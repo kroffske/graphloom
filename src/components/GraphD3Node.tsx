@@ -30,10 +30,7 @@ const GraphD3Node = ({
   // Appearance props
   const iconType = appearance.icon || node.type;
   const iconColor = appearance.iconColor || "#222";
-  const borderColor =
-    typeof appearance.borderEnabled === "boolean" && !appearance.borderEnabled
-      ? "transparent"
-      : appearance.borderColor || "#e5e7eb";
+  const borderColor = appearance.borderColor || "#e5e7eb";
   const borderEnabled = Boolean(appearance.borderEnabled);
   const nodeSize = appearance.size ?? 64;
   const labelField = appearance.labelField || "label";
@@ -46,8 +43,9 @@ const GraphD3Node = ({
       : "transparent";
 
   // Border: Only show if enabled or if selected
+  const baseBorderWidth = appearance.borderWidth ?? 2;
   const appliedBorderColor = borderEnabled || selected ? (selected ? "#3b82f6" : borderColor) : "transparent";
-  const borderWidth = borderEnabled || selected ? 2 : 0;
+  const borderWidth = borderEnabled ? baseBorderWidth : (selected ? 2 : 0);
 
   // Label extraction
   const label =
@@ -78,7 +76,7 @@ const GraphD3Node = ({
       onClick={() => onSelect?.(node.id)}
       style={{
         minWidth: nodeSize,
-        minHeight: nodeSize + 20, // allow label area
+        minHeight: nodeSize, // allow label area
         background: "none", // No rect background
         position: "relative",
       }}
@@ -119,23 +117,26 @@ const GraphD3Node = ({
             />
           )}
         </div>
+        {/* Label inside the circle, centered */}
+        <span
+          className="text-xs font-medium truncate text-foreground text-center"
+          style={{
+            position: "absolute",
+            width: nodeSize * 0.9,
+            bottom: radius * 0.3, // Closer to center
+            left: '50%',
+            transform: 'translateX(-50%)',
+            pointerEvents: 'none', // to not interfere with clicks
+            lineHeight: "1.1",
+            maxHeight: "2.1em", // Allow up to 2 lines, but it will be truncated
+            overflow: "hidden",
+            whiteSpace: "nowrap",
+          }}
+          title={label}
+        >
+          {label}
+        </span>
       </div>
-      {/* Label below the circle, close and uncut, always visible */}
-      <span
-        className="text-xs font-medium truncate max-w-[110px] text-foreground text-center"
-        style={{
-          width: nodeSize * 0.95,
-          marginTop: "4px",
-          lineHeight: "1.1",
-          maxHeight: "2.1em",
-          overflow: "hidden",
-          whiteSpace: "nowrap",
-          display: "block",
-        }}
-        title={label}
-      >
-        {label}
-      </span>
     </div>
   );
 };

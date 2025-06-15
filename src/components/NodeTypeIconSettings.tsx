@@ -3,18 +3,20 @@ import React from "react";
 import { Label } from "@/components/ui/label";
 import ColorCirclePicker from "./ColorCirclePicker";
 import IconPicker from "./IconPicker";
+import { Slider } from "@/components/ui/slider";
 
 // EXPANDED: Lucide icons group with more choices (add more as needed)
 const ICON_GROUPS: Record<string, string[]> = {
   "Classic": ["entity", "process", "data-store", "event", "decision", "external-system"],
   "Lucide": [
     "user", "activity", "alert-circle", "airplay", "air-vent", "alarm-clock", "align-center", "align-justify", "anchor",
-    "award", "baby", "battery", "bell", "book", "bookmark", "briefcase", "building", "calendar", "camera", "car", "check", "chevron-down",
-    "circle", "cloud", "code", "coffee", "compass", "computer", "cpu", "database", "dice", "disc", "dollar-sign", "download", "edit", "eye",
-    "file", "flag", "folder", "gift", "globe", "grid", "heart", "home", "image", "key", "layers", "layout", "lightbulb", "link", "list", "lock",
-    "map", "menu", "message-square", "mic", "moon", "music", "paperclip", "phone", "pie-chart", "play", "plus", "printer", "refresh-cw", "save",
-    "scissors", "search", "settings", "share", "shield", "shopping-cart", "shuffle", "sliders", "star", "sun", "tag", "thumbs-up", "trash", "trending-up",
-    "tv", "umbrella", "unlock", "upload", "user-check", "users", "video", "watch", "wifi", "zap"
+    "archive", "archive-x", "award", "baby", "battery", "bell", "bell-off", "book", "bookmark", "box", "briefcase", "building", "calendar", "camera", "car", "check", "chevron-down",
+    "circle", "clipboard", "clock", "cloud", "code", "cog", "coffee", "compass", "computer", "copy", "cpu", "database", "dice", "disc", "dollar-sign", "download", "edit", "eye",
+    "file", "filter", "flag", "folder", "gift", "globe", "grid", "heart", "help-circle", "home", "image", "info", "key", "layers", "layout", "lightbulb", "link", "list", "lock",
+    "log-in", "log-out", "mail", "map-pin", "map", "menu", "message-square", "mic", "minus", "monitor", "moon", "more-horizontal", "more-vertical", "move", "music", "package", "paperclip", "pause", "pen", "percent",
+    "phone", "pie-chart", "play", "plus", "power", "printer", "refresh-cw", "save",
+    "scissors", "search", "send", "settings", "share", "shield", "shopping-cart", "shuffle", "sidebar", "signal", "sliders", "star", "sun", "tag", "target", "terminal", "thermometer", "thumbs-down", "thumbs-up", "trash", "trash-2", "trending-up",
+    "truck", "tv", "umbrella", "unlock", "upload", "user-check", "users", "video", "volume", "watch", "wifi", "x", "youtube", "zap"
   ]
 };
 
@@ -28,6 +30,8 @@ type NodeTypeIconSettingsProps = {
   setBorderColor: (color: string) => void;
   borderEnabled: boolean;
   setBorderEnabled: (enabled: boolean) => void;
+  borderWidth: number;
+  setBorderWidth: (width: number) => void;
   iconOrder: string[];
   setIconOrder: (arr: string[]) => void;
 };
@@ -42,6 +46,8 @@ const NodeTypeIconSettings: React.FC<NodeTypeIconSettingsProps> = ({
   setBorderColor,
   borderEnabled,
   setBorderEnabled,
+  borderWidth,
+  setBorderWidth,
   iconOrder,
   setIconOrder,
 }) => {
@@ -112,14 +118,32 @@ const NodeTypeIconSettings: React.FC<NodeTypeIconSettingsProps> = ({
           <Label htmlFor="node-border-enabled" className="mb-0">
             Node Border Enabled
           </Label>
-          {borderEnabled && (
-            <ColorCirclePicker
-              value={borderColor}
-              onChange={setBorderColor}
-              className="ml-2"
-            />
-          )}
         </div>
+
+        {borderEnabled && (
+          <div className="grid gap-4 pl-6 pt-2">
+            <div>
+              <Label htmlFor="node-border-color" className="mb-2 block">Border Color</Label>
+              <ColorCirclePicker
+                value={borderColor}
+                onChange={setBorderColor}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="appearance-border-width">Border Width ({borderWidth ?? 2}px)</Label>
+              <Slider
+                id="appearance-border-width"
+                min={1}
+                max={10}
+                step={0.5}
+                value={[borderWidth ?? 2]}
+                onValueChange={([s]) => setBorderWidth(s)}
+                className="w-full"
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

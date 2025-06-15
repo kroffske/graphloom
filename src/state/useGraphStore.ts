@@ -22,6 +22,7 @@ export type GraphNode = {
     iconColor?: string;
     borderEnabled?: boolean;
     borderColor?: string;
+    borderWidth?: number;
   };
 };
 
@@ -63,6 +64,7 @@ type NodeTypeAppearanceMap = Record<string, {
   iconColor?: string;
   borderEnabled?: boolean;
   borderColor?: string;
+  borderWidth?: number;
 }>;
 
 // UPDATED: include labelField here too!
