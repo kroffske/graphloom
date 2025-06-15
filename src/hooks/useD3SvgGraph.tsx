@@ -1,4 +1,3 @@
-
 import { useEffect, useRef } from "react";
 import * as d3 from "d3";
 import { useD3DragNodes } from "@/hooks/useD3DragNodes";
@@ -31,6 +30,11 @@ type UseD3SvgGraphProps = {
   simulation: any;
   simNodes: any[];
   simEdges: any[];
+  /**
+   * Optional: show context menu for edge (edgeId, event)
+   * You can plug in a UI or logic to display/hide a menu.
+   */
+  onEdgeContextMenu?: (edgeId: string, event: MouseEvent) => void;
 };
 
 export function useD3SvgGraph({
@@ -53,6 +57,7 @@ export function useD3SvgGraph({
   simulation,
   simNodes,
   simEdges,
+  onEdgeContextMenu,
 }: UseD3SvgGraphProps) {
   // Get edge selection API
   const { selectedEdgeId, selectEdge, edgeAppearances, showEdgeLabels } = useGraphStore();
@@ -71,7 +76,7 @@ export function useD3SvgGraph({
     const svgGroup = svg.append("g");
     svgGroupRef.current = svgGroup.node() as SVGGElement;
 
-    // -- EDGE LAYER: add click/keyboard handlers for force layout!
+    // -- EDGE LAYER --
     const link = svgGroup.append("g").attr("class", "edges").selectAll("line")
       .data(simEdges)
       .enter()
@@ -88,23 +93,24 @@ export function useD3SvgGraph({
         return appearance.width || 2;
       })
       .attr("opacity", (d: any) => (selectedEdgeId === d.id ? 1 : 0.7))
-      .attr("cursor", "pointer")
+      .attr("cursor", "context-menu") // indicate right-click functionality
       .attr("tabindex", 0)
       .attr("id", (d: any) => "edge-" + d.id)
-      .on("mousedown", function (event: any) {
+      // Prevent drag/select weirdness on mousedown/up
+      .on("mousedown", function(event: any) { event.stopPropagation(); })
+      .on("mouseup", function(event: any) { event.stopPropagation(); })
+      // DO NOT attach click/selection/keydown handlers for left click or keyboard
+      .on("click", null)
+      .on("keydown", null)
+      // Show context menu on right-click
+      .on("contextmenu", function(event: MouseEvent, d: any) {
+        event.preventDefault();
         event.stopPropagation();
-      })
-      .on("mouseup", function (event: any) {
-        event.stopPropagation();
-      })
-      .on("click", function (event: any, d: any) {
-        event.stopPropagation();
-        // Toggle selection
-        selectEdge(selectedEdgeId === d.id ? null : d.id);
-      })
-      .on("keydown", function (event: any, d: any) {
-        if (event.key === "Enter" || event.key === " ") {
-          selectEdge(selectedEdgeId === d.id ? null : d.id);
+        // If a callback is provided, call it; otherwise fallback to setContextNodeId for now
+        if (onEdgeContextMenu) {
+          onEdgeContextMenu(d.id, event);
+        } else if (typeof setContextNodeId === "function") {
+          setContextNodeId(d.id);
         }
       });
 
@@ -307,9 +313,6 @@ export function useD3SvgGraph({
     selectEdge,
     selectedEdgeId,
     edgeAppearances,
+    onEdgeContextMenu
   ]);
 }
-
-// ... NOTE: This file is now over 252 lines. It is getting quite long!
-// Please consider asking Lovable to refactor this file into smaller, maintainable modules.
-// ... end file
