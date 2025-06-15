@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from "react";
 import { useGraphStore } from "@/state/useGraphStore";
 import { Label } from "@/components/ui/label";
@@ -28,21 +27,45 @@ const NodeTypeAppearanceForm: React.FC = () => {
     nodeTypeAppearances,
     setNodeTypeAppearance,
     resetNodeTypeAppearance,
+    nodes,
   } = useGraphStore();
 
-  // ---- DYNAMIC NODE TYPES ----
+  // --- Gather all known node types from: built-in, custom appearances, loaded preset (from window or config), and actual nodes
+  const [presetJsonString, setPresetJsonString] = useState<string>(
+    // Try to sync with editable JSON from config if available - fallback handled below
+    ""
+  );
+  // Hack: pull the editable JSON config if it's placed in window (by GlobalSettingsSection) for live sync
+  React.useEffect(() => {
+    // Listen for custom event to set preset JSON string if present
+    function handlePresetJsonSync(e: any) {
+      if (typeof e.detail === "string") setPresetJsonString(e.detail);
+    }
+    window.addEventListener("lovable-preset-json-sync", handlePresetJsonSync);
+    return () => window.removeEventListener("lovable-preset-json-sync", handlePresetJsonSync);
+  }, []);
+
   const nodeTypeKeys: string[] = useMemo(() => {
-    const keys = Object.keys(nodeTypeAppearances ?? {});
-    if (keys.length > 0) return keys;
-    return [
-      "entity",
-      "process",
-      "data-store",
-      "event",
-      "decision",
-      "external-system",
-    ];
-  }, [nodeTypeAppearances]);
+    // Collect: built-in, appearance keys, present nodes, AND keys found in the config/preset JSON (if present)
+    const builtIn = ["entity", "process", "data-store", "event", "decision", "external-system"];
+    const fromAppearances = Object.keys(nodeTypeAppearances ?? {});
+    const fromNodes = nodes.map((n) => n.type);
+    let fromPresetJson: string[] = [];
+    // Safely parse preset JSON if string exists
+    if (presetJsonString) {
+      try {
+        const parsed = JSON.parse(presetJsonString);
+        if (parsed && typeof parsed === "object") {
+          fromPresetJson = Object.keys(parsed);
+        }
+      } catch {
+        // Ignore invalid JSON
+      }
+    }
+    // Deduplicate and return
+    return Array.from(new Set([...builtIn, ...fromAppearances, ...fromNodes, ...fromPresetJson]));
+  }, [nodeTypeAppearances, nodes, presetJsonString]);
+
   const nodeTypeLabels: Record<string, string> = useMemo(() => {
     const labels: Record<string, string> = {};
     nodeTypeKeys.forEach(
