@@ -45,6 +45,11 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
   const isInitialMount = useRef(true);
   const prevSelectedType = useRef(selectedType);
 
+  const onSaveRef = useRef(onSave);
+  useEffect(() => {
+    onSaveRef.current = onSave;
+  }, [onSave]);
+
   useEffect(() => {
     setIcon(appearance.icon || selectedType);
     setIconColor(appearance.iconColor || "#222");
@@ -82,7 +87,7 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
       labelField,
       iconOrder,
     };
-    onSave(selectedType, newAppearance);
+    onSaveRef.current(selectedType, newAppearance);
   }, [
     icon,
     iconColor,
@@ -93,7 +98,6 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
     size,
     labelField,
     iconOrder,
-    onSave,
     selectedType,
   ]);
 
