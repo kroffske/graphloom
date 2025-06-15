@@ -1,7 +1,19 @@
 
 import React from "react";
 
-const EntityIcon = ({ filled = false, className = "", ...props }: { filled?: boolean; className?: string; "aria-label"?: string }) => (
+type EntityIconProps = {
+  filled?: boolean;
+  className?: string;
+  "aria-label"?: string;
+  color?: string;
+};
+
+const EntityIcon = ({
+  filled = false,
+  className = "",
+  color,
+  ...props
+}: EntityIconProps) => (
   <svg
     viewBox="0 0 24 24"
     aria-label="Entity"
@@ -9,7 +21,7 @@ const EntityIcon = ({ filled = false, className = "", ...props }: { filled?: boo
     width={24}
     height={24}
     fill="none"
-    stroke="currentColor"
+    stroke={color || "currentColor"}
     strokeWidth={2}
     strokeLinejoin="round"
     strokeLinecap="round"
@@ -21,8 +33,8 @@ const EntityIcon = ({ filled = false, className = "", ...props }: { filled?: boo
       width={16}
       height={16}
       rx={4}
-      fill={filled ? "currentColor" : "none"}
-      stroke="currentColor"
+      fill={filled ? (color || "currentColor") : "none"}
+      stroke={color || "currentColor"}
     />
   </svg>
 );
