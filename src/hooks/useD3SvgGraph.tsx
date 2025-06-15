@@ -1,4 +1,3 @@
-
 import { useEffect, useRef } from "react";
 import * as d3 from "d3";
 import { useD3DragNodes } from "@/hooks/useD3DragNodes";
@@ -36,6 +35,9 @@ type UseD3SvgGraphProps = {
    * You can plug in a UI or logic to display/hide a menu.
    */
   onEdgeContextMenu?: (edgeId: string, event: MouseEvent) => void;
+  // NEW for hover
+  setHoveredEdgeId?: (id: string | null) => void;
+  setEdgeMousePos?: (pos: { x: number; y: number } | null) => void;
 };
 
 export function useD3SvgGraph({
@@ -59,6 +61,9 @@ export function useD3SvgGraph({
   simNodes,
   simEdges,
   onEdgeContextMenu,
+  // NEW for hover
+  setHoveredEdgeId,
+  setEdgeMousePos,
 }: UseD3SvgGraphProps) {
   // Get edge selection API
   const { selectedEdgeId, selectEdge, edgeAppearances, showEdgeLabels } = useGraphStore();
@@ -118,6 +123,18 @@ export function useD3SvgGraph({
         } else if (typeof setContextNodeId === "function") {
           setContextNodeId(d.id);
         }
+      })
+      // --- EDGE HOVER HANDLERS ---
+      .on("mouseenter", function(event: MouseEvent, d: any) {
+        if (setHoveredEdgeId) setHoveredEdgeId(d.id);
+        if (setEdgeMousePos) setEdgeMousePos({ x: event.clientX, y: event.clientY });
+      })
+      .on("mousemove", function(event: MouseEvent, d: any) {
+        if (setEdgeMousePos) setEdgeMousePos({ x: event.clientX, y: event.clientY });
+      })
+      .on("mouseleave", function() {
+        if (setHoveredEdgeId) setHoveredEdgeId(null);
+        if (setEdgeMousePos) setEdgeMousePos(null);
       });
 
     const nodeLayer = svgGroup.append("g").attr("class", "nodes");

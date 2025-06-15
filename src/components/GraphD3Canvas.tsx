@@ -5,6 +5,7 @@ import GraphD3SvgLayer from "./GraphD3SvgLayer";
 import GraphTooltipManager from "./GraphTooltipManager";
 import EdgeContextMenu from "./EdgeContextMenu";
 import { useGraphStore } from "@/state/useGraphStore";
+import EdgeTooltip from "./EdgeTooltip";
 
 /**
  * This D3 graph canvas component now composes specialized pieces for simulation and rendering.
@@ -29,6 +30,10 @@ const GraphD3Canvas: React.FC = () => {
   const [contextNodeId, setContextNodeId] = React.useState<string | null>(null);
   const [dragging, setDragging] = React.useState<null | { id: string; offsetX: number; offsetY: number }>(null);
   const [hiddenNodeIds, setHiddenNodeIds] = React.useState<Set<string>>(new Set());
+
+  // NEW: Edge hover state and mouse position for tooltip
+  const [hoveredEdgeId, setHoveredEdgeId] = React.useState<string | null>(null);
+  const [edgeMousePos, setEdgeMousePos] = React.useState<{ x: number; y: number } | null>(null);
 
   // NEW: Edge context menu state
   const [edgeMenu, setEdgeMenu] = useState<{ edgeId: string; x: number; y: number } | null>(null);
@@ -138,6 +143,9 @@ const GraphD3Canvas: React.FC = () => {
     [selectEdge]
   );
 
+  // Find the currently hovered edge, if any
+  const hoveredEdge = edges.find(e => e.id === hoveredEdgeId);
+
   return (
     <div className="relative w-full h-full flex-1 bg-background border rounded-lg overflow-hidden shadow-lg p-0 m-0" style={{ minHeight: 0, minWidth: 0 }}>
       <GraphD3Toolbar
@@ -163,6 +171,9 @@ const GraphD3Canvas: React.FC = () => {
           initialPositions={layoutMode === "force" ? d3InitialPositions : undefined}
           // Pass edge context menu handler
           onEdgeContextMenu={handleEdgeContextMenu}
+          // Pass hover handlers for edges:
+          setHoveredEdgeId={setHoveredEdgeId}
+          setEdgeMousePos={setEdgeMousePos}
         />
       </div>
       {edgeMenu && (
@@ -176,7 +187,10 @@ const GraphD3Canvas: React.FC = () => {
       {contextNodeId && (
         <div className="fixed z-50 left-36 top-32 pointer-events-none"></div>
       )}
+      {/* Node tooltip */}
       <GraphTooltipManager node={hoveredNode} />
+      {/* Edge tooltip */}
+      <EdgeTooltip edge={hoveredEdge} position={edgeMousePos} />
     </div>
   );
 };
