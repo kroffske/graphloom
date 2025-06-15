@@ -1,10 +1,9 @@
-
 import React from "react";
 import * as Papa from "papaparse";
 import { useGraphStore } from "@/state/useGraphStore";
 import { SAMPLE_TAB_CSVS } from "./SampleTabs";
 import UploadCsvSection from "./UploadCsvSection";
-import SettingsSidebar from "./SettingsSidebar";
+import MainSettingsSection from "./MainSettingsSection";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 // --- Copy helpers from UploadCsvSection ---
@@ -100,8 +99,8 @@ const UploadPanel = () => {
           </div>
         </TabsContent>
         <TabsContent value="settings" className="p-0 w-full">
-          <div className="w-full">
-            <SettingsSidebar onFillExample={handleFillExample} />
+          <div className="w-full flex justify-center">
+            <MainSettingsSection onFillExample={handleFillExample} />
           </div>
         </TabsContent>
       </Tabs>
