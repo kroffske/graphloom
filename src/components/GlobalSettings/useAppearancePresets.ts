@@ -1,4 +1,3 @@
-
 import { useCallback, useMemo, useEffect, useState } from "react";
 import { appearancePresets } from "@/data/appearancePresets";
 import { toast } from "sonner";
@@ -116,12 +115,16 @@ export function useAppearancePresets() {
     return displayedPresets.find(p => p.key === selectedPresetKey) || null;
   }, [selectedPresetKey, displayedPresets]);
 
-  // Update all nodes to use new appearances
+  // Correct: Only update appearance, preserve other node props (especially x/y)
   const updateAllNodeAppearances = useCallback((appearanceMap: Record<string, any>) => {
-    setNodes(nodes.map(n => ({
-      ...n,
-      appearance: appearanceMap[n.type] ? { ...appearanceMap[n.type] } : {},
-    })));
+    setNodes(
+      nodes.map(n => ({
+        ...n,
+        appearance: appearanceMap[n.type] ? { ...appearanceMap[n.type] } : {},
+        // Crucially: retain ALL existing properties, including x and y and previous attributes!
+        // This avoids losing positions.
+      }))
+    );
   }, [nodes, setNodes]);
 
   // Save from preset JSON (nodeTypes/edgeTypes shape or flat)
@@ -139,7 +142,7 @@ export function useAppearancePresets() {
         setNodeTypeAppearance(type, config);
       });
       Object.entries(edgeTypes).forEach(([type, config]) => {
-        setEdgeTypeAppearance(type, config as any);
+        setEdgeTypeAppearance(type as any, config as any);
       });
       persistCustomPreset({ nodeTypes, edgeTypes });
       setCustomPreset({
@@ -172,7 +175,7 @@ export function useAppearancePresets() {
         setNodeTypeAppearance(type, config);
       });
       Object.entries(edgeTypes).forEach(([type, config]) => {
-        setEdgeTypeAppearance(type, config as any);
+        setEdgeTypeAppearance(type as any, config as any);
       });
       updateAllNodeAppearances(nodeTypes);
       toast.success("Preset loaded!");
