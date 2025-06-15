@@ -2,6 +2,7 @@ import React from "react";
 import { GraphNode } from "@/state/useGraphStore";
 import { useIconRegistry } from "./IconRegistry";
 import { useGraphStore } from "@/state/useGraphStore";
+import { resolveLabel } from "@/utils/labelJoin";
 
 /**
  * Renders the node as a circular background (with optional transparency),
@@ -48,12 +49,7 @@ const GraphD3Node = ({
   const borderWidth = borderEnabled ? baseBorderWidth : (selected ? 2 : 0);
 
   // Label extraction
-  const label =
-    labelField === "label"
-      ? node.label
-      : node.attributes[labelField] !== undefined
-      ? String(node.attributes[labelField])
-      : node.label;
+  const label = resolveLabel(labelField, node.attributes, node.label);
 
   // For layout: svg circle is nodeSize, keep icon slightly smaller
   const radius = nodeSize / 2;
