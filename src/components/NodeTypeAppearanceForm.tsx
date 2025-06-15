@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -194,4 +193,4 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
   );
 };
 
-export export default NodeTypeAppearanceForm;
+export default NodeTypeAppearanceForm;

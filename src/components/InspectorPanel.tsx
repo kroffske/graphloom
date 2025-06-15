@@ -6,6 +6,7 @@ import InspectorPanelTabs from "./InspectorPanelTabs";
 import EdgeSettingsForm from "./EdgeSettingsForm";
 import EdgeDetailsDisplay from "./EdgeDetailsDisplay";
 import EdgeTypeAppearanceSettings from "./EdgeTypeAppearanceSettings";
+import { useAppearanceManager } from "@/hooks/appearance/useAppearanceManager";
 
 // All possible tab keys
 type TabKey = "details" | "settings" | "type-settings";
@@ -20,6 +21,14 @@ const InspectorPanel = () => {
   const iconRegistry = useIconRegistry();
   // The tab state will apply for whichever object is selected
   const [tab, setTab] = useState<TabKey>("details");
+
+  const {
+    edgeTypeKeys,
+    selectedEdgeType,
+    setSelectedEdgeType,
+    updateEdgeTypeAppearance,
+    resetEdgeTypeAppearance,
+  } = useAppearanceManager();
 
   // Show: nothing selected
   if (!selectedNodeId && !selectedEdgeId)
@@ -116,7 +125,13 @@ const InspectorPanel = () => {
             <div className="text-xs uppercase font-semibold text-muted-foreground mb-2">
               Edge Type Appearance Settings
             </div>
-            <EdgeTypeAppearanceSettings />
+            <EdgeTypeAppearanceSettings
+              onSave={updateEdgeTypeAppearance}
+              onReset={resetEdgeTypeAppearance}
+              selectedType={selectedEdgeType}
+              setSelectedType={setSelectedEdgeType}
+              allTypes={edgeTypeKeys}
+            />
           </div>
         )}
       </aside>
