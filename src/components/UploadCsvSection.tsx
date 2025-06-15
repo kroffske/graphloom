@@ -206,12 +206,12 @@ const UploadCsvSection: React.FC<UploadCsvSectionProps> = ({ onExample }) => {
   );
 
   return (
-    <div className="w-full md:w-[420px] flex flex-col gap-4">
+    <div className="flex flex-col flex-1 gap-4 h-full w-full">
       {/* Node uploader */}
       <section
         onDrop={onDropNode}
         onDragOver={e => e.preventDefault()}
-        className="w-full flex flex-col items-center justify-center gap-3 border-2 border-dashed border-primary/40 rounded-lg p-6 bg-card/80 shadow mb-1 transition hover:border-primary cursor-pointer"
+        className="flex flex-col flex-1 items-center justify-center gap-3 border-2 border-dashed border-primary/40 rounded-lg p-6 bg-card/80 shadow mb-1 transition hover:border-primary cursor-pointer w-full min-h-[120px]"
         tabIndex={0}
         aria-label="Upload nodes.csv"
         onClick={() => nodeFileInputRef.current?.click()}
@@ -236,7 +236,7 @@ const UploadCsvSection: React.FC<UploadCsvSectionProps> = ({ onExample }) => {
       <section
         onDrop={onDropEdge}
         onDragOver={e => e.preventDefault()}
-        className="w-full flex flex-col items-center justify-center gap-3 border-2 border-dashed border-primary/40 rounded-lg p-6 bg-card/80 shadow mb-1 transition hover:border-primary cursor-pointer"
+        className="flex flex-col flex-1 items-center justify-center gap-3 border-2 border-dashed border-primary/40 rounded-lg p-6 bg-card/80 shadow mb-1 transition hover:border-primary cursor-pointer w-full min-h-[120px]"
         tabIndex={0}
         aria-label="Upload edges.csv"
         onClick={() => edgeFileInputRef.current?.click()}
@@ -258,7 +258,9 @@ const UploadCsvSection: React.FC<UploadCsvSectionProps> = ({ onExample }) => {
         />
       </section>
       {/* SampleTabs */}
-      <SampleTabs onFillExample={() => onExample("example")} />
+      <div className="flex-grow">
+        <SampleTabs onFillExample={() => onExample("example")} />
+      </div>
     </div>
   );
 };
