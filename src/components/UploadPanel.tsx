@@ -3,7 +3,7 @@ import * as Papa from "papaparse";
 import { useGraphStore } from "@/state/useGraphStore";
 import { SAMPLE_TAB_CSVS } from "./SampleTabs";
 import UploadCsvSection from "./UploadCsvSection";
-import GlobalSettingsSection from "./GlobalSettingsSection";
+import SettingsSidebar from "./SettingsSidebar";
 
 // --- Copy helpers from UploadCsvSection ---
 function castToSupportedType(val: unknown): string | number | boolean {
@@ -84,8 +84,12 @@ const UploadPanel = () => {
     <div className="w-full flex flex-col md:flex-row md:items-start gap-6">
       {/* ---- LEFT COLUMN: Upload and Examples ---- */}
       <UploadCsvSection onExample={handleFillExample} />
-      {/* ---- RIGHT COLUMN: Global Settings ---- */}
-      <GlobalSettingsSection onFillExample={handleFillExample} />
+      {/* ---- RIGHT COLUMN: Settings Sidebar ---- */}
+      {/* Replace old GlobalSettingsSection with the new sidebar */}
+      <div className="hidden md:block min-w-[340px] max-w-[410px] w-full h-full">
+        <SettingsSidebar />
+      </div>
+      {/* On small screens, surface settings as a button/panel modal (future improvement) */}
     </div>
   );
 };
