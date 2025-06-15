@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useGraphStore } from "@/state/useGraphStore";
 
@@ -37,7 +36,6 @@ const GraphD3EdgeLayer: React.FC<GraphD3EdgeLayerProps> = ({
 
         // Get appearance (per-edge or store override)
         const edgeApp = { ...e.appearance, ...edgeAppearances[e.id] };
-
         const color = edgeApp.color || DEFAULT_EDGE_COLOR;
         const width = edgeApp.width || DEFAULT_EDGE_WIDTH;
         const isSelected = selectedEdgeId === e.id;
@@ -66,11 +64,16 @@ const GraphD3EdgeLayer: React.FC<GraphD3EdgeLayerProps> = ({
                 ev.stopPropagation();
                 selectEdge(isSelected ? null : e.id);
               }}
-              onContextMenu={onEdgeContextMenu
-                ? (ev) => {
-                    onEdgeContextMenu(e.id, ev);
-                  }
-                : undefined
+              onContextMenu={
+                onEdgeContextMenu
+                  ? (ev) => {
+                      ev.preventDefault();
+                      ev.stopPropagation();
+                      // Select edge before opening menu (right-click)
+                      selectEdge(e.id);
+                      onEdgeContextMenu(e.id, ev);
+                    }
+                  : undefined
               }
               onMouseDown={ev => ev.stopPropagation()}
               onMouseUp={ev => ev.stopPropagation()}

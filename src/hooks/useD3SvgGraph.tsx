@@ -106,6 +106,10 @@ export function useD3SvgGraph({
       .on("contextmenu", function(event: MouseEvent, d: any) {
         event.preventDefault();
         event.stopPropagation();
+        // --- UPDATE: Select edge on right-click before showing context menu ---
+        if (typeof selectEdge === "function") {
+          selectEdge(d.id);
+        }
         // If a callback is provided, call it; otherwise fallback to setContextNodeId for now
         if (onEdgeContextMenu) {
           onEdgeContextMenu(d.id, event);
