@@ -1,3 +1,4 @@
+
 import { useEffect, useRef } from "react";
 import * as d3 from "d3";
 import { useD3DragNodes } from "@/hooks/useD3DragNodes";
@@ -5,7 +6,6 @@ import { useD3ZoomAndPan } from "@/hooks/useD3ZoomAndPan";
 import GraphD3NodeMount from "@/components/GraphD3NodeMount";
 import { useGraphStore, GraphStore } from "@/state/useGraphStore";
 import { resolveLabelTemplate } from "@/utils/labelTemplate";
-import { shallow } from "zustand/shallow";
 
 // Break out the shape constants since they may be used outside the hook as well
 export const WIDTH = 900;
@@ -102,8 +102,7 @@ export function useD3SvgGraph({
       edgeAppearances: state.edgeAppearances,
       showEdgeLabels: state.showEdgeLabels,
       edgeTypeAppearances: state.edgeTypeAppearances,
-    }),
-    shallow
+    })
   );
 
   useD3ZoomAndPan({
@@ -218,7 +217,7 @@ export function useD3SvgGraph({
         "style",
         "display: flex;justify-content:center;align-items:center;width:100%;height:100%;"
       )
-      .html((d) => `<div id="d3-node-${d.id}"></div>`);
+      .html((d: any) => `<div id="d3-node-${d.id}"></div>`);
 
     if (layoutMode === "manual") {
       useD3DragNodes({
@@ -233,22 +232,22 @@ export function useD3SvgGraph({
       nodeG.call(
         d3
           .drag<SVGGElement, any>()
-          .on("start", function (event, d) {
+          .on("start", function (event, d: any) {
             if (!event.active && simulation && simulation.alphaTarget)
               simulation.alphaTarget(0.3).restart();
             d.fx = d.x;
             d.fy = d.y;
           })
-          .on("drag", function (event, d) {
+          .on("drag", function (event, d: any) {
             d.fx = event.x;
             d.fy = event.y;
           })
-          .on("end", function (event, d) {
+          .on("end", function (event, d: any) {
             if (!event.active && simulation && simulation.alphaTarget)
               simulation.alphaTarget(0);
           })
       );
-      nodeG.on("dblclick", function (_event, d) {
+      nodeG.on("dblclick", function (_event, d: any) {
         d.fx = null;
         d.fy = null;
         if (simulation && simulation.alphaTarget)
@@ -257,14 +256,14 @@ export function useD3SvgGraph({
     }
 
     nodeG
-      .on("mouseenter", (_event, d) => setHoveredNodeId(d.id))
+      .on("mouseenter", (_event, d: any) => setHoveredNodeId(d.id))
       .on("mouseleave", () => setHoveredNodeId(null))
-      .on("contextmenu", function (event, d) {
+      .on("contextmenu", function (event, d: any) {
         event.preventDefault();
         setContextNodeId(d.id);
       });
 
-    nodeG.on("keydown", function (event, d) {
+    nodeG.on("keydown", function (event, d: any) {
       if (layoutMode === "manual" && event.key.startsWith("Arrow")) {
         event.preventDefault();
         const manual = manualPositions[d.id];
@@ -315,7 +314,7 @@ export function useD3SvgGraph({
           .attr("x1", (d: any) => (d.source as any).x!)
           .attr("y1", (d: any) => (d.source as any).y!)
           .attr("x2", (d: any) => (d.target as any).x!)
-          .attr("y2", (d.target as any).y!);
+          .attr("y2", (d: any) => (d.target as any).y!);
         
         linkLabel
           .attr("x", (d: any) => ((d.source as any).x! + (d.target as any).x!) / 2)
