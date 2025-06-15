@@ -1,5 +1,4 @@
-
-import React, { useRef, useCallback } from "react";
+import React, { useRef, useCallback, useState } from "react";
 import * as Papa from "papaparse";
 import { toast } from "sonner";
 import { useGraphStore } from "@/state/useGraphStore";
@@ -78,9 +77,14 @@ const UploadCsvSection: React.FC<UploadCsvSectionProps> = ({ onExample }) => {
   const edgeFileInputRef = useRef<HTMLInputElement>(null);
   const { setNodes, setEdges } = useGraphStore();
 
+  // Track uploaded filenames
+  const [nodeFilename, setNodeFilename] = useState<string | null>(null);
+  const [edgeFilename, setEdgeFilename] = useState<string | null>(null);
+
   // Parse CSV and validate (nodes)
   const processNodeFile = useCallback((file: File | null) => {
     if (!file) return;
+    setNodeFilename(file.name); // Track filename on upload
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
@@ -137,6 +141,7 @@ const UploadCsvSection: React.FC<UploadCsvSectionProps> = ({ onExample }) => {
   // Parse CSV and validate (edges)
   const processEdgeFile = useCallback((file: File | null) => {
     if (!file) return;
+    setEdgeFilename(file.name); // Track filename on upload
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
@@ -231,6 +236,11 @@ const UploadCsvSection: React.FC<UploadCsvSectionProps> = ({ onExample }) => {
           onChange={onNodeFile}
           aria-label="Upload nodes CSV file"
         />
+        {nodeFilename && (
+          <span className="text-xs text-accent mt-2">
+            <span className="font-semibold">Selected file:</span> {nodeFilename}
+          </span>
+        )}
       </section>
       {/* Edge uploader */}
       <section
@@ -256,6 +266,11 @@ const UploadCsvSection: React.FC<UploadCsvSectionProps> = ({ onExample }) => {
           onChange={onEdgeFile}
           aria-label="Upload edges CSV file"
         />
+        {edgeFilename && (
+          <span className="text-xs text-accent mt-2">
+            <span className="font-semibold">Selected file:</span> {edgeFilename}
+          </span>
+        )}
       </section>
       {/* SampleTabs */}
       <div className="flex-grow">
@@ -269,4 +284,3 @@ export default UploadCsvSection;
 
 // File is now 245+ lines and getting long.
 // After this you should consider refactoring it into smaller files for maintainability.
-
