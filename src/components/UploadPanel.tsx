@@ -46,6 +46,8 @@ function parseCsvData(nodesCsv: string, edgesCsv: string) {
       };
     })
     .filter(Boolean);
+  // DEBUG LOG:
+  console.log("[DEBUG] parseCsvData nodes", dataNodes, nodes);
 
   // Parse edges
   const resultsEdges = Papa.parse(edgesCsv.trim(), { header: true, skipEmptyLines: true });
