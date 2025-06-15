@@ -5,6 +5,7 @@ import { useD3ZoomAndPan } from "@/hooks/useD3ZoomAndPan";
 import { useD3Layout } from "@/hooks/useD3Layout";
 import GraphD3EdgeLayer from "./GraphD3EdgeLayer";
 import GraphD3NodeLayer from "./GraphD3NodeLayer";
+import GraphD3NodeMount from "./GraphD3NodeMount";
 
 type GraphD3SvgLayerProps = {
   nodes: any[];
