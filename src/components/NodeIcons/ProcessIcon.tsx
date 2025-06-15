@@ -1,7 +1,19 @@
 
 import React from "react";
 
-const ProcessIcon = ({ filled = false, className = "", ...props }: { filled?: boolean; className?: string; "aria-label"?: string }) => (
+type ProcessIconProps = {
+  filled?: boolean;
+  className?: string;
+  "aria-label"?: string;
+  color?: string;
+};
+
+const ProcessIcon = ({
+  filled = false,
+  className = "",
+  color,
+  ...props
+}: ProcessIconProps) => (
   <svg
     viewBox="0 0 24 24"
     aria-label="Process"
@@ -9,16 +21,16 @@ const ProcessIcon = ({ filled = false, className = "", ...props }: { filled?: bo
     width={24}
     height={24}
     fill="none"
-    stroke="currentColor"
+    stroke={color || "currentColor"}
     strokeWidth={2}
     strokeLinejoin="round"
     strokeLinecap="round"
     {...props}
   >
-    <circle cx={12} cy={12} r={10} fill={filled ? "currentColor" : "none"} />
+    <circle cx={12} cy={12} r={10} fill={filled ? (color || "currentColor") : "none"} />
     <g>
-      <path d="M12 8v4h4" />
-      <circle cx={12} cy={12} r={4} stroke="currentColor" fill="none" />
+      <path d="M12 8v4h4" stroke={color || "currentColor"} />
+      <circle cx={12} cy={12} r={4} stroke={color || "currentColor"} fill="none" />
     </g>
   </svg>
 );
