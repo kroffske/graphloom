@@ -36,9 +36,6 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
   const [backgroundColor, setBackgroundColor] = useState<string>(
     appearance.backgroundColor || ""
   );
-  const [lineColor, setLineColor] = useState<string>(
-    appearance.lineColor || ""
-  );
   const [size, setSize] = useState<number>(appearance.size ?? 64);
   const [labelField, setLabelField] = useState<string>(
     appearance.labelField || "label"
@@ -55,7 +52,6 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
     setBorderEnabled(appearance.borderEnabled ?? false);
     setBorderWidth(appearance.borderWidth ?? 2);
     setBackgroundColor(appearance.backgroundColor || "");
-    setLineColor(appearance.lineColor || "");
     setSize(appearance.size ?? 64);
     setLabelField(appearance.labelField || "label");
     setIconOrder((currOrder) => {
@@ -82,7 +78,6 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
       borderEnabled,
       borderWidth,
       backgroundColor,
-      lineColor,
       size,
       labelField,
       iconOrder,
@@ -95,7 +90,6 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
     borderEnabled,
     borderWidth,
     backgroundColor,
-    lineColor,
     size,
     labelField,
     iconOrder,
@@ -176,8 +170,6 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
         <NodeTypeVisualSettings
           backgroundColor={backgroundColor}
           setBackgroundColor={setBackgroundColor}
-          lineColor={lineColor}
-          setLineColor={setLineColor}
           size={size}
           setSize={setSize}
           labelField={labelField}

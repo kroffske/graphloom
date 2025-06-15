@@ -13,8 +13,6 @@ import { NodeTypeVisualSettingsProps } from "@/types/forms";
 const NodeTypeVisualSettings: React.FC<NodeTypeVisualSettingsProps> = ({
   backgroundColor,
   setBackgroundColor,
-  lineColor,
-  setLineColor,
   size,
   setSize,
   labelField,

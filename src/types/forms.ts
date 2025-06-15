@@ -1,11 +1,8 @@
-
 import { NodeTypeAppearance, EdgeTypeAppearance } from "./appearance";
 
 export type NodeTypeVisualSettingsProps = {
   backgroundColor: string;
   setBackgroundColor: (c: string) => void;
-  lineColor: string;
-  setLineColor: (c: string) => void;
   size: number;
   setSize: (n: number) => void;
   labelField: string;
@@ -47,3 +44,4 @@ export type EdgeTypeAppearanceSettingsProps = {
   setSelectedType: (type: string) => void;
   allTypes: string[];
 };
+
