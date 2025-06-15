@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useCallback } from "react";
+
+import { useEffect, useMemo, useRef, useCallback, useState } from "react";
 import {
   useNodesState,
   useEdgesState,
@@ -9,11 +10,17 @@ import {
 } from "@xyflow/react";
 import { useGraphStore } from "@/state/useGraphStore";
 
+/**
+ * Manages all logic for graph state, including synchronization and node hover handling.
+ */
 export function useGraphLogic() {
   // Zustand store (source of truth for CSV upload, but not for interactive graph anymore)
   const { nodes: storeNodes, edges: storeEdges, setNodes, setEdges, selectNode } = useGraphStore();
 
-  // Transform Zustand nodes/edges into React Flow-compatible nodes (for initial load only)
+  // Local state for hovered node (for tooltip)
+  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
+
+  // Transform Zustand nodes/edges into React Flow-compatible nodes (on first load)
   const rfNodesInitial = useMemo<Node[]>(
     () =>
       storeNodes.map((n) => ({
@@ -22,7 +29,7 @@ export function useGraphLogic() {
         type: "custom",
         data: { nodeId: n.id },
       })),
-    // Only uses on initial mount (don't keep sync here)
+    // Only on initial mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
@@ -43,10 +50,10 @@ export function useGraphLogic() {
   const [rfNodes, setRfNodes, onNodesChange] = useNodesState(rfNodesInitial);
   const [rfEdges, setRfEdges, onEdgesChange] = useEdgesState(rfEdgesInitial);
 
-  // Track whether we've synced initial data from Zustand already
+  // Track if we've synced initial data from Zustand already
   const initialized = useRef(false);
 
-  // Hydrate RF state ONLY ONCE from Zustand (when files are uploaded, reload the page to update graph)
+  // Hydrate RF state ONLY ONCE from Zustand
   useEffect(() => {
     if (!initialized.current && storeNodes.length && storeEdges.length) {
       setRfNodes(
@@ -71,7 +78,7 @@ export function useGraphLogic() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storeNodes, storeEdges]);
 
-  // On node drag or position change: sync positions to Zustand
+  // On node drag or change: sync positions to Zustand
   const handleNodesChange = useCallback(
     (changes) => {
       onNodesChange(changes);
@@ -92,7 +99,7 @@ export function useGraphLogic() {
     [onNodesChange, setNodes, rfNodes, storeNodes]
   );
 
-  // On edge manip: add to both RF and Zustand
+  // On edge create: add to both RF and Zustand
   const handleConnect = useCallback(
     (connection: Edge | Connection) => {
       const newEdge: Edge = {
@@ -115,7 +122,7 @@ export function useGraphLogic() {
     [setRfEdges, setEdges, rfEdges]
   );
 
-  // Select node logic
+  // Select node on click
   const onNodeClick = useCallback(
     (_: any, n: Node) => {
       selectNode(n.id);
@@ -132,5 +139,8 @@ export function useGraphLogic() {
     onEdgesChange,
     onConnect: handleConnect,
     onNodeClick,
+    hoveredNodeId,
+    setHoveredNodeId,
   };
 }
+
