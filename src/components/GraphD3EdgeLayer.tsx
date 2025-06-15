@@ -57,8 +57,8 @@ const GraphD3EdgeLayer: React.FC<GraphD3EdgeLayerProps> = ({
               ...e.attributes,
               source_label: s.label,
               target_label: t.label,
-              source, // pass full source node
-              target, // pass full target node
+              source: s, // pass full source node
+              target: t, // pass full target node
             };
             edgeLabel = resolveLabelTemplate(edgeApp.labelTemplate, context, fallbackId);
           } else if (edgeApp.labelField) {
