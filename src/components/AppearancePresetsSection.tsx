@@ -5,27 +5,31 @@ import { Settings } from "lucide-react";
 import { appearancePresets } from "@/data/appearancePresets";
 
 type AppearancePresetsSectionProps = {
-  onPresetSelect?: (presetConfig: Record<string, any>) => void;
+  onPresetSelect?: (presetConfig: Record<string, any>, presetKey: string) => void;
+  selectedPresetKey?: string;
 };
 
 const AppearancePresetsSection: React.FC<AppearancePresetsSectionProps> = ({
   onPresetSelect,
+  selectedPresetKey,
 }) => {
   return (
-    <section>
-      <div className="flex flex-row items-center gap-2 mb-2">
-        <Settings className="w-4 h-4 text-muted-foreground" />
-        <span className="font-semibold text-sm">Appearance Presets</span>
-      </div>
+    <section className="w-full flex flex-col gap-2">
+      {/* No duplicate 'Appearance Presets' heading, let parent render if needed */}
       <div className="flex flex-col gap-1 my-1">
         {appearancePresets.map((p) => (
           <Button
             key={p.key}
-            variant="secondary"
+            variant={selectedPresetKey === p.key ? "default" : "secondary"}
             size="sm"
-            className="justify-start w-full"
-            onClick={() => onPresetSelect?.(p.config)}
+            className={`justify-start w-full border ${
+              selectedPresetKey === p.key
+                ? "ring-2 ring-primary bg-primary text-primary-foreground font-bold"
+                : ""
+            }`}
+            onClick={() => onPresetSelect?.(p.config, p.key)}
             type="button"
+            aria-pressed={selectedPresetKey === p.key}
           >
             {p.name}
           </Button>
@@ -44,3 +48,4 @@ const AppearancePresetsSection: React.FC<AppearancePresetsSectionProps> = ({
 };
 
 export default AppearancePresetsSection;
+

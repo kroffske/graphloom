@@ -36,6 +36,9 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
   const importInputRef = useRef<HTMLInputElement>(null);
   const { setNodes, setEdges, nodes, edges, manualPositions, nodeTypeAppearances, setNodeTypeAppearance } = useGraphStore();
 
+  // --- Appearance Preset Selection State ---
+  const [selectedPresetKey, setSelectedPresetKey] = useState<string | undefined>(undefined);
+
   // Export current graph state as JSON
   function handleExport() {
     const payload = {
@@ -146,18 +149,20 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
   }
 
   // --- Handler to load a selected preset ---
-  function handlePresetSelect(presetConfig: Record<string, any>) {
+  function handlePresetSelect(presetConfig: Record<string, any>, presetKey: string) {
     // Overwrite nodeTypeAppearances for every type in presetConfig
     Object.entries(presetConfig).forEach(([type, config]) => {
       setNodeTypeAppearance(type, config);
     });
     toast.success("Preset loaded!");
-    // Reset editable JSON and dirty state
     setEditableJson(JSON.stringify({
       ...completePresetObject,
       ...presetConfig
     }, null, 2));
     setIsDirty(false);
+
+    // Set selected preset key for highlight
+    setSelectedPresetKey(presetKey);
   }
 
   return (
@@ -187,8 +192,12 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
           />
         </div>
         <div className="flex flex-col gap-3">
+          {/* Only ONE heading, not duplicated */}
           <span className="font-semibold text-base mt-1 mb-0.5">Appearance Presets</span>
-          <AppearancePresetsSection onPresetSelect={handlePresetSelect} />
+          <AppearancePresetsSection
+            onPresetSelect={handlePresetSelect}
+            selectedPresetKey={selectedPresetKey}
+          />
         </div>
         <div className="w-full flex flex-col md:flex-row gap-6 mt-2">
           <div className="w-full md:w-1/2 flex-shrink-0">
