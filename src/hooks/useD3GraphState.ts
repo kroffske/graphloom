@@ -18,13 +18,14 @@ export function useD3GraphState() {
     manualPositions,
     incrementalUpdateNodes,
     incrementalUpdateEdges,
-    // Expose setter for all manual positions
   } = useGraphStore();
+
+  // Position capture: store latest simulation positions
+  const lastSimPositionsRef = useRef<Record<string, { x: number; y: number }>>({});
 
   // Add: bulk manual positions setter
   const setManualPositions = useCallback(
     (positions: Record<string, { x: number; y: number }>) => {
-      // This setter is not in the store yet, so simulate by updating each
       Object.entries(positions).forEach(([id, pos]) => setManualPosition(id, pos));
     },
     [setManualPosition]
@@ -33,6 +34,22 @@ export function useD3GraphState() {
   // Cache: Used to memorize last states for diffing
   const lastNodesRef = useRef<GraphNode[]>([]);
   const lastEdgesRef = useRef<GraphEdge[]>([]);
+
+  // Position capture function - called from simulation tick
+  const captureSimulationPositions = useCallback((simNodes: any[]) => {
+    const positions: Record<string, { x: number; y: number }> = {};
+    simNodes.forEach((node: any) => {
+      if (typeof node.id === "string" && typeof node.x === "number" && typeof node.y === "number") {
+        positions[node.id] = { x: node.x, y: node.y };
+      }
+    });
+    lastSimPositionsRef.current = positions;
+  }, []);
+
+  // Get latest simulation positions
+  const getLastSimulationPositions = useCallback(() => {
+    return { ...lastSimPositionsRef.current };
+  }, []);
 
   // Differential node update
   const updateNodes = useCallback(
@@ -93,7 +110,8 @@ export function useD3GraphState() {
     clearManualPositions,
     saveManualPosition,
     manualPositions,
-    setManualPositions, // new exposed
+    setManualPositions,
+    captureSimulationPositions,
+    getLastSimulationPositions,
   };
 }
-

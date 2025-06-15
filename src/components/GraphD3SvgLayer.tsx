@@ -2,7 +2,6 @@
 import React, { useEffect, useRef } from "react";
 import * as d3 from "d3";
 import { useD3DragNodes } from "@/hooks/useD3DragNodes";
-import { useSimLayoutCapture } from "@/hooks/useSimLayoutCapture";
 import { d3SetupZoom } from "@/utils/d3SetupZoom";
 import { d3SetupSimulation } from "@/utils/d3SetupSimulation";
 import GraphD3NodeMount from "./GraphD3NodeMount";
@@ -20,6 +19,7 @@ type GraphD3SvgLayerProps = {
   setContextNodeId: (id: string | null) => void;
   dragging: any;
   setDragging: (d: any) => void;
+  captureSimulationPositions: (simNodes: any[]) => void;
 };
 
 const NODE_RADIUS = 36;
@@ -40,13 +40,15 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
   setContextNodeId,
   dragging,
   setDragging,
+  captureSimulationPositions,
 }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
-  const { capturePositions } = useSimLayoutCapture();
-  const lastSimPositionsRef = useRef<Record<string, { x: number; y: number }>>({});
 
   useEffect(() => {
     if (!svgRef.current || !nodes.length) return;
+
+    console.log("Setting up D3 layer with mode:", layoutMode);
+    console.log("Manual positions:", manualPositions);
 
     // Merge manual positions when in manual mode
     const mergedNodes = nodes.map((n) =>
@@ -182,19 +184,9 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
 
     // Simulation tick: layout, update pos and edges
     simulation.on("tick", () => {
-      capturePositions(simNodes);
-      // Store last simulation positions
-      const result: Record<string, { x: number; y: number }> = {};
-      simNodes.forEach((n: any) => {
-        if (
-          typeof n.id === "string" &&
-          typeof n.x === "number" &&
-          typeof n.y === "number"
-        ) {
-          result[n.id] = { x: n.x, y: n.y };
-        }
-      });
-      lastSimPositionsRef.current = result;
+      // Capture positions for mode switching
+      captureSimulationPositions(simNodes);
+      
       link
         .attr("x1", (d: any) => (d.source as any).x!)
         .attr("y1", (d: any) => (d.source as any).y!)
@@ -221,7 +213,7 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = ({
     setHoveredNodeId,
     setContextNodeId,
     dragging,
-    capturePositions,
+    captureSimulationPositions,
   ]);
 
   return (
