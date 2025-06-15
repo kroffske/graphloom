@@ -12,11 +12,11 @@ import GlobalSettingsSection from "@/components/GlobalSettingsSection";
 import AppearancePresetsSection from "@/components/AppearancePresetsSection";
 import NodeTypeAppearanceSettings from "@/components/NodeTypeAppearanceSettings";
 
-/**
- * SettingsSidebar displays a sidebar with tabs for high-level settings:
- * Global, Presets, Node Types, Advanced.
- * Each section loads the corresponding config panel.
- */
+// SettingsSidebar now takes onFillExample prop and passes it to GlobalSettingsSection
+type SettingsSidebarProps = {
+  onFillExample: () => void;
+};
+
 const tabLabels = [
   { key: "global", label: "Global" },
   { key: "presets", label: "Presets" },
@@ -24,7 +24,7 @@ const tabLabels = [
   { key: "advanced", label: "Advanced" },
 ];
 
-const SettingsSidebar: React.FC = () => {
+const SettingsSidebar: React.FC<SettingsSidebarProps> = ({ onFillExample }) => {
   const [tab, setTab] = useState("global");
 
   return (
@@ -54,7 +54,7 @@ const SettingsSidebar: React.FC = () => {
               </TabsList>
               <div className="flex-1 overflow-y-auto min-h-0 p-4">
                 <TabsContent value="global" className="p-0">
-                  <GlobalSettingsSection />
+                  <GlobalSettingsSection onFillExample={onFillExample} />
                 </TabsContent>
                 <TabsContent value="presets" className="p-0">
                   <AppearancePresetsSection />
@@ -78,3 +78,4 @@ const SettingsSidebar: React.FC = () => {
 };
 
 export default SettingsSidebar;
+
