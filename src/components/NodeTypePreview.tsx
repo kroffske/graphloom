@@ -47,7 +47,8 @@ const NodeTypePreview: React.FC<NodeTypePreviewProps> = ({
       >
         {Icon ? (
           <Icon
-            style={{ width: iconSize, height: iconSize }}
+            width={iconSize}
+            height={iconSize}
             color={appearance.iconColor || appearance.color || "currentColor"}
             filled={true}
           />
