@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import AppearancePresetsSection from "@/components/AppearancePresetsSection";
 import { useGraphStore } from "@/state/useGraphStore";
 import { SampleTabs, SAMPLE_TAB_CSVS } from "./SampleTabs";
-import { Settings, Import, Export } from "lucide-react";
+import { Settings, Import } from "lucide-react";
 
 // Helper: Only allow string | number | boolean
 function castToSupportedType(val: unknown): string | number | boolean {
@@ -276,7 +276,7 @@ const UploadPanel = () => {
           {/* Export/Import buttons */}
           <div className="flex flex-row gap-3 items-center">
             <Button variant="outline" size="sm" onClick={handleExport}>
-              <Export className="w-4 h-4 mr-1" /> Export JSON
+              Export JSON
             </Button>
             <Button
               variant="outline"
