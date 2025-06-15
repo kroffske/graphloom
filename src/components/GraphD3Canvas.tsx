@@ -1,3 +1,4 @@
+
 import React, { useRef, useCallback, useState } from "react";
 import { useD3GraphState } from "@/hooks/useD3GraphState";
 import GraphD3Toolbar from "./GraphD3Toolbar";
@@ -6,6 +7,7 @@ import GraphTooltipManager from "./GraphTooltipManager";
 import EdgeContextMenu from "./EdgeContextMenu";
 import { useGraphStore } from "@/state/useGraphStore";
 import TimeRangeSlider from "./TimeRangeSlider";
+import { shallow } from "zustand/shallow";
 
 /**
  * This D3 graph canvas component now composes specialized pieces for simulation and rendering.
@@ -37,7 +39,8 @@ const GraphD3Canvas: React.FC = () => {
       hoveredEdgeId: state.hoveredEdgeId,
       setHoveredEdgeId: state.setHoveredEdgeId,
       selectEdge: state.selectEdge,
-    })
+    }),
+    shallow
   );
   const [mousePosition, setMousePosition] = React.useState<{ x: number, y: number } | null>(null);
 

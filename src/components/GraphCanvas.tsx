@@ -4,6 +4,7 @@ import { useGraphStore } from "@/state/useGraphStore";
 import { useGraphLogic } from "@/hooks/useGraphLogic";
 import GraphRenderer from "./GraphRenderer";
 import GraphTooltipManager from "./GraphTooltipManager";
+import { shallow } from "zustand/shallow";
 
 /**
  * The composition root for the graph area: handles layout and orchestrates
@@ -24,7 +25,14 @@ const GraphCanvas = () => {
     nodes: storeNodes,
     edges: storeEdges,
     hoveredEdgeId,
-  } = useGraphStore();
+  } = useGraphStore(
+    (state) => ({
+      nodes: state.nodes,
+      edges: state.edges,
+      hoveredEdgeId: state.hoveredEdgeId,
+    }),
+    shallow
+  );
 
   const [position, setPosition] = useState<{ x: number; y: number } | null>(
     null

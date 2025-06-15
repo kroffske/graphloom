@@ -5,6 +5,7 @@ import { useD3ZoomAndPan } from "@/hooks/useD3ZoomAndPan";
 import GraphD3NodeMount from "@/components/GraphD3NodeMount";
 import { useGraphStore } from "@/state/useGraphStore";
 import { resolveLabelTemplate } from "@/utils/labelTemplate";
+import { shallow } from "zustand/shallow";
 
 // Break out the shape constants since they may be used outside the hook as well
 export const WIDTH = 900;
@@ -94,7 +95,16 @@ export function useD3SvgGraph({
   onEdgeContextMenu,
 }: UseD3SvgGraphProps) {
   // Get edge selection API
-  const { selectedEdgeId, selectEdge, edgeAppearances, showEdgeLabels, edgeTypeAppearances } = useGraphStore();
+  const { selectedEdgeId, selectEdge, edgeAppearances, showEdgeLabels, edgeTypeAppearances } = useGraphStore(
+    (state) => ({
+      selectedEdgeId: state.selectedEdgeId,
+      selectEdge: state.selectEdge,
+      edgeAppearances: state.edgeAppearances,
+      showEdgeLabels: state.showEdgeLabels,
+      edgeTypeAppearances: state.edgeTypeAppearances,
+    }),
+    shallow
+  );
 
   useD3ZoomAndPan({
     svgRef,
@@ -305,7 +315,7 @@ export function useD3SvgGraph({
           .attr("x1", (d: any) => (d.source as any).x!)
           .attr("y1", (d: any) => (d.source as any).y!)
           .attr("x2", (d: any) => (d.target as any).x!)
-          .attr("y2", (d: any) => (d.target as any).y!);
+          .attr("y2", (d.target as any).y!);
         
         linkLabel
           .attr("x", (d: any) => ((d.source as any).x! + (d.target as any).x!) / 2)
@@ -423,5 +433,5 @@ export function useD3SvgGraph({
     const linkLabels = svg.selectAll("g.edges text tspan");
     linkLabels.text((d: any) => getEdgeLabel(d, showEdgeLabels, edgeTypeAppearances, edgeAppearances, simNodes));
 
-  }, [svgRef, selectedEdgeId, edgeAppearances, edgeTypeAppearances, showEdgeLabels]);
+  }, [svgRef, selectedEdgeId, edgeAppearances, edgeTypeAppearances, showEdgeLabels, simNodes]);
 }
