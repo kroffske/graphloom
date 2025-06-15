@@ -1,5 +1,6 @@
 
-import create from "zustand";
+// FIX: Use named import instead of default import for zustand
+import { create } from "zustand";
 
 // Graph Node & Edge structures (loosely modeled)
 export type GraphNode = {

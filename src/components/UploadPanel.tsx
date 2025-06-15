@@ -1,6 +1,7 @@
 
 import React, { useCallback, useRef } from "react";
-import Papa from "papaparse";
+// FIX: Vite and ESM sometimes require star import for PapaParse
+import * as Papa from "papaparse";
 import { toast } from "sonner";
 import { useGraphStore } from "@/state/useGraphStore";
 
@@ -27,7 +28,7 @@ const UploadPanel = () => {
     Papa.parse(nodeFile, {
       header: true,
       skipEmptyLines: true,
-      complete: (results) => {
+      complete: (results: Papa.ParseResult<any>) => {
         const data = results.data as any[];
         // Basic validation
         if (!data[0]?.node_id || !data[0]?.node_type) {
@@ -55,7 +56,7 @@ const UploadPanel = () => {
     Papa.parse(edgeFile, {
       header: true,
       skipEmptyLines: true,
-      complete: (results) => {
+      complete: (results: Papa.ParseResult<any>) => {
         const data = results.data as any[];
         if (!data[0]?.source || !data[0]?.target) {
           toast.error("Invalid edges.csv: must have source and target columns.");

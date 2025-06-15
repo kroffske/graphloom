@@ -1,4 +1,3 @@
-
 import React, { useMemo, useCallback } from "react";
 import {
   ReactFlow,
@@ -102,7 +101,6 @@ const GraphCanvas = () => {
         nodeTypes={nodeTypes}
         elementsSelectable
         nodesConnectable={false}
-        edgesUpdatable={false}
         panOnDrag
         zoomOnScroll
         fitView
