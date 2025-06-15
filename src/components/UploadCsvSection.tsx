@@ -4,62 +4,7 @@ import { toast } from "sonner";
 import { useGraphStore } from "@/state/useGraphStore";
 import { SAMPLE_TAB_CSVS, SampleTabs } from "./SampleTabs";
 import { Upload as UploadIcon } from "lucide-react";
-
-// Utility used here and in parent; safe to copy for isolation
-function castToSupportedType(val: unknown): string | number | boolean {
-  if (typeof val === "string") {
-    const num = Number(val);
-    if (!isNaN(num) && val.trim() !== "") return num;
-    if (val.toLowerCase() === "true") return true;
-    if (val.toLowerCase() === "false") return false;
-    return val;
-  }
-  if (typeof val === "number" || typeof val === "boolean") return val;
-  return String(val);
-}
-
-// Parse logic moved locally
-function parseCsvData(nodesCsv: string, edgesCsv: string) {
-  const resultsNodes = Papa.parse(nodesCsv.trim(), { header: true, skipEmptyLines: true });
-  const dataNodes = resultsNodes.data as any[];
-  const nodeIds = new Set<string>();
-  const nodes = dataNodes
-    .map((row, idx) => {
-      const nodeId = row.node_id;
-      if (!nodeId || !row.node_type || nodeIds.has(nodeId)) return null;
-      nodeIds.add(nodeId);
-      const attributes: Record<string, string | number | boolean> = {};
-      Object.entries(row).forEach(([k, v]) => {
-        attributes[k] = castToSupportedType(v);
-      });
-      return {
-        id: nodeId,
-        type: String(row.node_type),
-        label: row.label ? String(row.label) : nodeId,
-        attributes,
-      };
-    })
-    .filter(Boolean);
-
-  const resultsEdges = Papa.parse(edgesCsv.trim(), { header: true, skipEmptyLines: true });
-  const dataEdges = resultsEdges.data as any[];
-  // Now: include all CSV columns as edge "attributes"
-  const edges = dataEdges.map((row, i) => {
-    const attributes: Record<string, string | number | boolean> = {};
-    Object.entries(row).forEach(([k, v]) => {
-      attributes[k] = castToSupportedType(v);
-    });
-    return {
-      id: `e${i + 1}`,
-      source: String(row.source),
-      target: String(row.target),
-      type: row.edge_type ? String(row.edge_type) : "default",
-      attributes: Object.keys(attributes).length ? attributes : undefined,
-    };
-  });
-
-  return { nodes, edges };
-}
+import { castToSupportedType } from "@/utils/csvParser";
 
 type UploadCsvSectionProps = {
   onExample: (preset?: "example") => void;
@@ -271,6 +216,3 @@ const UploadCsvSection: React.FC<UploadCsvSectionProps> = ({ onExample }) => {
 };
 
 export default UploadCsvSection;
-
-// File is now 287+ lines and getting long.
-// After this you should consider refactoring it into smaller files for maintainability.
