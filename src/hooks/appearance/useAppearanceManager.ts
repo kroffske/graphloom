@@ -5,6 +5,7 @@ import {
   NodeTypeAppearance,
   EdgeTypeAppearance,
   PresetConfig,
+  Preset,
 } from "@/types/appearance";
 import {
   useAppearancePresets,
@@ -137,7 +138,7 @@ export function useAppearanceManager() {
   );
 
   const handlePresetSaveFromJson = useCallback(
-    (jsonStr: string, showToast = true) => {
+    (jsonStr: string, name?: string, showToast = true) => {
       try {
         const data = JSON.parse(jsonStr);
         let nodeTypes = data.nodeTypes || {};
@@ -155,14 +156,18 @@ export function useAppearanceManager() {
           setEdgeTypeAppearance(type, config as EdgeTypeAppearance);
         });
         const newPresetConfig = { nodeTypes, edgeTypes };
-        persistCustomPreset(newPresetConfig);
-        setCustomPreset({
-          name: "Custom",
+        const presetName = name || customPreset?.name || "Custom";
+        const newPreset: Preset = {
+          name: presetName,
           key: CUSTOM_PRESET_KEY,
           config: newPresetConfig,
-        });
+        };
+        persistCustomPreset(newPreset);
+        setCustomPreset(newPreset);
+
         updateAllNodeAppearances(nodeTypes);
-        if (showToast) toast.success("Preset changes saved to 'Custom' preset!");
+        if (showToast)
+          toast.success(`Preset changes saved to '${presetName}'!`);
         setSelectedPresetKey(CUSTOM_PRESET_KEY);
         persistSelectedPresetKey(CUSTOM_PRESET_KEY);
         setIsPresetDirty(false); // Clear dirty state on save
@@ -179,6 +184,7 @@ export function useAppearanceManager() {
       updateAllNodeAppearances,
       setSelectedPresetKey,
       setIsPresetDirty,
+      customPreset,
     ]
   );
 
@@ -219,12 +225,16 @@ export function useAppearanceManager() {
     ]
   );
   
-  const savePresetChanges = useCallback(() => {
+  const savePresetChanges = useCallback((name: string) => {
+    if (!name.trim()) {
+        toast.error("Preset name cannot be empty.");
+        return;
+    }
     const presetToSave = {
         nodeTypes: completePresetObject.nodeTypes,
         edgeTypes: completePresetObject.edgeTypes,
     };
-    handlePresetSaveFromJson(JSON.stringify(presetToSave, null, 2));
+    handlePresetSaveFromJson(JSON.stringify(presetToSave, null, 2), name);
   }, [completePresetObject, handlePresetSaveFromJson]);
   
   const revertPresetChanges = useCallback(() => {
@@ -235,11 +245,19 @@ export function useAppearanceManager() {
   }, [selectedPresetObj, handlePresetSelect]);
 
   const updateNodeTypeAppearance = useCallback((type: string, appearance: NodeTypeAppearance) => {
+    const currentAppearance = useGraphStore.getState().nodeTypeAppearances[type];
+    if (currentAppearance && JSON.stringify(appearance) === JSON.stringify(currentAppearance)) {
+      return;
+    }
     setNodeTypeAppearance(type, appearance);
     setIsPresetDirty(true);
   }, [setNodeTypeAppearance]);
 
   const updateEdgeTypeAppearance = useCallback((type: string, appearance: EdgeTypeAppearance) => {
+    const currentAppearance = useGraphStore.getState().edgeTypeAppearances[type];
+    if (currentAppearance && JSON.stringify(appearance) === JSON.stringify(currentAppearance)) {
+      return;
+    }
     setEdgeTypeAppearance(type, appearance);
     setIsPresetDirty(true);
   }, [setEdgeTypeAppearance]);

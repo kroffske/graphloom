@@ -9,6 +9,7 @@ import PresetJsonConfigTextarea from "./GlobalSettings/PresetJsonConfigTextarea"
 import { useAppearanceManager } from "@/hooks/appearance/useAppearanceManager";
 import AppearancePresetDropdown from "./AppearancePresetDropdown";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
 
 const GlobalSettingsSection: React.FC<{ onFillExample: () => void }> = () => {
   const {
@@ -43,6 +44,19 @@ const GlobalSettingsSection: React.FC<{ onFillExample: () => void }> = () => {
   const [editableJson, setEditableJson] = useState<string>(
     JSON.stringify(completePresetObject, null, 2)
   );
+  const [customPresetName, setCustomPresetName] = useState("");
+
+  useEffect(() => {
+    if (isPresetDirty) {
+      if (selectedPresetKey === "custom" && selectedPresetObj?.name) {
+        setCustomPresetName(selectedPresetObj.name);
+      } else {
+        setCustomPresetName(
+          selectedPresetObj ? `${selectedPresetObj.name} Copy` : "My Custom Preset"
+        );
+      }
+    }
+  }, [isPresetDirty, selectedPresetKey, selectedPresetObj]);
 
   // Sync text with presets if not dirty
   useEffect(() => {
@@ -85,8 +99,18 @@ const GlobalSettingsSection: React.FC<{ onFillExample: () => void }> = () => {
           </span>
           {isPresetDirty && (
             <div className="flex items-center gap-2">
-              <Button onClick={savePresetChanges} size="sm">Save as Custom</Button>
-              <Button onClick={revertPresetChanges} variant="outline" size="sm">Revert</Button>
+              <Input
+                value={customPresetName}
+                onChange={(e) => setCustomPresetName(e.target.value)}
+                placeholder="Custom preset name"
+                className="h-9"
+              />
+              <Button onClick={() => savePresetChanges(customPresetName)} size="sm">
+                Save
+              </Button>
+              <Button onClick={revertPresetChanges} variant="outline" size="sm">
+                Revert
+              </Button>
             </div>
           )}
         </div>
