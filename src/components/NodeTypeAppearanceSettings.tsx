@@ -12,11 +12,9 @@ import { useIconRegistry } from "./IconRegistry";
 import DraggableIcon from "./DraggableIcon";
 import { Textarea } from "@/components/ui/textarea";
 
-/**
- * Settings UI for node type default appearance.
- * All nodes with the given type use these as defaults (unless overridden).
- */
-const NODE_TYPE_LABELS: Record<string, string> = {
+// --- Dynamic: Node Type labels ---
+// Friendly names for built-ins; fallback to type key for unknowns
+const FRIENDLY_TYPE_LABELS: Record<string, string> = {
   entity: "Entity",
   process: "Process",
   "data-store": "Data Store",
@@ -42,9 +40,40 @@ export default function NodeTypeAppearanceSettings() {
     resetNodeTypeAppearance,
   } = useGraphStore();
 
-  const nodeTypeKeys = useMemo(() => Object.keys(NODE_TYPE_LABELS), []);
+  // ---- DYNAMIC NODE TYPES ----
+  // Always use all type keys from the store's nodeTypeAppearances (after preset/json load)
+  // Fallback: if empty, use classic built-in types for initial UX
+  const nodeTypeKeys: string[] = useMemo(() => {
+    const keys = Object.keys(nodeTypeAppearances ?? {});
+    if (keys.length > 0) return keys;
+    // fallback to built-ins for new users, if needed:
+    return [
+      "entity",
+      "process",
+      "data-store",
+      "event",
+      "decision",
+      "external-system",
+    ];
+  }, [nodeTypeAppearances]);
+  // Label dictionary is always auto-built
+  const nodeTypeLabels: Record<string, string> = useMemo(() => {
+    const labels: Record<string, string> = {};
+    nodeTypeKeys.forEach(
+      (key) => (labels[key] = FRIENDLY_TYPE_LABELS[key] || key)
+    );
+    return labels;
+  }, [nodeTypeKeys]);
+
+  // Select first available node type by default
   const [selectedType, setSelectedType] = useState(nodeTypeKeys[0] || "");
-  const selectedLabel = NODE_TYPE_LABELS[selectedType] || selectedType;
+  // Update selectedType if keys change (e.g. after preset/json loaded)
+  React.useEffect(() => {
+    if (!nodeTypeKeys.includes(selectedType) && nodeTypeKeys[0]) {
+      setSelectedType(nodeTypeKeys[0]);
+    }
+  }, [nodeTypeKeys, selectedType]);
+  const selectedLabel = nodeTypeLabels[selectedType] || selectedType;
 
   // Local state for editing
   const [tab, setTab] = useState("appearance");
@@ -207,7 +236,7 @@ export default function NodeTypeAppearanceSettings() {
           >
             {nodeTypeKeys.map(key => (
               <option key={key} value={key}>
-                {NODE_TYPE_LABELS[key]}
+                {nodeTypeLabels[key]}
               </option>
             ))}
           </select>
@@ -315,3 +344,4 @@ export default function NodeTypeAppearanceSettings() {
     </section>
   );
 }
+
