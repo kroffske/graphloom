@@ -130,7 +130,10 @@ const GlobalSettingsSection: React.FC<{ onFillExample: () => void }> = () => {
           nodeTypeLabels={nodeTypeLabels}
           nodeTypeAppearances={completePresetObject.nodeTypes || {}}
         />
-        <AppearanceImportExport />
+        <AppearanceImportExport
+          completePresetObject={completePresetObject}
+          onImport={handlePresetSaveFromJson}
+        />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-4">
           <NodeTypeAppearanceSettings
             onSave={updateNodeTypeAppearance}
