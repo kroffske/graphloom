@@ -1,7 +1,7 @@
-
 import React, { useRef, useEffect, useCallback } from "react";
 import * as d3 from "d3";
 import { useD3GraphState } from "@/hooks/useD3GraphState";
+import { useSimLayoutCapture } from "@/hooks/useSimLayoutCapture";
 import GraphD3Node from "./GraphD3Node";
 import GraphTooltipManager from "./GraphTooltipManager";
 import GraphNodeContextMenu from "./GraphNodeContextMenu";
@@ -25,22 +25,19 @@ const GraphD3Canvas: React.FC = () => {
     clearManualPositions,
     saveManualPosition,
     manualPositions,
-    setManualPositions, // new
+    setManualPositions,
   } = useD3GraphState();
 
-  // Local layout mode
   const [layoutMode, setLayoutMode] = React.useState<"simulation" | "manual">("simulation");
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [hoveredNodeId, setHoveredNodeId] = React.useState<string | null>(null);
   const [contextNodeId, setContextNodeId] = React.useState<string | null>(null);
-
-  // Local drag state for manual mode
   const [dragging, setDragging] = React.useState<null | { id: string; offsetX: number; offsetY: number }>(null);
 
-  // Manual: track last simulation node positions for preserving layout
-  const lastSimNodePositions = useRef<Record<string, { x: number; y: number }>>({});
+  // Extracted layout capture logic to keep this file shorter
+  const { capturePositions, getPositions } = useSimLayoutCapture();
 
-  // Filtered node/edge data
+  // Node/edge hiding UI logic
   const [hiddenNodeIds, setHiddenNodeIds] = React.useState<Set<string>>(new Set());
   const filteredNodes = React.useMemo(
     () => nodes.filter((n) => !hiddenNodeIds.has(n.id)),
@@ -53,7 +50,6 @@ const GraphD3Canvas: React.FC = () => {
   );
   const hoveredNode = nodes.find((n) => n.id === hoveredNodeId);
 
-  // Keyboard: batch unhide
   React.useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "u") {
@@ -64,7 +60,6 @@ const GraphD3Canvas: React.FC = () => {
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
-  // Accessibility: context menu close with Esc
   React.useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape" && contextNodeId) {
@@ -75,23 +70,12 @@ const GraphD3Canvas: React.FC = () => {
     return () => window.removeEventListener("keydown", handler);
   }, [contextNodeId]);
 
-  // Track current node positions during simulation for transfer to manual mode
-  const captureSimulationPositions = useCallback((simNodes: any[]) => {
-    // Map every node.id to its x/y
-    const pos: Record<string, { x: number; y: number }> = {};
-    simNodes.forEach((n) => {
-      if (typeof n.x === "number" && typeof n.y === "number") {
-        pos[n.id] = { x: n.x, y: n.y };
-      }
-    });
-    lastSimNodePositions.current = pos;
-  }, []);
-
   // D3 Simulation & SVG Rendering
   useEffect(() => {
     if (!svgRef.current) return;
     if (!filteredNodes.length) return;
 
+    // If in manual mode, merge in manual positions for nodes
     const simNodes = filteredNodes.map((n) => {
       if (layoutMode === "manual" && manualPositions[n.id]) {
         return { ...n, ...manualPositions[n.id] };
@@ -200,7 +184,7 @@ const GraphD3Canvas: React.FC = () => {
       .on("mouseenter", (_event, d) => setHoveredNodeId(d.id))
       .on("mouseleave", () => setHoveredNodeId(null))
       .on("click", (_event, d) => {
-        // selection logic, could be setNodeSelected in state if needed
+        // selection logic
       })
       .on("contextmenu", function (event, d) {
         event.preventDefault();
@@ -256,10 +240,9 @@ const GraphD3Canvas: React.FC = () => {
       });
     }, 0);
 
-    // === Track/capture simulation node positions on every tick ===
+    // Track/capture simulation node positions on every tick
     simulation.on("tick", () => {
-      // Capture latest simulation node positions
-      captureSimulationPositions(simNodes);
+      capturePositions(simNodes);
 
       link
         .attr("x1", (d: any) => (d.source as any).x!)
@@ -285,22 +268,23 @@ const GraphD3Canvas: React.FC = () => {
     dragging,
     saveManualPosition,
     hiddenNodeIds,
-    captureSimulationPositions
+    capturePositions
   ]);
 
   // === PRESERVE NODE POSITIONS WHEN SWITCHING FROM SIMULATION TO MANUAL ===
   const handleSetLayoutMode = useCallback(
     (mode: "simulation" | "manual") => {
       if (mode === "manual" && layoutMode === "simulation") {
-        // Preserve node layout by saving the latest positions
-        setManualPositions(lastSimNodePositions.current);
+        // Only set manual positions for currently visible nodes to their latest simulated positions
+        const ids = filteredNodes.map(n => n.id);
+        const simPositions = getPositions(ids);
+        setManualPositions(simPositions);
       }
       setLayoutMode(mode);
     },
-    [layoutMode, setLayoutMode, setManualPositions]
+    [layoutMode, setLayoutMode, setManualPositions, filteredNodes, getPositions]
   );
 
-  // UI
   return (
     <div className="relative w-full h-[70vh] bg-background border rounded-lg overflow-hidden shadow-lg">
       <div className="flex gap-3 items-center px-3 py-1 absolute z-10 bg-muted left-2 top-2 rounded shadow">
