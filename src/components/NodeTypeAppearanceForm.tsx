@@ -112,7 +112,7 @@ const NodeTypeAppearanceForm: React.FC<NodeTypeAppearanceFormProps> = ({
       <form className="flex flex-col gap-2" onSubmit={handleSave}>
         {/* Type selector */}
         <div>
-          <Label htmlFor="node-type">Node Type</Label>
+          
           <select className="input px-2 py-1 rounded bg-muted border" id="node-type" value={selectedType} onChange={e => setSelectedType(e.target.value)} disabled={stableNodeTypeKeys.length === 0}>
             {stableNodeTypeKeys.map(key => <option key={key} value={key}>
                 {stableNodeTypeLabels[key]}
