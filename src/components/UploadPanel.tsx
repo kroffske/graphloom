@@ -6,6 +6,7 @@ import AppearancePresetsSection from "@/components/AppearancePresetsSection";
 import { useGraphStore } from "@/state/useGraphStore";
 import { SampleTabs, SAMPLE_TAB_CSVS } from "./SampleTabs";
 import { Settings, Import } from "lucide-react";
+import NodeTypeAppearanceSettings from "@/components/NodeTypeAppearanceSettings";
 
 // Helper: Only allow string | number | boolean
 function castToSupportedType(val: unknown): string | number | boolean {
@@ -278,7 +279,6 @@ const UploadPanel = () => {
             <Settings className="w-5 h-5 text-muted-foreground" />
             <span className="font-semibold text-xl">Global Settings</span>
           </div>
-          {/* Export/Import buttons */}
           <div className="flex flex-row gap-3 items-center">
             <Button variant="outline" size="sm" onClick={handleExport}>
               Export JSON
@@ -298,11 +298,12 @@ const UploadPanel = () => {
               onChange={handleImportFile}
             />
           </div>
-          {/* Appearance Presets */}
           <div className="flex flex-col gap-3">
             <span className="font-semibold text-base mt-1 mb-0.5">Appearance Presets</span>
             <AppearancePresetsSection />
           </div>
+          {/* New: Node Type Appearance Settings */}
+          <NodeTypeAppearanceSettings />
           <p className="text-xs text-muted-foreground">
             Export/import includes nodes, edges, and manual positions. Presets are experimental.
           </p>
