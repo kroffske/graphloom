@@ -6,6 +6,7 @@ import NodeTypeAppearanceSettings from "@/components/NodeTypeAppearanceSettings"
 import { Textarea } from "@/components/ui/textarea";
 import { useGraphStore } from "@/state/useGraphStore";
 import { toast } from "sonner";
+import { appearancePresets } from "@/data/appearancePresets";
 
 // Node type labels for all built-in types (should match those in NodeTypeAppearanceSettings)
 const NODE_TYPE_LABELS: Record<string, string> = {
@@ -28,15 +29,48 @@ const DEFAULTS = {
   iconOrder: undefined,
 };
 
+type CustomPreset = {
+  name: string;
+  key: string;
+  config: Record<string, any>;
+};
+
 type GlobalSettingsSectionProps = {
   onFillExample: () => void;
 };
+
+const CUSTOM_PRESET_KEY = "custom";
+
+// Persist the custom preset locally for current session and reloads, using localStorage.
+function getPersistedCustomPreset(): CustomPreset | null {
+  try {
+    const str = localStorage.getItem("lovable_custom_preset");
+    if (!str) return null;
+    const config = JSON.parse(str);
+    return {
+      name: "Custom",
+      key: CUSTOM_PRESET_KEY,
+      config,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function persistCustomPreset(config: Record<string, any>) {
+  try {
+    localStorage.setItem("lovable_custom_preset", JSON.stringify(config));
+  } catch {}
+}
 
 const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
   const importInputRef = useRef<HTMLInputElement>(null);
   const { setNodes, setEdges, nodes, edges, manualPositions, nodeTypeAppearances, setNodeTypeAppearance } = useGraphStore();
 
   // --- Appearance Preset Selection State ---
+  // Augment list to include a 'custom' preset if it exists
+  const [customPreset, setCustomPreset] = useState<CustomPreset | null>(() => getPersistedCustomPreset());
+  // selectedPresetKey points to Preset key, can be any preset or "custom"
   const [selectedPresetKey, setSelectedPresetKey] = useState<string | undefined>(undefined);
 
   // Export current graph state as JSON
@@ -133,6 +167,7 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
     setIsDirty(true);
   }
 
+  // Modified handlePresetSave to ALSO create/overwrite the custom preset
   function handlePresetSave() {
     try {
       const data = JSON.parse(editableJson);
@@ -141,8 +176,16 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
       Object.entries(data).forEach(([type, config]) => {
         setNodeTypeAppearance(type, config);
       });
+      // Save as custom preset (Both in useState and persist in localStorage)
+      persistCustomPreset(data);
+      setCustomPreset({
+        name: "Custom",
+        key: CUSTOM_PRESET_KEY,
+        config: data,
+      });
       toast.success("Preset JSON saved!");
       setIsDirty(false);
+      setSelectedPresetKey(CUSTOM_PRESET_KEY);
     } catch (err) {
       toast.error("Invalid JSON format or content.");
     }
@@ -161,9 +204,29 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
     }, null, 2));
     setIsDirty(false);
 
-    // Set selected preset key for highlight
-    setSelectedPresetKey(presetKey);
+    // If a user loads "Custom", ensure it's tracked in memory as last custom
+    if (presetKey === CUSTOM_PRESET_KEY) {
+      setSelectedPresetKey(CUSTOM_PRESET_KEY);
+    } else {
+      setSelectedPresetKey(presetKey);
+    }
   }
+
+  // On mount, try to load persisted custom preset once
+  useEffect(() => {
+    const loaded = getPersistedCustomPreset();
+    if (loaded) setCustomPreset(loaded);
+  }, []);
+
+  // Augment presets: include custom as first (if it exists)
+  const displayedPresets = useMemo(() => {
+    const presets = [...appearancePresets];
+    if (customPreset) {
+      // Always prepend custom
+      return [customPreset, ...presets];
+    }
+    return presets;
+  }, [customPreset]);
 
   return (
     <div className="w-full md:w-[650px] min-w-[340px] mt-0 flex flex-col gap-5 px-1 max-w-4xl">
@@ -197,6 +260,7 @@ const GlobalSettingsSection: React.FC<GlobalSettingsSectionProps> = () => {
           <AppearancePresetsSection
             onPresetSelect={handlePresetSelect}
             selectedPresetKey={selectedPresetKey}
+            appearancePresets={displayedPresets}  // Pass dynamic list
           />
         </div>
         <div className="w-full flex flex-col md:flex-row gap-6 mt-2">
