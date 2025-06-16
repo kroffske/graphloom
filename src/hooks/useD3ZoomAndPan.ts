@@ -24,6 +24,15 @@ export function useD3ZoomAndPan({ svgRef, svgGroup }: UseD3ZoomAndPanProps) {
         });
       });
     svg.call(zoom as any);
+    
+    // Emit initial transform
+    const currentTransform = d3.zoomTransform(svg.node()!);
+    graphEventBus.emit('transform:change', {
+      k: currentTransform.k,
+      x: currentTransform.x,
+      y: currentTransform.y,
+    });
+    
     return () => {
       svg.on(".zoom", null);
     };
