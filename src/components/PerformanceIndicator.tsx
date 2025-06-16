@@ -4,6 +4,8 @@ import { Activity } from 'lucide-react';
 interface PerformanceIndicatorProps {
   totalNodes: number;
   visibleNodes: number;
+  totalEdges: number;
+  visibleEdges: number;
   zoom: number;
   simplified: boolean;
 }
@@ -11,6 +13,8 @@ interface PerformanceIndicatorProps {
 export const PerformanceIndicator: React.FC<PerformanceIndicatorProps> = ({
   totalNodes,
   visibleNodes,
+  totalEdges,
+  visibleEdges,
   zoom,
   simplified
 }) => {
@@ -26,7 +30,8 @@ export const PerformanceIndicator: React.FC<PerformanceIndicatorProps> = ({
         <span className="font-medium">Performance</span>
       </div>
       <div className="text-muted-foreground">
-        <div>Visible: {visibleNodes} / {totalNodes} nodes</div>
+        <div>Nodes: {visibleNodes} / {totalNodes}</div>
+        <div>Edges: {visibleEdges} / {totalEdges}</div>
         <div>Zoom: {(zoom * 100).toFixed(0)}%</div>
         {simplified && <div className="text-yellow-500">Simplified rendering</div>}
       </div>

@@ -5,6 +5,7 @@ import { Play, Pause, FastForward, RotateCcw } from 'lucide-react';
 import { useGraphStore } from '@/state/useGraphStore';
 import { formatTimestamp } from '@/utils/timestampUtils';
 import { cn } from '@/lib/utils';
+import { Edge } from '@/types/graph.types';
 
 interface TimeRangeSliderProps {
   className?: string;
@@ -15,7 +16,9 @@ export const TimeRangeSlider: React.FC<TimeRangeSliderProps> = ({ className }) =
   const selectedTimeRange = useGraphStore(state => state.selectedTimeRange);
   const setSelectedTimeRange = useGraphStore(state => state.setSelectedTimeRange);
   const edges = useGraphStore(state => state.edges);
+  const nodes = useGraphStore(state => state.nodes);
   const timestampField = useGraphStore(state => state.timestampField);
+  const showIsolatedNodes = useGraphStore(state => state.showIsolatedNodes);
 
   // Animation state
   const [isPlaying, setIsPlaying] = React.useState(false);
@@ -112,11 +115,13 @@ export const TimeRangeSlider: React.FC<TimeRangeSliderProps> = ({ className }) =
     setPlaybackSpeed(speeds[nextIndex]);
   }, [playbackSpeed]);
 
-  // Calculate active edges count - MUST be before any conditional returns
-  const activeEdges = useMemo(() => {
-    if (!selectedTimeRange || !timestampField) return edges.length;
+  // Calculate active edges and nodes - MUST be before any conditional returns
+  const { activeEdges, activeNodes } = useMemo(() => {
+    if (!selectedTimeRange || !timestampField) {
+      return { activeEdges: edges.length, activeNodes: nodes.length };
+    }
     
-    return edges.filter(edge => {
+    const filteredEdges = edges.filter(edge => {
       const value = timestampField.includes('.') 
         ? timestampField.split('.').reduce((obj: any, key) => obj?.[key], edge)
         : (edge as any)[timestampField];
@@ -125,8 +130,25 @@ export const TimeRangeSlider: React.FC<TimeRangeSliderProps> = ({ className }) =
       
       const timestamp = new Date(value).getTime();
       return !isNaN(timestamp) && timestamp >= currentRange.start && timestamp <= currentRange.end;
-    }).length;
-  }, [edges, timestampField, currentRange, selectedTimeRange]);
+    });
+    
+    // Calculate connected nodes
+    const connectedNodeIds = new Set<string>();
+    filteredEdges.forEach(edge => {
+      const sourceId = typeof edge.source === 'string' ? edge.source : edge.source.id;
+      const targetId = typeof edge.target === 'string' ? edge.target : edge.target.id;
+      connectedNodeIds.add(sourceId);
+      connectedNodeIds.add(targetId);
+    });
+    
+    // Calculate active nodes count based on showIsolatedNodes setting
+    const activeNodesCount = showIsolatedNodes ? nodes.length : connectedNodeIds.size;
+    
+    return { 
+      activeEdges: filteredEdges.length, 
+      activeNodes: activeNodesCount 
+    };
+  }, [edges, nodes, timestampField, currentRange, selectedTimeRange, showIsolatedNodes]);
   
   // If no time range is set, don't render
   if (!timeRange || !timestampField) {
@@ -169,7 +191,9 @@ export const TimeRangeSlider: React.FC<TimeRangeSliderProps> = ({ className }) =
           </div>
           
           <div className="text-sm text-muted-foreground">
-            {activeEdges} / {edges.length} edges
+            <span>Nodes: {activeNodes} / {nodes.length}</span>
+            <span className="mx-2">|</span>
+            <span>Edges: {activeEdges} / {edges.length}</span>
           </div>
         </div>
 
