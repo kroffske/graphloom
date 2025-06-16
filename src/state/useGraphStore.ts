@@ -13,6 +13,7 @@ export type GraphStore = {
   edges: GraphEdge[];
   selectedNodeId: string | null;
   selectedEdgeId: string | null;
+  hoveredNodeId: string | null;
   hoveredEdgeId: string | null;
   hiddenNodeIds: Set<string>;
   manualPositions: Record<string, { x: number; y: number }>;
@@ -20,6 +21,7 @@ export type GraphStore = {
   setEdges: (edges: GraphEdge[]) => void;
   selectNode: (id: string | null) => void;
   selectEdge: (id: string | null) => void;
+  setHoveredNodeId: (id: string | null) => void;
   setHoveredEdgeId: (id: string | null) => void;
   hideNode: (id: string) => void;
   showNode: (id: string) => void;
@@ -62,6 +64,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   edges: [],
   selectedNodeId: null,
   selectedEdgeId: null,
+  hoveredNodeId: null,
   hoveredEdgeId: null,
   hiddenNodeIds: new Set(),
   manualPositions: {},
@@ -72,6 +75,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   setEdges: (edges) => set({ edges }),
   selectNode: (id) => set({ selectedNodeId: id }),
   selectEdge: (id) => set({ selectedEdgeId: id }),
+  setHoveredNodeId: (id) => set({ hoveredNodeId: id }),
   setHoveredEdgeId: (id) => set({ hoveredEdgeId: id }),
   hideNode: (id) => {
     set((state) => {

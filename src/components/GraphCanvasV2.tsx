@@ -120,7 +120,8 @@ export const GraphCanvasV2: React.FC = () => {
       width="100%"
       height="100%"
       viewBox="0 0 900 530"
-      style={{ background: '#f9fafb', cursor: 'grab' }}
+      className="bg-background"
+      style={{ cursor: 'grab' }}
     >
       <g 
         ref={gRef}
@@ -129,9 +130,15 @@ export const GraphCanvasV2: React.FC = () => {
         {/* Render edges first (behind nodes) */}
         <g className="edges">
           {edges.map(edge => {
-            const source = positions.get(edge.source);
-            const target = positions.get(edge.target);
-            if (!source || !target) return null;
+            const sourceId = typeof edge.source === 'string' ? edge.source : edge.source.id;
+            const targetId = typeof edge.target === 'string' ? edge.target : edge.target.id;
+            const source = positions.get(sourceId);
+            const target = positions.get(targetId);
+            
+            if (!source || !target) {
+              console.warn(`Edge ${edge.id} missing position for source ${sourceId} or target ${targetId}`);
+              return null;
+            }
             
             return (
               <line
@@ -140,9 +147,10 @@ export const GraphCanvasV2: React.FC = () => {
                 y1={source.y}
                 x2={target.x}
                 y2={target.y}
-                stroke={edge.appearance?.color || '#cbd5e1'}
-                strokeWidth={edge.appearance?.width || 1}
+                stroke={edge.appearance?.color || '#64748b'}
+                strokeWidth={edge.appearance?.width || 2}
                 opacity={0.6}
+                className="dark:stroke-slate-500"
               />
             );
           })}

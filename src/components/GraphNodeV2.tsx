@@ -56,27 +56,9 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
     e.stopPropagation();
     e.preventDefault();
     
-    const svg = (e.target as SVGElement).ownerSVGElement;
-    if (!svg) return;
-    
     setIsDragging(true);
-    
-    // Convert mouse position to SVG coordinates
-    const pt = svg.createSVGPoint();
-    pt.x = e.clientX;
-    pt.y = e.clientY;
-    const svgP = pt.matrixTransform(svg.getScreenCTM()!.inverse());
-    
-    // Account for transform
-    dragStart.current = {
-      x: (svgP.x - transform.x) / transform.k,
-      y: (svgP.y - transform.y) / transform.k,
-      nodeX: x,
-      nodeY: y
-    };
-    
     onDrag(node.id, x, y, 'start');
-  }, [node.id, x, y, transform, onDrag]);
+  }, [node.id, x, y, onDrag]);
   
   // Handle drag with mouse move on document
   useEffect(() => {
@@ -86,17 +68,22 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
       const svg = document.querySelector('svg');
       if (!svg) return;
       
-      // Convert mouse position to SVG coordinates
+      // Get the SVG point in screen coordinates
       const pt = svg.createSVGPoint();
       pt.x = e.clientX;
       pt.y = e.clientY;
-      const svgP = pt.matrixTransform(svg.getScreenCTM()!.inverse());
       
-      // Calculate new position accounting for transform
-      const newX = (svgP.x - transform.x) / transform.k;
-      const newY = (svgP.y - transform.y) / transform.k;
+      // Transform to SVG coordinates
+      const ctm = svg.getScreenCTM();
+      if (!ctm) return;
       
-      onDrag(node.id, newX, newY, 'drag');
+      const svgP = pt.matrixTransform(ctm.inverse());
+      
+      // Apply the inverse of the group transform to get world coordinates
+      const worldX = (svgP.x - transform.x) / transform.k;
+      const worldY = (svgP.y - transform.y) / transform.k;
+      
+      onDrag(node.id, worldX, worldY, 'drag');
     };
     
     const handleMouseUp = () => {
@@ -124,8 +111,9 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
         fill={node.appearance?.backgroundColor || '#ffffff'}
         stroke={isSelected ? '#3b82f6' : '#e5e7eb'}
         strokeWidth={isSelected ? 3 : 1.5}
+        className="dark:stroke-slate-600"
         style={{ 
-          filter: isHovered ? 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))' : undefined,
+          filter: isHovered ? 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3))' : undefined,
           transition: 'stroke 0.2s, stroke-width 0.2s'
         }}
         onClick={handleClick}
@@ -155,6 +143,7 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
           textAnchor="middle"
           fontSize={12}
           fill="#6b7280"
+          className="dark:fill-slate-400"
           pointerEvents="none"
           style={{ userSelect: 'none' }}
         >
