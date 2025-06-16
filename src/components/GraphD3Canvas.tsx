@@ -181,8 +181,8 @@ const GraphD3Canvas: React.FC = () => {
       event.stopPropagation();
       // Select edge before showing menu
       selectEdge(edgeId);
-      let clientX = (event as MouseEvent).clientX;
-      let clientY = (event as MouseEvent).clientY;
+      const clientX = (event as MouseEvent).clientX;
+      const clientY = (event as MouseEvent).clientY;
       setEdgeMenu({ edgeId, x: clientX, y: clientY });
     },
     [selectEdge]

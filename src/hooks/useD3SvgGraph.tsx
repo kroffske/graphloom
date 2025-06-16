@@ -310,7 +310,7 @@ export function useD3SvgGraph({
         const manual = manualPositions[d.id];
         const x = manual?.x ?? d.x ?? 0;
         const y = manual?.y ?? d.y ?? 0;
-        let step = event.shiftKey ? 1 : 10;
+        const step = event.shiftKey ? 1 : 10;
         let nx = x,
           ny = y;
         if (event.key === "ArrowUp") ny -= step;

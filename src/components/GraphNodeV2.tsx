@@ -79,9 +79,9 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
     
     // Set up drag handlers immediately
     const handleMouseMove = (e: MouseEvent) => {
-      const svg = document.querySelector('svg');
+      const svg = document.querySelector('svg.graph-canvas-svg');
       if (!svg) {
-        console.error('[GraphNodeV2] No SVG element found');
+        console.error('[GraphNodeV2] No graph SVG element found');
         return;
       }
       
@@ -93,7 +93,7 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
       // Get the transform matrix from the g element
       const gElement = svg.querySelector('g');
       if (!gElement) {
-        console.error('[GraphNodeV2] No g element found');
+        console.error('[GraphNodeV2] No g element found in graph SVG');
         return;
       }
       
@@ -111,8 +111,7 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
         clientX: e.clientX, 
         clientY: e.clientY, 
         worldX: svgCoords.x, 
-        worldY: svgCoords.y,
-        transform: transform
+        worldY: svgCoords.y
       });
       
       onDrag(node.id, svgCoords.x, svgCoords.y, 'drag');
@@ -160,7 +159,6 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
         onMouseDown={handleMouseDown}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        onPointerDown={(e) => console.log('[GraphNodeV2] Pointer down on circle:', node.id, e)}
       />
       
       {/* Icon/Emoji */}

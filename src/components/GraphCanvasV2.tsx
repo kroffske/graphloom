@@ -3,6 +3,13 @@ import * as d3 from 'd3';
 import { useGraphStore } from '@/state/useGraphStore';
 import { GraphNodeV2 } from './GraphNodeV2';
 import { graphEventBus } from '@/lib/graphEventBus';
+import { LayoutSelector, LayoutType } from './LayoutSelector';
+import { 
+  ForceAtlas2Layout,
+  applyCircleLayout,
+  applyHierarchyLayout,
+  applyRadialLayout
+} from '@/utils/layouts';
 
 interface Transform {
   k: number;
@@ -14,6 +21,11 @@ export const GraphCanvasV2: React.FC = () => {
   const svgRef = useRef<SVGSVGElement>(null);
   const gRef = useRef<SVGGElement>(null);
   const simulationRef = useRef<d3.Simulation<any, any>>();
+  const forceAtlas2Ref = useRef<ForceAtlas2Layout>();
+  const animationFrameRef = useRef<number>();
+  
+  // Layout state
+  const [currentLayout, setCurrentLayout] = useState<LayoutType>('force');
   
   // Single transform state for zoom/pan
   const [transform, setTransform] = useState<Transform>({ k: 1, x: 0, y: 0 });
@@ -26,27 +38,37 @@ export const GraphCanvasV2: React.FC = () => {
   const nodes = useGraphStore(state => state.nodes);
   const edges = useGraphStore(state => state.edges);
   
-  // Initialize D3 simulation
+  // Initialize layout based on current type
   useEffect(() => {
     if (!nodes.length) return;
+    
+    // Stop any existing animations
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+    }
+    if (simulationRef.current) {
+      simulationRef.current.stop();
+    }
+    if (forceAtlas2Ref.current) {
+      forceAtlas2Ref.current.stop();
+    }
     
     // Copy nodes to avoid mutating the store
     const simNodes = nodes.map(n => ({ ...n }));
     const simEdges = edges.map(e => ({ ...e }));
     
-    // Create simulation
-    const simulation = d3.forceSimulation(simNodes)
-      .force('link', d3.forceLink(simEdges).id((d: any) => d.id).distance(100).strength(1))
-      .force('charge', d3.forceManyBody().strength(-400))
-      .force('center', d3.forceCenter(450, 265))
-      .force('collision', d3.forceCollide().radius(40))
-      .velocityDecay(0.4)  // Add some friction
-      .alphaDecay(0.02);   // Slower cooling for smoother animation
+    // Initialize positions if needed
+    simNodes.forEach(node => {
+      const existing = positionsRef.current.get(node.id);
+      if (existing) {
+        node.x = existing.x;
+        node.y = existing.y;
+      } else {
+        node.x = node.x || Math.random() * 900;
+        node.y = node.y || Math.random() * 530;
+      }
+    });
     
-    simulationRef.current = simulation;
-    
-    // Throttled position updates
-    let rafId: number;
     let tickCount = 0;
     const updatePositions = () => {
       simNodes.forEach(node => {
@@ -62,20 +84,100 @@ export const GraphCanvasV2: React.FC = () => {
       }
     };
     
-    simulation.on('tick', () => {
-      cancelAnimationFrame(rafId);
-      rafId = requestAnimationFrame(updatePositions);
-    });
-    
-    // Stop simulation after initial layout
-    simulation.alpha(0.3).restart();
+    switch (currentLayout) {
+      case 'force': {
+        // D3 Force Layout
+        const simulation = d3.forceSimulation(simNodes)
+          .force('link', d3.forceLink(simEdges).id((d: any) => d.id).distance(100).strength(1))
+          .force('charge', d3.forceManyBody().strength(-400))
+          .force('center', d3.forceCenter(450, 265))
+          .force('collision', d3.forceCollide().radius(40))
+          .velocityDecay(0.4)
+          .alphaDecay(0.02);
+        
+        simulationRef.current = simulation;
+        
+        simulation.on('tick', () => {
+          updatePositions();
+        });
+        
+        simulation.alpha(0.3).restart();
+        break;
+      }
+      
+      case 'forceatlas2': {
+        // ForceAtlas2 Layout
+        const fa2 = new ForceAtlas2Layout(simNodes, simEdges, {
+          gravity: 1.0,
+          scalingRatio: 2.0,
+          barnesHut: true,
+          linLogMode: false,
+          preventOverlap: true
+        });
+        
+        forceAtlas2Ref.current = fa2;
+        fa2.start();
+        
+        const animate = () => {
+          fa2.tick();
+          updatePositions();
+          
+          if (fa2.isRunning()) {
+            animationFrameRef.current = requestAnimationFrame(animate);
+          }
+        };
+        
+        animate();
+        
+        // Stop after some iterations
+        setTimeout(() => fa2.stop(), 5000);
+        break;
+      }
+      
+      case 'circle': {
+        // Circle Layout
+        applyCircleLayout(simNodes, {
+          center: [450, 265],
+          radius: 200
+        });
+        updatePositions();
+        break;
+      }
+      
+      case 'hierarchy': {
+        // Hierarchy Layout
+        applyHierarchyLayout(simNodes, simEdges, {
+          width: 900,
+          height: 530
+        });
+        updatePositions();
+        break;
+      }
+      
+      case 'radial': {
+        // Radial Layout
+        applyRadialLayout(simNodes, simEdges, {
+          center: [450, 265],
+          radius: 200
+        });
+        updatePositions();
+        break;
+      }
+    }
     
     // Cleanup
     return () => {
-      cancelAnimationFrame(rafId);
-      simulation.stop();
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      if (simulationRef.current) {
+        simulationRef.current.stop();
+      }
+      if (forceAtlas2Ref.current) {
+        forceAtlas2Ref.current.stop();
+      }
     };
-  }, [nodes, edges]);
+  }, [nodes, edges, currentLayout]);
   
   // Setup zoom behavior
   useEffect(() => {
@@ -136,60 +238,70 @@ export const GraphCanvasV2: React.FC = () => {
   // Handle node drag
   const handleNodeDrag = useCallback((nodeId: string, dx: number, dy: number, type: 'start' | 'drag' | 'end') => {
     console.log('[GraphCanvasV2] handleNodeDrag called:', { nodeId, dx, dy, type });
-    const simulation = simulationRef.current;
-    if (!simulation) {
-      console.warn('[GraphCanvasV2] No simulation available');
-      return;
+    
+    if (type === 'drag') {
+      // Update position immediately for all layout types
+      positionsRef.current.set(nodeId, { x: dx, y: dy });
+      setPositionsVersion(v => v + 1);
     }
     
-    if (type === 'start') {
-      // Find the node in simulation
-      const node = simulation.nodes().find((n: any) => n.id === nodeId);
-      if (!node) {
-        console.warn('[GraphCanvasV2] Node not found in simulation:', nodeId);
-        return;
-      }
+    // Only handle simulation-specific logic for force layouts
+    if (currentLayout === 'force' || currentLayout === 'forceatlas2') {
+      const simulation = simulationRef.current;
       
-      dragSubjectRef.current = node;
-      
-      if (!simulation.alpha()) {
-        simulation.alphaTarget(0.3).restart();
-      }
-      node.fx = node.x;
-      node.fy = node.y;
-      console.log('[GraphCanvasV2] Drag started, fixed node at:', node.x, node.y);
-    } else if (type === 'drag') {
-      // For drag, dx and dy are the mouse positions, not deltas
-      if (dragSubjectRef.current) {
-        dragSubjectRef.current.fx = dx;
-        dragSubjectRef.current.fy = dy;
-        // Update position immediately for smooth dragging
-        positionsRef.current.set(nodeId, { x: dx, y: dy });
-        setPositionsVersion(v => v + 1);
-      }
-    } else if (type === 'end') {
-      if (dragSubjectRef.current) {
-        if (!simulation.alpha()) {
-          simulation.alphaTarget(0);
+      if (currentLayout === 'force' && simulation) {
+        if (type === 'start') {
+          // Find the node in simulation
+          const node = simulation.nodes().find((n: any) => n.id === nodeId);
+          if (!node) {
+            console.warn('[GraphCanvasV2] Node not found in simulation:', nodeId);
+            return;
+          }
+          
+          dragSubjectRef.current = node;
+          
+          if (!simulation.alpha()) {
+            simulation.alphaTarget(0.3).restart();
+          }
+          node.fx = node.x;
+          node.fy = node.y;
+        } else if (type === 'drag') {
+          if (dragSubjectRef.current) {
+            dragSubjectRef.current.fx = dx;
+            dragSubjectRef.current.fy = dy;
+          }
+        } else if (type === 'end') {
+          if (dragSubjectRef.current) {
+            if (!simulation.alpha()) {
+              simulation.alphaTarget(0);
+            }
+            // Release the node so it can continue moving with the simulation
+            dragSubjectRef.current.fx = null;
+            dragSubjectRef.current.fy = null;
+            dragSubjectRef.current = null;
+          }
         }
-        // Release the node so it can continue moving with the simulation
-        dragSubjectRef.current.fx = null;
-        dragSubjectRef.current.fy = null;
-        dragSubjectRef.current = null;
       }
     }
-  }, []);
+  }, [currentLayout]);
   
   // Get current positions
   const positions = positionsRef.current;
   
+  console.log('[GraphCanvasV2] Rendering with', nodes.length, 'nodes,', positions.size, 'positions');
+  
   return (
-    <svg 
+    <div className="flex flex-col h-full">
+      <LayoutSelector 
+        currentLayout={currentLayout}
+        onLayoutChange={setCurrentLayout}
+      />
+      <svg 
       ref={svgRef}
       width="100%"
       height="100%"
       viewBox="0 0 900 530"
-      className="bg-background"
+      className="bg-background graph-canvas-svg"
       style={{ cursor: 'default', touchAction: 'none' }}
       onContextMenu={(e) => e.preventDefault()}
     >
@@ -251,5 +363,6 @@ export const GraphCanvasV2: React.FC = () => {
         </g>
       </g>
     </svg>
+    </div>
   );
 };

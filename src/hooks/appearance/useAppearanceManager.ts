@@ -223,8 +223,8 @@ export function useAppearanceManager() {
 
   const handlePresetSelect = useCallback(
     (presetConfig: PresetConfig, presetKey: string) => {
-      let nodeTypes = presetConfig.nodeTypes || {};
-      let edgeTypes = presetConfig.edgeTypes || {};
+      const nodeTypes = presetConfig.nodeTypes || {};
+      const edgeTypes = presetConfig.edgeTypes || {};
 
       Object.keys(useGraphStore.getState().nodeTypeAppearances).forEach(
         (type) => resetNodeTypeAppearance(type)

@@ -55,7 +55,7 @@ export default function EdgeTypeAppearanceForm({
     setColor(edgeTypeAppearances[type]?.color ?? "#64748b");
     setWidth(edgeTypeAppearances[type]?.width ?? 2);
     setLabelTemplate(edgeTypeAppearances[type]?.labelTemplate ?? "");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [type, edgeTypeAppearances]);
 
   useEffect(() => {
