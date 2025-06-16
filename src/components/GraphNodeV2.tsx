@@ -232,6 +232,7 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
                         style={{ width: radius * 0.6, height: radius * 0.6 }}
                         filled={false}
                         aria-label={icon}
+                        color={iconColor}
                       />
                     </div>
                   </foreignObject>
