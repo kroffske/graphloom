@@ -10,6 +10,8 @@ interface GraphNodeV2Props {
   y: number;
   transform: { k: number; x: number; y: number };
   onDrag?: (nodeId: string, x: number, y: number, type: 'start' | 'drag' | 'end') => void;
+  showLabel?: boolean;
+  showIcon?: boolean;
 }
 
 // Memoize to prevent unnecessary re-renders
@@ -18,7 +20,9 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
   x, 
   y, 
   transform,
-  onDrag
+  onDrag,
+  showLabel = true,
+  showIcon = true
 }) => {
   const selectedNodeId = useGraphStore(state => state.selectedNodeId);
   const hoveredNodeId = useGraphStore(state => state.hoveredNodeId);
@@ -44,8 +48,8 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
   const iconColor = appearance.color || appearance.iconColor || '#374151';
   const icon = appearance.icon || node.type;
   
-  // Hide labels when zoomed out
-  const showLabel = transform.k > 0.6;
+  // Use prop override for label visibility
+  const shouldShowLabel = showLabel && transform.k > 0.6;
   
   // Drag state
   const [isDragging, setIsDragging] = useState(false);
@@ -180,7 +184,7 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
       />
       
       {/* Icon/Emoji */}
-      {icon && (
+      {icon && showIcon && (
         <>
           {isEmoji(icon) ? (
             // Render emoji directly as text
@@ -234,7 +238,7 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
       )}
       
       {/* Label (hidden when zoomed out) */}
-      {showLabel && (
+      {shouldShowLabel && (
         <text
           y={50}
           textAnchor="middle"
@@ -272,7 +276,10 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
     prev.node === next.node &&
     prev.x === next.x &&
     prev.y === next.y &&
-    prev.transform.k === next.transform.k
+    prev.transform.k === next.transform.k &&
+    prev.showLabel === next.showLabel &&
+    prev.showIcon === next.showIcon &&
+    prev.onDrag === next.onDrag
   );
 });
 
