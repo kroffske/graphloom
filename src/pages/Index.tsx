@@ -51,10 +51,10 @@ const Index = () => {
           </TabsList>
           <SidebarProvider>
             <div className="flex-1 flex flex-row w-full min-h-0 max-h-[calc(100vh-70px)] overflow-hidden">
-              <main className="flex-1 flex flex-col pl-7 pr-2 pt-6 pb-0 max-w-[calc(100vw-370px)]">
-                <TabsContent value="graph" className="p-0 h-full w-full flex flex-col">
+              <main className="flex-1 flex flex-col pl-7 pr-2 pt-6 pb-4 max-w-[calc(100vw-370px)]">
+                <TabsContent value="graph" className="p-0 h-full w-full flex flex-col overflow-hidden">
                   {useReactFirstApproach && <TestDataLoader />}
-                  <div className="flex-1">
+                  <div className="flex-1 min-h-0 overflow-hidden">
                     {useReactFirstApproach ? <GraphCanvasV2 /> : <GraphD3Canvas />}
                   </div>
                 </TabsContent>

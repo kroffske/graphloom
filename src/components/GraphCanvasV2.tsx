@@ -486,23 +486,24 @@ export const GraphCanvasV2: React.FC = () => {
   console.log('[GraphCanvasV2] Rendering', visibleNodes.length, 'of', filteredNodes.length, 'nodes (zoom:', transform.k.toFixed(2), ')');
   
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex gap-2">
+    <div className="flex flex-col h-full overflow-hidden">
+      <div className="flex gap-2 mb-2">
         <LayoutSelector 
           currentLayout={currentLayout}
           onLayoutChange={setCurrentLayout}
         />
         <VisibilitySettings />
       </div>
-      <svg 
-      ref={svgRef}
-      width="100%"
-      height="100%"
-      viewBox="0 0 900 530"
-      className="bg-background graph-canvas-svg"
-      style={{ cursor: 'default', touchAction: 'none' }}
-      onContextMenu={(e) => e.preventDefault()}
-    >
+      <div className="flex-1 min-h-0 relative">
+        <svg 
+          ref={svgRef}
+          width="100%"
+          height="100%"
+          viewBox="0 0 900 530"
+          className="bg-background graph-canvas-svg absolute inset-0"
+          style={{ cursor: 'default', touchAction: 'none' }}
+          onContextMenu={(e) => e.preventDefault()}
+        >
       <g 
         ref={gRef}
         transform={`translate(${transform.x},${transform.y}) scale(${transform.k})`}
@@ -612,13 +613,14 @@ export const GraphCanvasV2: React.FC = () => {
         </g>
       </g>
     </svg>
-    <PerformanceIndicator
-      totalNodes={filteredNodes.length}
-      visibleNodes={visibleNodes.length}
-      zoom={transform.k}
-      simplified={simplifiedRendering}
-    />
-    <TimeRangeSlider className="mt-2" />
+        <PerformanceIndicator
+          totalNodes={filteredNodes.length}
+          visibleNodes={visibleNodes.length}
+          zoom={transform.k}
+          simplified={simplifiedRendering}
+        />
+      </div>
+      <TimeRangeSlider className="mt-2 flex-shrink-0" />
     </div>
   );
 };
