@@ -1,6 +1,8 @@
 import React, { useCallback, useRef, useEffect, useState } from 'react';
 import { GraphNode } from '@/types/graph.types';
 import { useGraphStore } from '@/state/useGraphStore';
+import { useIconRegistry } from '@/components/IconRegistry';
+import { isEmoji } from '@/config/emojiIcons';
 
 interface GraphNodeV2Props {
   node: GraphNode;
@@ -22,9 +24,22 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
   const hoveredNodeId = useGraphStore(state => state.hoveredNodeId);
   const selectNode = useGraphStore(state => state.selectNode);
   const setHoveredNodeId = useGraphStore(state => state.setHoveredNodeId);
+  const nodeTypeAppearances = useGraphStore(state => state.nodeTypeAppearances);
+  const iconRegistry = useIconRegistry();
   
   const isSelected = selectedNodeId === node.id;
   const isHovered = hoveredNodeId === node.id;
+  
+  // Get appearance with fallback to node type appearance
+  const typeAppearance = nodeTypeAppearances?.[node.type] ?? {};
+  const appearance = node.appearance && Object.keys(node.appearance).length > 0
+    ? node.appearance
+    : typeAppearance;
+  
+  // Extract appearance properties with defaults
+  const backgroundColor = appearance.backgroundColor || '#ffffff';
+  const iconColor = appearance.color || appearance.iconColor || '#374151';
+  const icon = appearance.icon || node.type;
   
   // Hide labels when zoomed out
   const showLabel = transform.k > 0.6;
@@ -143,7 +158,7 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
       {/* Background circle */}
       <circle
         r={36}
-        fill={node.appearance?.backgroundColor || '#ffffff'}
+        fill={backgroundColor}
         stroke={isSelected ? '#3b82f6' : '#e5e7eb'}
         strokeWidth={isSelected ? 3 : 1.5}
         className="dark:stroke-slate-600"
@@ -162,17 +177,57 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
       />
       
       {/* Icon/Emoji */}
-      {node.appearance?.icon && (
-        <text
-          textAnchor="middle"
-          dominantBaseline="central"
-          fontSize={24}
-          fill={node.appearance?.color || '#374151'}
-          pointerEvents="none"
-          style={{ userSelect: 'none' }}
-        >
-          {node.appearance.icon}
-        </text>
+      {icon && (
+        <>
+          {isEmoji(icon) ? (
+            // Render emoji directly as text
+            <text
+              textAnchor="middle"
+              dominantBaseline="central"
+              fontSize={24}
+              fill={iconColor}
+              pointerEvents="none"
+              style={{ userSelect: 'none' }}
+            >
+              {icon}
+            </text>
+          ) : (
+            // Render icon component if available
+            (() => {
+              const IconComponent = iconRegistry[icon];
+              if (IconComponent) {
+                return (
+                  <foreignObject
+                    x={-16}
+                    y={-16}
+                    width={32}
+                    height={32}
+                    pointerEvents="none"
+                  >
+                    <IconComponent 
+                      className="w-8 h-8"
+                      filled={false}
+                      aria-label={icon}
+                    />
+                  </foreignObject>
+                );
+              }
+              // Fallback to text if no icon found
+              return (
+                <text
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fontSize={14}
+                  fill={iconColor}
+                  pointerEvents="none"
+                  style={{ userSelect: 'none' }}
+                >
+                  {icon}
+                </text>
+              );
+            })()
+          )}
+        </>
       )}
       
       {/* Label (hidden when zoomed out) */}

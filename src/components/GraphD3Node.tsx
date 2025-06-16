@@ -3,6 +3,7 @@ import type { GraphNode } from "@/types/graph";
 import { useIconRegistry } from "./IconRegistry";
 import { useGraphStore } from "@/state/useGraphStore";
 import { resolveLabelTemplate } from "@/utils/labelTemplate";
+import { isEmoji } from "@/config/emojiIcons";
 
 /**
  * Renders the node as a circular background (with optional transparency),
@@ -106,13 +107,45 @@ const GraphD3Node = ({
           }}
           className="select-none"
         >
-          {Icon && (
-            <Icon
-              className={iconClass}
-              aria-label={iconType}
-              filled={true}
-              color={iconColor}
-            />
+          {iconType && (
+            <>
+              {isEmoji(iconType) ? (
+                // Render emoji directly
+                <span
+                  className={iconClass}
+                  style={{ 
+                    color: iconColor,
+                    fontSize: `${iconSize}px`,
+                    lineHeight: 1,
+                    userSelect: 'none'
+                  }}
+                  role="img"
+                  aria-label={iconType}
+                >
+                  {iconType}
+                </span>
+              ) : Icon ? (
+                // Render icon component
+                <Icon
+                  className={iconClass}
+                  aria-label={iconType}
+                  filled={true}
+                  color={iconColor}
+                />
+              ) : (
+                // Fallback text
+                <span
+                  className={iconClass}
+                  style={{ 
+                    color: iconColor,
+                    fontSize: '14px',
+                    userSelect: 'none'
+                  }}
+                >
+                  {iconType}
+                </span>
+              )}
+            </>
           )}
         </div>
         {/* Label inside the circle, centered */}

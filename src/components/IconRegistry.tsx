@@ -27,6 +27,8 @@ import SecurityIcon from "./NodeIcons/SecurityIcon";
 
 import { icons } from "lucide-react";
 import { ICON_GROUPS } from "@/config/iconConstants";
+import { EMOJI_ICONS } from "@/config/emojiIcons";
+import EmojiIcon from "./NodeIcons/EmojiIcon";
 
 export type IconRegistryType = {
   [nodeType: string]: React.ComponentType<{
@@ -82,7 +84,17 @@ lucideIconNames.forEach(name => {
     }
 });
 
-const ICON_REGISTRY: IconRegistryType = { ...classicIcons, ...lucideIcons };
+// Create emoji icon components
+const emojiIcons: IconRegistryType = {};
+Object.entries(EMOJI_ICONS).forEach(([key, emoji]) => {
+  const IconComponent: React.FC<{ filled?: boolean; className?: string; "aria-label"?: string }> = (props) => (
+    <EmojiIcon emoji={emoji} {...props} aria-label={key} />
+  );
+  IconComponent.displayName = `Emoji(${key})`;
+  emojiIcons[key] = IconComponent;
+});
+
+const ICON_REGISTRY: IconRegistryType = { ...classicIcons, ...lucideIcons, ...emojiIcons };
 
 const IconRegistryContext = createContext<IconRegistryType>(ICON_REGISTRY);
 

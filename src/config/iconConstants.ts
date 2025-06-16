@@ -1,5 +1,7 @@
 
-// EXPANDED: Lucide icons group with more choices (add more as needed)
+import { EMOJI_ICON_KEYS } from './emojiIcons';
+
+// Icon groups including emojis
 export const ICON_GROUPS: Record<string, string[]> = {
   "Classic": [
     "entity", "process", "data-store", "event", "decision", "external-system",
@@ -17,5 +19,6 @@ export const ICON_GROUPS: Record<string, string[]> = {
     "phone", "pie-chart", "play", "plus", "power", "printer", "refresh-cw", "save",
     "scissors", "search", "send", "settings", "share", "shield", "shopping-cart", "shuffle", "sidebar", "signal", "sliders", "star", "sun", "tag", "target", "terminal", "thermometer", "thumbs-down", "thumbs-up", "trash", "trash-2", "trending-up",
     "truck", "tv", "umbrella", "unlock", "upload", "user-check", "users", "video", "volume", "watch", "wifi", "x", "youtube", "zap"
-  ]
+  ],
+  "Emoji": EMOJI_ICON_KEYS
 };
