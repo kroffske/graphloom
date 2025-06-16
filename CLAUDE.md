@@ -26,7 +26,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **D3.js** for graph visualization and physics simulation
 - **shadcn-ui** components (in `src/components/ui/`)
 - **Tailwind CSS** for styling
-- **Supabase** for backend integration
 
 ### Key Architectural Patterns
 
