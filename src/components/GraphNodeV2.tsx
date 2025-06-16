@@ -10,6 +10,8 @@ interface GraphNodeV2Props {
   y: number;
   transform: { k: number; x: number; y: number };
   onDrag?: (nodeId: string, x: number, y: number, type: 'start' | 'drag' | 'end') => void;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
   showLabel?: boolean;
   showIcon?: boolean;
 }
@@ -21,6 +23,8 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
   y, 
   transform,
   onDrag,
+  onMouseEnter,
+  onMouseLeave,
   showLabel = true,
   showIcon = true
 }) => {
@@ -86,14 +90,16 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
   const handleMouseEnter = useCallback(() => {
     if (!isDragging) {
       setHoveredNodeId(node.id);
+      onMouseEnter?.();
     }
-  }, [node.id, setHoveredNodeId, isDragging]);
+  }, [node.id, setHoveredNodeId, isDragging, onMouseEnter]);
   
   const handleMouseLeave = useCallback(() => {
     if (!isDragging) {
       setHoveredNodeId(null);
+      onMouseLeave?.();
     }
-  }, [setHoveredNodeId, isDragging]);
+  }, [setHoveredNodeId, isDragging, onMouseLeave]);
   
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     console.log('[GraphNodeV2] handleMouseDown called, button:', e.button, 'onDrag available:', !!onDrag);

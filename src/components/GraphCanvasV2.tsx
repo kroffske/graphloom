@@ -8,6 +8,7 @@ import { PerformanceIndicator } from './PerformanceIndicator';
 import { TimeRangeSlider } from './TimeRangeSlider';
 import { isEdgeInTimeRange } from '@/utils/timestampUtils';
 import { VisibilitySettings } from './VisibilitySettings';
+import GraphTooltipManager from './GraphTooltipManager';
 import { 
   ForceAtlas2Layout,
   OpenOrdLayout,
@@ -40,6 +41,11 @@ export const GraphCanvasV2: React.FC = () => {
   // Node positions in ref to avoid re-renders on every tick
   const positionsRef = useRef<Map<string, { x: number; y: number }>>(new Map());
   const [positionsVersion, setPositionsVersion] = useState(0);
+  
+  // Hover and mouse state
+  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
+  const [hoveredEdgeId, setHoveredEdgeId] = useState<string | null>(null);
+  const [mousePosition, setMousePosition] = useState<{ x: number; y: number } | null>(null);
   
   // Get graph data from store
   const nodes = useGraphStore(state => state.nodes);
@@ -450,6 +456,11 @@ export const GraphCanvasV2: React.FC = () => {
   // Get current positions
   const positions = positionsRef.current;
   
+  // Handle mouse move
+  const handleMouseMove = useCallback((event: React.MouseEvent) => {
+    setMousePosition({ x: event.clientX, y: event.clientY });
+  }, []);
+  
   // Viewport culling - only render visible nodes
   const visibleNodes = React.useMemo(() => {
     if (!svgRef.current) return filteredNodes;
@@ -485,8 +496,12 @@ export const GraphCanvasV2: React.FC = () => {
   
   console.log('[GraphCanvasV2] Rendering', visibleNodes.length, 'of', filteredNodes.length, 'nodes (zoom:', transform.k.toFixed(2), ')');
   
+  // Get hovered items
+  const hoveredNode = hoveredNodeId ? nodes.find(n => n.id === hoveredNodeId) : null;
+  const hoveredEdge = hoveredEdgeId ? edges.find(e => e.id === hoveredEdgeId) : null;
+  
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex flex-col h-full overflow-hidden" onMouseMove={handleMouseMove}>
       <div className="flex gap-2 mb-2">
         <LayoutSelector 
           currentLayout={currentLayout}
@@ -552,18 +567,34 @@ export const GraphCanvasV2: React.FC = () => {
             const strokeDasharray = appearance.strokeDasharray;
             
             return (
-              <line
-                key={edge.id}
-                x1={source.x}
-                y1={source.y}
-                x2={target.x}
-                y2={target.y}
-                stroke={color}
-                strokeWidth={simplifiedRendering ? 1 : width}
-                opacity={simplifiedRendering ? 0.3 : opacity}
-                strokeDasharray={strokeDasharray}
-                className="dark:stroke-slate-500"
-              />
+              <g key={edge.id}>
+                {/* Invisible wider line for easier hovering */}
+                <line
+                  x1={source.x}
+                  y1={source.y}
+                  x2={target.x}
+                  y2={target.y}
+                  stroke="transparent"
+                  strokeWidth={Math.max(10, width * 2)}
+                  className="cursor-pointer"
+                  onMouseEnter={() => setHoveredEdgeId(edge.id)}
+                  onMouseLeave={() => setHoveredEdgeId(null)}
+                  style={{ pointerEvents: 'stroke' }}
+                />
+                {/* Visible line */}
+                <line
+                  x1={source.x}
+                  y1={source.y}
+                  x2={target.x}
+                  y2={target.y}
+                  stroke={hoveredEdgeId === edge.id ? '#3b82f6' : color}
+                  strokeWidth={hoveredEdgeId === edge.id ? (width + 1) : (simplifiedRendering ? 1 : width)}
+                  opacity={simplifiedRendering ? 0.3 : opacity}
+                  strokeDasharray={strokeDasharray}
+                  className="dark:stroke-slate-500"
+                  style={{ pointerEvents: 'none' }}
+                />
+              </g>
             );
           })}
         </g>
@@ -595,6 +626,8 @@ export const GraphCanvasV2: React.FC = () => {
                   strokeWidth={appearance.borderEnabled ? 0.5 : 0}
                   className="cursor-pointer"
                   onClick={() => useGraphStore.getState().selectNode(node.id)}
+                  onMouseEnter={() => setHoveredNodeId(node.id)}
+                  onMouseLeave={() => setHoveredNodeId(null)}
                 />
               );
             }
@@ -607,6 +640,8 @@ export const GraphCanvasV2: React.FC = () => {
                 y={pos.y}
                 transform={transform}
                 onDrag={handleNodeDrag}
+                onMouseEnter={() => setHoveredNodeId(node.id)}
+                onMouseLeave={() => setHoveredNodeId(null)}
               />
             );
           })}
@@ -623,6 +658,11 @@ export const GraphCanvasV2: React.FC = () => {
         />
       </div>
       <TimeRangeSlider className="mt-2 flex-shrink-0" />
+      <GraphTooltipManager 
+        hoveredNode={hoveredNode} 
+        hoveredEdge={hoveredEdge} 
+        position={mousePosition} 
+      />
     </div>
   );
 };
