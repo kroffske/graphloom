@@ -164,7 +164,7 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
     >
       {/* Background circle */}
       <circle
-        r={36}
+        r={19}
         fill={backgroundColor}
         stroke={isSelected ? '#3b82f6' : '#e5e7eb'}
         strokeWidth={isSelected ? 3 : 1.5}
@@ -191,7 +191,7 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
             <text
               textAnchor="middle"
               dominantBaseline="central"
-              fontSize={24}
+              fontSize={14}
               fill={iconColor}
               pointerEvents="none"
               style={{ userSelect: 'none' }}
@@ -205,14 +205,14 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
               if (IconComponent) {
                 return (
                   <foreignObject
-                    x={-16}
-                    y={-16}
-                    width={32}
-                    height={32}
+                    x={-10}
+                    y={-10}
+                    width={20}
+                    height={20}
                     pointerEvents="none"
                   >
                     <IconComponent 
-                      className="w-8 h-8"
+                      className="w-5 h-5"
                       filled={false}
                       aria-label={icon}
                     />
@@ -240,7 +240,7 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
       {/* Label (hidden when zoomed out) */}
       {shouldShowLabel && (
         <text
-          y={50}
+          y={35}
           textAnchor="middle"
           fontSize={12}
           fill="#6b7280"
@@ -255,7 +255,7 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
       {/* Selection indicator (shown when right-clicked) */}
       {isSelected && (
         <circle
-          r={42}
+          r={22}
           fill="none"
           stroke="#3b82f6"
           strokeWidth={3}

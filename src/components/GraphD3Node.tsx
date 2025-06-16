@@ -34,7 +34,7 @@ const GraphD3Node = ({
   const iconColor = appearance.iconColor || "#222";
   const borderColor = appearance.borderColor || "#e5e7eb";
   const borderEnabled = Boolean(appearance.borderEnabled);
-  const nodeSize = appearance.size ?? 64;
+  const nodeSize = appearance.size ?? 38;
   const labelTemplate = appearance.labelTemplate;
   const Icon = iconRegistry[iconType];
 
