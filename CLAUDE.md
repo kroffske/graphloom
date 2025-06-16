@@ -70,6 +70,33 @@ The project uses TypeScript path aliases:
 
 Example: `import { Button } from "@/components/ui/button"`
 
+## Documentation
+
+Detailed documentation is available in the `docs/` directory:
+
+- **[Node Customization Guide](docs/node-customization.md)** - How to customize node appearance, sizes, icons, and colors
+- **[Performance Optimization Guide](docs/performance-optimization.md)** - Techniques for handling large graphs efficiently
+- **[Layout Algorithms Guide](docs/layouts.md)** - Description of available layouts and when to use them
+- **[Test Data Generation Guide](docs/test-data-generation.md)** - How to generate and customize test data
+
+### Quick Reference
+
+#### Changing Node Sizes
+- GraphNodeV2: Edit hardcoded radius in `src/components/GraphNodeV2.tsx` (line 167)
+- GraphD3Node: Change default size in `src/components/GraphD3Node.tsx` (line 37)
+- Current defaults: 19px radius (38px diameter)
+
+#### Performance Tips
+- Use "Fast" layout for 5000+ nodes
+- Viewport culling is automatic
+- LOD rendering: icons hidden at zoom < 0.3
+- Reduce edge density for better performance
+
+#### Adding Icons
+- Emoji icons: Edit `src/config/emojiIcons.ts`
+- SVG icons: Add to icon registry
+- Icon selection: Settings → Icon Style
+
 ## Task Management
 
 ### Active Tasks
