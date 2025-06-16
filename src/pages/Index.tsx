@@ -10,13 +10,20 @@ import InspectorPanel from "@/components/InspectorPanel";
 import ThemeToggle from "@/components/ThemeToggle";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { TestDragNode } from "@/components/TestDragNode";
 
 const Index = () => {
   // Only "graph" and "upload", now "graph" leftmost
   const [mainTab, setMainTab] = useState<"graph" | "upload">("graph");
   const useReactFirstApproach = useFeatureFlag('USE_REACT_FIRST_GRAPH');
+  const testDrag = useFeatureFlag('TEST_DRAG');
   
   console.log('[Index] Using React-First approach:', useReactFirstApproach);
+
+  // Test drag implementation
+  if (testDrag) {
+    return <TestDragNode />;
+  }
 
   return (
     <IconRegistryProvider>
