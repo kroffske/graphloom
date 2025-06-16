@@ -69,3 +69,35 @@ The project uses TypeScript path aliases:
 - `@/*` maps to `./src/*`
 
 Example: `import { Button } from "@/components/ui/button"`
+
+## Task Management
+
+### Active Tasks
+Detailed task lists are maintained in the `tasks/` directory:
+- `tasks/01_refactoring.md` - Current refactoring to separate React and D3 concerns
+
+### Development Workflow
+**IMPORTANT**: After completing each logical block of work:
+1. Run `npm run lint` to ensure code quality
+2. Run `npm run test:run` to verify tests pass
+3. Commit changes with a descriptive message
+4. Push to the repository
+
+This ensures:
+- Work is saved incrementally
+- Changes can be reverted if needed
+- Progress is visible to all team members
+- Code quality is maintained throughout
+
+### Commit Guidelines
+- Commit after each completed phase in task files
+- Commit after implementing each major component
+- Commit after fixing each significant bug
+- Use clear, descriptive commit messages that reference the task
+
+Example commit messages:
+```
+feat: Create portal infrastructure for React-D3 separation
+fix: Resolve removeChild errors in GraphD3NodeMount
+refactor: Update useD3SvgGraph to use event system
+```
