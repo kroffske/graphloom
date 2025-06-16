@@ -2,6 +2,8 @@
 import React, { useState } from "react";
 import { IconRegistryProvider } from "@/components/IconRegistry";
 import GraphD3Canvas from "@/components/GraphD3Canvas";
+import { GraphCanvasV2 } from "@/components/GraphCanvasV2";
+import { useFeatureFlag } from "@/hooks/useFeatureFlag";
 import UploadPanel from "@/components/UploadPanel";
 import InspectorPanel from "@/components/InspectorPanel";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -11,6 +13,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 const Index = () => {
   // Only "graph" and "upload", now "graph" leftmost
   const [mainTab, setMainTab] = useState<"graph" | "upload">("graph");
+  const useReactFirstApproach = useFeatureFlag('USE_REACT_FIRST_GRAPH');
 
   return (
     <IconRegistryProvider>
@@ -40,7 +43,7 @@ const Index = () => {
             <div className="flex-1 flex flex-row w-full min-h-0 max-h-[calc(100vh-70px)] overflow-hidden">
               <main className="flex-1 flex flex-col pl-7 pr-2 pt-6 pb-0 max-w-[calc(100vw-370px)]">
                 <TabsContent value="graph" className="p-0 h-full w-full">
-                  <GraphD3Canvas />
+                  {useReactFirstApproach ? <GraphCanvasV2 /> : <GraphD3Canvas />}
                 </TabsContent>
                 <TabsContent value="upload" className="p-0 h-full w-full">
                   <UploadPanel />
