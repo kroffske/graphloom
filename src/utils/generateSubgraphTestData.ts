@@ -13,7 +13,8 @@ interface SubgraphConfig {
 export function generateSubgraphTestData(
   totalNodes: number = 5000,
   subgraphCount: number = 4,
-  interSubgraphConnections: number = 10
+  interSubgraphConnections: number = 10,
+  includeTimestamps: boolean = true
 ) {
   const nodes: GraphNode[] = [];
   const edges: Edge[] = [];
@@ -109,6 +110,10 @@ export function generateSubgraphTestData(
   
   // Generate internal edges for each subgraph
   let edgeIdCounter = 0;
+  
+  // Base timestamp for edge generation (24 hours ago)
+  const baseTimestamp = Date.now() - (24 * 60 * 60 * 1000);
+  const timeRange = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
   subgraphConfigs.forEach(config => {
     const range = subgraphNodeRanges.get(config.id)!;
     const nodeCount = range.end - range.start + 1;
@@ -128,7 +133,7 @@ export function generateSubgraphTestData(
       const edgeKey = `${source}-${target}`;
       addedEdges.add(edgeKey);
       
-      edges.push({
+      const edge: Edge = {
         id: `edge-${edgeIdCounter++}`,
         source: `node-${source}`,
         target: `node-${target}`,
@@ -138,7 +143,18 @@ export function generateSubgraphTestData(
           width: 1,
           opacity: 0.3
         }
-      });
+      };
+      
+      if (includeTimestamps) {
+        // Generate timestamp distributed over the time range
+        const timestamp = baseTimestamp + Math.random() * timeRange;
+        edge.attributes = {
+          ...edge.attributes,
+          timestamp: new Date(timestamp).toISOString()
+        };
+      }
+      
+      edges.push(edge);
     }
   });
   
@@ -159,7 +175,7 @@ export function generateSubgraphTestData(
     const sourceNode = sourceRange.start + Math.floor(Math.random() * (sourceRange.end - sourceRange.start + 1));
     const targetNode = targetRange.start + Math.floor(Math.random() * (targetRange.end - targetRange.start + 1));
     
-    edges.push({
+    const edge: Edge = {
       id: `edge-${edgeIdCounter++}`,
       source: `node-${sourceNode}`,
       target: `node-${targetNode}`,
@@ -170,7 +186,18 @@ export function generateSubgraphTestData(
         opacity: 0.5,
         strokeDasharray: '5,5' // Dashed line for inter-subgraph
       }
-    });
+    };
+    
+    if (includeTimestamps) {
+      // Inter-subgraph connections happen later in time
+      const timestamp = baseTimestamp + (0.5 + Math.random() * 0.5) * timeRange;
+      edge.attributes = {
+        ...edge.attributes,
+        timestamp: new Date(timestamp).toISOString()
+      };
+    }
+    
+    edges.push(edge);
   }
   
   console.log(`Generated ${nodes.length} nodes in ${subgraphCount} subgraphs with ${edges.length} edges`);

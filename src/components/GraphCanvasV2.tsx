@@ -7,6 +7,7 @@ import { LayoutSelector, LayoutType } from './LayoutSelector';
 import { PerformanceIndicator } from './PerformanceIndicator';
 import { TimeRangeSlider } from './TimeRangeSlider';
 import { isEdgeInTimeRange } from '@/utils/timestampUtils';
+import { VisibilitySettings } from './VisibilitySettings';
 import { 
   ForceAtlas2Layout,
   OpenOrdLayout,
@@ -50,6 +51,9 @@ export const GraphCanvasV2: React.FC = () => {
   const selectedTimeRange = useGraphStore(state => state.selectedTimeRange);
   const timestampField = useGraphStore(state => state.timestampField);
   
+  // Visibility settings
+  const showIsolatedNodes = useGraphStore(state => state.showIsolatedNodes);
+  
   // Filter edges based on time range
   const filteredEdges = React.useMemo(() => {
     if (!selectedTimeRange || !timestampField) {
@@ -59,9 +63,29 @@ export const GraphCanvasV2: React.FC = () => {
     return edges.filter(edge => isEdgeInTimeRange(edge, timestampField, selectedTimeRange));
   }, [edges, selectedTimeRange, timestampField]);
   
+  // Find connected nodes based on filtered edges
+  const connectedNodeIds = React.useMemo(() => {
+    const connected = new Set<string>();
+    filteredEdges.forEach(edge => {
+      const sourceId = typeof edge.source === 'string' ? edge.source : edge.source.id;
+      const targetId = typeof edge.target === 'string' ? edge.target : edge.target.id;
+      connected.add(sourceId);
+      connected.add(targetId);
+    });
+    return connected;
+  }, [filteredEdges]);
+  
+  // Filter nodes based on isolation setting
+  const filteredNodes = React.useMemo(() => {
+    if (showIsolatedNodes) {
+      return nodes;
+    }
+    return nodes.filter(node => connectedNodeIds.has(node.id));
+  }, [nodes, showIsolatedNodes, connectedNodeIds]);
+  
   // Initialize layout based on current type
   useEffect(() => {
-    if (!nodes.length) return;
+    if (!filteredNodes.length) return;
     
     // Stop any existing animations
     if (animationFrameRef.current) {
@@ -78,7 +102,7 @@ export const GraphCanvasV2: React.FC = () => {
     }
     
     // Copy nodes to avoid mutating the store
-    const simNodes = nodes.map(n => ({ ...n }));
+    const simNodes = filteredNodes.map(n => ({ ...n }));
     const simEdges = edges.map(e => ({ ...e }));
     
     // Initialize positions if needed
@@ -315,7 +339,7 @@ export const GraphCanvasV2: React.FC = () => {
         openOrdRef.current.stop();
       }
     };
-  }, [nodes, edges, currentLayout]);
+  }, [filteredNodes, filteredEdges, currentLayout]);
   
   // Setup zoom behavior
   useEffect(() => {
@@ -428,7 +452,7 @@ export const GraphCanvasV2: React.FC = () => {
   
   // Viewport culling - only render visible nodes
   const visibleNodes = React.useMemo(() => {
-    if (!svgRef.current) return nodes;
+    if (!svgRef.current) return filteredNodes;
     
     const rect = svgRef.current.getBoundingClientRect();
     const viewBox = { width: 900, height: 530 };
@@ -443,7 +467,7 @@ export const GraphCanvasV2: React.FC = () => {
     };
     
     // Filter nodes that are within visible bounds
-    return nodes.filter(node => {
+    return filteredNodes.filter(node => {
       const pos = positions.get(node.id);
       if (!pos) return false;
       
@@ -452,21 +476,24 @@ export const GraphCanvasV2: React.FC = () => {
              pos.y >= visibleBounds.top && 
              pos.y <= visibleBounds.bottom;
     });
-  }, [nodes, positions, transform, positionsVersion]);
+  }, [filteredNodes, positions, transform, positionsVersion]);
   
   // Level of detail based on zoom
   const showLabels = transform.k > 0.6;
   const showIcons = transform.k > 0.3;
   const simplifiedRendering = transform.k < 0.5;
   
-  console.log('[GraphCanvasV2] Rendering', visibleNodes.length, 'of', nodes.length, 'nodes (zoom:', transform.k.toFixed(2), ')');
+  console.log('[GraphCanvasV2] Rendering', visibleNodes.length, 'of', filteredNodes.length, 'nodes (zoom:', transform.k.toFixed(2), ')');
   
   return (
     <div className="flex flex-col h-full">
-      <LayoutSelector 
-        currentLayout={currentLayout}
-        onLayoutChange={setCurrentLayout}
-      />
+      <div className="flex gap-2">
+        <LayoutSelector 
+          currentLayout={currentLayout}
+          onLayoutChange={setCurrentLayout}
+        />
+        <VisibilitySettings />
+      </div>
       <svg 
       ref={svgRef}
       width="100%"
@@ -586,7 +613,7 @@ export const GraphCanvasV2: React.FC = () => {
       </g>
     </svg>
     <PerformanceIndicator
-      totalNodes={nodes.length}
+      totalNodes={filteredNodes.length}
       visibleNodes={visibleNodes.length}
       zoom={transform.k}
       simplified={simplifiedRendering}

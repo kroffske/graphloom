@@ -1,10 +1,10 @@
 import { GraphNode, Edge } from '@/types/graph.types';
 import { generateSubgraphTestData } from './generateSubgraphTestData';
 
-export function generateTestGraph(nodeCount: number = 5000) {
+export function generateTestGraph(nodeCount: number = 5000, includeTimestamps: boolean = true) {
   // For large graphs, use subgraph structure for better performance
   if (nodeCount >= 500) {
-    return generateSubgraphTestData(nodeCount, 4, Math.floor(nodeCount * 0.005));
+    return generateSubgraphTestData(nodeCount, 4, Math.floor(nodeCount * 0.005), includeTimestamps);
   }
   
   // Original implementation for small graphs
@@ -40,6 +40,10 @@ export function generateTestGraph(nodeCount: number = 5000) {
   const edgeCount = Math.floor(nodeCount * 1.25);
   const edgeTypes = ['CONNECTED_TO', 'KNOWS', 'WORKS_AT', 'OWNS', 'LOCATED_IN'];
   
+  // Base timestamp for edge generation (7 days ago)
+  const baseTimestamp = Date.now() - (7 * 24 * 60 * 60 * 1000);
+  const timeRange = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+  
   for (let i = 0; i < edgeCount; i++) {
     const source = Math.floor(Math.random() * nodeCount);
     let target = Math.floor(Math.random() * nodeCount);
@@ -49,7 +53,7 @@ export function generateTestGraph(nodeCount: number = 5000) {
       target = Math.floor(Math.random() * nodeCount);
     }
     
-    edges.push({
+    const edge: Edge = {
       id: `edge-${i}`,
       source: `node-${source}`,
       target: `node-${target}`,
@@ -58,7 +62,17 @@ export function generateTestGraph(nodeCount: number = 5000) {
         color: '#94a3b8',
         width: 1 + Math.random() * 2
       }
-    });
+    };
+    
+    if (includeTimestamps) {
+      // Generate timestamp distributed over the time range
+      const timestamp = baseTimestamp + Math.random() * timeRange;
+      edge.attributes = {
+        timestamp: new Date(timestamp).toISOString()
+      };
+    }
+    
+    edges.push(edge);
   }
   
   return { nodes, edges };

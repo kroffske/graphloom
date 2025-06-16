@@ -41,6 +41,10 @@ export type GraphStore = {
   setEdgeAppearance: (id: string, appearance: GraphEdgeAppearance) => void;
   showEdgeLabels: boolean;
   toggleEdgeLabels: () => void;
+  
+  // Visibility settings
+  showIsolatedNodes: boolean;
+  toggleIsolatedNodes: () => void;
 
   // Time range filtering
   timeRange: { min: number; max: number } | null;
@@ -164,6 +168,10 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
 
   showEdgeLabels: true,
   toggleEdgeLabels: () => set((state) => ({ showEdgeLabels: !state.showEdgeLabels })),
+  
+  // Visibility settings
+  showIsolatedNodes: true,
+  toggleIsolatedNodes: () => set((state) => ({ showIsolatedNodes: !state.showIsolatedNodes })),
   nodeFilename: null,
   edgeFilename: null,
   setNodeFilename: (filename) => set({ nodeFilename: filename }),

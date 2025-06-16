@@ -5,6 +5,7 @@ import { generateSmallTestGraph, generateMediumTestGraph, generateLargeTestGraph
 import { generateTransparentTestGraph } from '@/utils/generateTransparentTestGraph';
 import { Loader2, Shuffle, Circle } from 'lucide-react';
 import { graphEventBus } from '@/lib/graphEventBus';
+import { analyzeTimestampFields, findTimeRange } from '@/utils/timestampUtils';
 
 export const TestDataLoader: React.FC = () => {
   const [loading, setLoading] = React.useState(false);
@@ -38,6 +39,25 @@ export const TestDataLoader: React.FC = () => {
     console.log(`Loading ${testData.nodes.length} nodes and ${testData.edges.length} edges`);
     setNodes(testData.nodes);
     setEdges(testData.edges);
+    
+    // Analyze timestamps in edges
+    const timestampFields = analyzeTimestampFields(testData.edges);
+    if (timestampFields.length > 0) {
+      const bestField = timestampFields[0];
+      useGraphStore.getState().setTimestampField(bestField.field);
+      
+      const timeRange = findTimeRange(testData.edges, bestField.field);
+      if (timeRange) {
+        useGraphStore.getState().setTimeRange(timeRange);
+        // Don't set selectedTimeRange - let the slider initialize it
+      }
+    } else {
+      // Clear time range if no timestamps found
+      useGraphStore.getState().setTimestampField(null);
+      useGraphStore.getState().setTimeRange(null);
+      useGraphStore.getState().setSelectedTimeRange(null);
+    }
+    
     setLoading(false);
   };
 

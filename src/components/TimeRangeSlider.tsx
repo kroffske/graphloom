@@ -32,6 +32,13 @@ export const TimeRangeSlider: React.FC<TimeRangeSliderProps> = ({ className }) =
   
   // Initialize selected range to full range if not set
   const currentRange = selectedTimeRange || { start: min, end: max };
+  
+  // Set initial range if not set
+  React.useEffect(() => {
+    if (!selectedTimeRange && timeRange) {
+      setSelectedTimeRange({ start: min, end: max });
+    }
+  }, [selectedTimeRange, timeRange, min, max, setSelectedTimeRange]);
 
   const handleSliderChange = useCallback((value: number[]) => {
     if (value.length === 2) {
