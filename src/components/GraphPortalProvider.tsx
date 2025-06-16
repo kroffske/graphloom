@@ -156,6 +156,11 @@ const GraphReactOverlay = React.forwardRef<
               position: 'absolute',
               transform: `translate(${portal.position.x - 36}px, ${portal.position.y - 36}px)`,
               pointerEvents: portal.type === 'tooltip' ? 'none' : 'auto',
+              width: '72px',
+              height: '72px',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
             }}
           >
             {portal.element}
