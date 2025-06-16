@@ -10,7 +10,8 @@ import {
   OpenOrdLayout,
   applyCircleLayout,
   applyHierarchyLayout,
-  applyRadialLayout
+  applyRadialLayout,
+  applyFastLayout
 } from '@/utils/layouts';
 
 interface Transform {
@@ -93,14 +94,44 @@ export const GraphCanvasV2: React.FC = () => {
     
     switch (currentLayout) {
       case 'force': {
-        // D3 Force Layout
+        // D3 Force Layout optimized for subgraphs
+        const isLargeGraph = nodes.length > 1000;
+        
         const simulation = d3.forceSimulation(simNodes)
-          .force('link', d3.forceLink(simEdges).id((d: any) => d.id).distance(100).strength(1))
-          .force('charge', d3.forceManyBody().strength(-400))
-          .force('center', d3.forceCenter(450, 265))
-          .force('collision', d3.forceCollide().radius(40))
-          .velocityDecay(0.4)
-          .alphaDecay(0.02);
+          .force('link', d3.forceLink(simEdges)
+            .id((d: any) => d.id)
+            .distance((d: any) => {
+              // Shorter distances for internal edges, longer for inter-subgraph
+              return d.type === 'INTER_SUBGRAPH' ? 200 : 80;
+            })
+            .strength((d: any) => {
+              // Stronger internal connections, weaker inter-subgraph
+              return d.type === 'INTER_SUBGRAPH' ? 0.2 : 0.8;
+            })
+          )
+          .force('charge', d3.forceManyBody()
+            .strength(isLargeGraph ? -300 : -400)
+            .theta(isLargeGraph ? 0.9 : 0.8) // More approximate for large graphs
+            .distanceMax(isLargeGraph ? 200 : 500) // Limit interaction distance
+          )
+          .force('center', d3.forceCenter(450, 265).strength(0.05))
+          .force('collision', d3.forceCollide()
+            .radius(isLargeGraph ? 30 : 40)
+            .strength(0.7)
+            .iterations(isLargeGraph ? 1 : 2) // Fewer iterations for performance
+          );
+        
+        // Faster cooling for large graphs
+        if (isLargeGraph) {
+          simulation
+            .velocityDecay(0.6) // More friction
+            .alphaDecay(0.05) // Faster cooling
+            .alphaMin(0.01); // Stop sooner
+        } else {
+          simulation
+            .velocityDecay(0.4)
+            .alphaDecay(0.02);
+        }
         
         simulationRef.current = simulation;
         
@@ -108,18 +139,24 @@ export const GraphCanvasV2: React.FC = () => {
           updatePositions();
         });
         
-        simulation.alpha(0.3).restart();
+        // Lower initial alpha for large graphs
+        simulation.alpha(isLargeGraph ? 0.2 : 0.3).restart();
         break;
       }
       
       case 'forceatlas2': {
-        // ForceAtlas2 Layout
+        // ForceAtlas2 Layout optimized for subgraphs
+        const isLargeGraph = nodes.length > 1000;
+        
         const fa2 = new ForceAtlas2Layout(simNodes, simEdges, {
-          gravity: 1.0,
-          scalingRatio: 2.0,
+          gravity: isLargeGraph ? 2.0 : 1.0, // Stronger gravity for large graphs
+          scalingRatio: isLargeGraph ? 10.0 : 2.0, // More spacing
           barnesHut: true,
-          linLogMode: false,
-          preventOverlap: true
+          barnesHutTheta: isLargeGraph ? 0.8 : 0.5, // More approximation
+          linLogMode: true, // Better for graphs with varying densities
+          preventOverlap: true,
+          edgeWeightInfluence: 0.5, // Consider edge weights
+          nodeSize: isLargeGraph ? 20 : 10
         });
         
         forceAtlas2Ref.current = fa2;
@@ -136,8 +173,8 @@ export const GraphCanvasV2: React.FC = () => {
         
         animate();
         
-        // Stop after some iterations
-        setTimeout(() => fa2.stop(), 5000);
+        // Stop after fewer iterations for large graphs
+        setTimeout(() => fa2.stop(), isLargeGraph ? 3000 : 5000);
         break;
       }
       
@@ -197,6 +234,32 @@ export const GraphCanvasV2: React.FC = () => {
           radius: 200
         });
         updatePositions();
+        break;
+      }
+      
+      case 'fast': {
+        // Fast Layout - immediate positioning
+        applyFastLayout(simNodes, {
+          width: 900,
+          height: 530,
+          padding: 50
+        });
+        updatePositions();
+        
+        // Optional: Run a quick force simulation to separate overlapping nodes
+        if (nodes.length < 1000) {
+          const quickSim = d3.forceSimulation(simNodes)
+            .force('collision', d3.forceCollide().radius(35))
+            .velocityDecay(0.8)
+            .alphaDecay(0.1)
+            .alpha(0.1);
+          
+          for (let i = 0; i < 50; i++) {
+            quickSim.tick();
+          }
+          
+          updatePositions();
+        }
         break;
       }
     }

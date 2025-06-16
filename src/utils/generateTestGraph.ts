@@ -1,6 +1,13 @@
 import { GraphNode, Edge } from '@/types/graph.types';
+import { generateSubgraphTestData } from './generateSubgraphTestData';
 
 export function generateTestGraph(nodeCount: number = 5000) {
+  // For large graphs, use subgraph structure for better performance
+  if (nodeCount >= 500) {
+    return generateSubgraphTestData(nodeCount, 4, Math.floor(nodeCount * 0.01));
+  }
+  
+  // Original implementation for small graphs
   const nodes: GraphNode[] = [];
   const edges: Edge[] = [];
   

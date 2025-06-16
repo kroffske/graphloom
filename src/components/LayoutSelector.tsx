@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { graphEventBus } from '@/lib/graphEventBus';
 
-export type LayoutType = 'force' | 'forceatlas2' | 'openord' | 'circle' | 'hierarchy' | 'radial';
+export type LayoutType = 'force' | 'forceatlas2' | 'openord' | 'circle' | 'hierarchy' | 'radial' | 'fast';
 
 interface LayoutSelectorProps {
   currentLayout: LayoutType;
@@ -56,6 +56,12 @@ export const LayoutSelector: React.FC<LayoutSelectorProps> = ({
       label: 'Radial', 
       icon: Activity,
       description: 'Radial tree layout'
+    },
+    { 
+      type: 'fast' as LayoutType, 
+      label: 'Fast', 
+      icon: Zap,
+      description: 'Quick layout for large graphs'
     }
   ];
 
