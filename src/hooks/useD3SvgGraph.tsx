@@ -119,8 +119,25 @@ export function useD3SvgGraph({
     
     // Log SVG dimensions
     const svgRect = svgRef.current.getBoundingClientRect();
+    const viewBox = svgRef.current.getAttribute('viewBox');
     debugLog('[D3] SVG dimensions:', { width: svgRect.width, height: svgRect.height });
-    debugLog('[D3] SVG viewBox:', svgRef.current.getAttribute('viewBox'));
+    debugLog('[D3] SVG viewBox:', viewBox);
+    
+    // Calculate scale factor
+    if (viewBox && usePortalRendering) {
+      const [vx, vy, vw, vh] = viewBox.split(' ').map(Number);
+      const scaleX = svgRect.width / vw;
+      const scaleY = svgRect.height / vh;
+      console.log('=== D3 COORDINATE DIAGNOSTICS ===');
+      console.log(JSON.stringify({
+        svgPixelSize: { width: svgRect.width, height: svgRect.height },
+        viewBox: { x: vx, y: vy, width: vw, height: vh },
+        scale: { x: scaleX, y: scaleY },
+        nodeRadius: NODE_RADIUS,
+        foreignObjectSize: NODE_RADIUS * 2
+      }, null, 2));
+      console.log('=== END D3 DIAGNOSTICS ===');
+    }
 
     // Clean up any existing React roots before D3 removes elements
     nodeRootsMap.forEach((root, id) => {
