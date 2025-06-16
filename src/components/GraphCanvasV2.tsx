@@ -155,7 +155,8 @@ export const GraphCanvasV2: React.FC = () => {
       height="100%"
       viewBox="0 0 900 530"
       className="bg-background"
-      style={{ cursor: 'grab' }}
+      style={{ cursor: 'default' }}
+      onContextMenu={(e) => e.preventDefault()}
     >
       <g 
         ref={gRef}
