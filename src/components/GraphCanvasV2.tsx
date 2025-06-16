@@ -41,6 +41,8 @@ export const GraphCanvasV2: React.FC = () => {
   // Get graph data from store
   const nodes = useGraphStore(state => state.nodes);
   const edges = useGraphStore(state => state.edges);
+  const nodeTypeAppearances = useGraphStore(state => state.nodeTypeAppearances);
+  const edgeTypeAppearances = useGraphStore(state => state.edgeTypeAppearances);
   
   // Initialize layout based on current type
   useEffect(() => {
@@ -116,7 +118,17 @@ export const GraphCanvasV2: React.FC = () => {
           )
           .force('center', d3.forceCenter(450, 265).strength(0.05))
           .force('collision', d3.forceCollide()
-            .radius(isLargeGraph ? 16 : 22)
+            .radius((d: any) => {
+              // Get node appearance to determine size
+              const node = nodes.find(n => n.id === d.id);
+              if (!node) return 19; // Default radius
+              const typeAppearance = nodeTypeAppearances?.[node.type] ?? {};
+              const appearance = node.appearance && Object.keys(node.appearance).length > 0
+                ? node.appearance
+                : typeAppearance;
+              const nodeSize = appearance.size ?? 38;
+              return nodeSize / 2 + 2; // Add 2px padding
+            })
             .strength(0.7)
             .iterations(isLargeGraph ? 1 : 2) // Fewer iterations for performance
           );
@@ -249,7 +261,16 @@ export const GraphCanvasV2: React.FC = () => {
         // Optional: Run a quick force simulation to separate overlapping nodes
         if (nodes.length < 1000) {
           const quickSim = d3.forceSimulation(simNodes)
-            .force('collision', d3.forceCollide().radius(20))
+            .force('collision', d3.forceCollide().radius((d: any) => {
+              const node = nodes.find(n => n.id === d.id);
+              if (!node) return 19;
+              const typeAppearance = nodeTypeAppearances?.[node.type] ?? {};
+              const appearance = node.appearance && Object.keys(node.appearance).length > 0
+                ? node.appearance
+                : typeAppearance;
+              const nodeSize = appearance.size ?? 38;
+              return nodeSize / 2 + 2;
+            }))
             .velocityDecay(0.8)
             .alphaDecay(0.1)
             .alpha(0.1);
@@ -476,6 +497,17 @@ export const GraphCanvasV2: React.FC = () => {
               return null;
             }
             
+            // Get edge appearance with fallback to type appearance
+            const typeAppearance = edgeTypeAppearances?.[edge.type || ''] ?? {};
+            const appearance = edge.appearance && Object.keys(edge.appearance).length > 0
+              ? edge.appearance
+              : typeAppearance;
+            
+            const color = appearance.color || '#64748b';
+            const width = appearance.width || 2;
+            const opacity = appearance.opacity ?? 0.6;
+            const strokeDasharray = appearance.strokeDasharray;
+            
             return (
               <line
                 key={edge.id}
@@ -483,9 +515,10 @@ export const GraphCanvasV2: React.FC = () => {
                 y1={source.y}
                 x2={target.x}
                 y2={target.y}
-                stroke={edge.appearance?.color || '#64748b'}
-                strokeWidth={simplifiedRendering ? 1 : (edge.appearance?.width || 2)}
-                opacity={simplifiedRendering ? 0.3 : 0.6}
+                stroke={color}
+                strokeWidth={simplifiedRendering ? 1 : width}
+                opacity={simplifiedRendering ? 0.3 : opacity}
+                strokeDasharray={strokeDasharray}
                 className="dark:stroke-slate-500"
               />
             );
@@ -500,15 +533,23 @@ export const GraphCanvasV2: React.FC = () => {
             
             // Simplified rendering for performance when zoomed out
             if (simplifiedRendering) {
+              // Get node size even for simplified rendering
+              const typeAppearance = nodeTypeAppearances?.[node.type] ?? {};
+              const appearance = node.appearance && Object.keys(node.appearance).length > 0
+                ? node.appearance
+                : typeAppearance;
+              const nodeSize = appearance.size ?? 38;
+              const simplifiedRadius = Math.max(3, nodeSize / 2 * 0.3); // 30% of full size, min 3px
+              
               return (
                 <circle
                   key={node.id}
                   cx={pos.x}
                   cy={pos.y}
-                  r={5}
-                  fill={node.appearance?.backgroundColor || 'transparent'}
-                  stroke="#e5e7eb"
-                  strokeWidth={1}
+                  r={simplifiedRadius}
+                  fill={appearance.backgroundColor || 'transparent'}
+                  stroke={appearance.borderEnabled ? (appearance.borderColor || '#e5e7eb') : 'transparent'}
+                  strokeWidth={appearance.borderEnabled ? 0.5 : 0}
                   className="cursor-pointer"
                   onClick={() => useGraphStore.getState().selectNode(node.id)}
                 />
