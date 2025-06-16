@@ -45,7 +45,7 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
   const backgroundColor = (appearance.backgroundColor !== undefined && appearance.backgroundColor !== '')
     ? appearance.backgroundColor 
     : 'transparent';
-  const iconColor = appearance.color || appearance.iconColor || '#374151';
+  const iconColor = appearance.iconColor || appearance.color || '#374151';
   const icon = appearance.icon || node.type;
   
   // Border settings
@@ -229,7 +229,8 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
                       justifyContent: 'center' 
                     }}>
                       <IconComponent 
-                        style={{ width: radius * 0.6, height: radius * 0.6 }}
+                        width={radius * 0.6}
+                        height={radius * 0.6}
                         filled={false}
                         aria-label={icon}
                         color={iconColor}
