@@ -5,6 +5,8 @@ import { GraphNodeV2 } from './GraphNodeV2';
 import { graphEventBus } from '@/lib/graphEventBus';
 import { LayoutSelector, LayoutType } from './LayoutSelector';
 import { PerformanceIndicator } from './PerformanceIndicator';
+import { TimeRangeSlider } from './TimeRangeSlider';
+import { isEdgeInTimeRange } from '@/utils/timestampUtils';
 import { 
   ForceAtlas2Layout,
   OpenOrdLayout,
@@ -43,6 +45,19 @@ export const GraphCanvasV2: React.FC = () => {
   const edges = useGraphStore(state => state.edges);
   const nodeTypeAppearances = useGraphStore(state => state.nodeTypeAppearances);
   const edgeTypeAppearances = useGraphStore(state => state.edgeTypeAppearances);
+  
+  // Time filtering state
+  const selectedTimeRange = useGraphStore(state => state.selectedTimeRange);
+  const timestampField = useGraphStore(state => state.timestampField);
+  
+  // Filter edges based on time range
+  const filteredEdges = React.useMemo(() => {
+    if (!selectedTimeRange || !timestampField) {
+      return edges;
+    }
+    
+    return edges.filter(edge => isEdgeInTimeRange(edge, timestampField, selectedTimeRange));
+  }, [edges, selectedTimeRange, timestampField]);
   
   // Initialize layout based on current type
   useEffect(() => {
@@ -467,7 +482,7 @@ export const GraphCanvasV2: React.FC = () => {
       >
         {/* Render edges first (behind nodes) */}
         <g className="edges">
-          {edges.map(edge => {
+          {filteredEdges.map(edge => {
             const sourceId = typeof edge.source === 'string' ? edge.source : edge.source.id;
             const targetId = typeof edge.target === 'string' ? edge.target : edge.target.id;
             const source = positions.get(sourceId);
@@ -576,6 +591,7 @@ export const GraphCanvasV2: React.FC = () => {
       zoom={transform.k}
       simplified={simplifiedRendering}
     />
+    <TimeRangeSlider className="mt-2" />
     </div>
   );
 };
