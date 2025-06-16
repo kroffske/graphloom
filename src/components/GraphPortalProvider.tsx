@@ -74,10 +74,16 @@ export const GraphPortalProvider: React.FC<{ children: React.ReactNode }> = ({ c
   // Listen to position updates from D3
   useEffect(() => {
     const handlePositionUpdate = ({ nodeId, x, y }: { nodeId: string; x: number; y: number }) => {
+      console.log('[Portal] Position update:', { nodeId, x, y });
       updatePortalPosition(nodeId, { x, y });
     };
 
     const handleSimulationTick = ({ positions }: { positions: Map<string, Point> }) => {
+      console.log('[Portal] Simulation tick, positions:', positions.size);
+      if (positions.size > 0) {
+        const firstEntry = positions.entries().next().value;
+        console.log('[Portal] Sample position:', firstEntry);
+      }
       setPortals(prev => {
         const next = new Map(prev);
         positions.forEach((pos, id) => {
@@ -91,6 +97,7 @@ export const GraphPortalProvider: React.FC<{ children: React.ReactNode }> = ({ c
     };
 
     const handleTransformChange = (newTransform: { k: number; x: number; y: number }) => {
+      console.log('[Portal] Transform change:', newTransform);
       currentTransform = newTransform;
       setTransform(newTransform);
     };
@@ -112,6 +119,14 @@ export const GraphPortalProvider: React.FC<{ children: React.ReactNode }> = ({ c
     updatePortalPosition,
     overlayRef,
   };
+
+  // Log overlay dimensions on mount
+  useEffect(() => {
+    if (overlayRef.current) {
+      const rect = overlayRef.current.getBoundingClientRect();
+      console.log('[Portal] Overlay dimensions:', { width: rect.width, height: rect.height });
+    }
+  }, []);
 
   return (
     <GraphPortalContext.Provider value={contextValue}>
@@ -148,24 +163,29 @@ const GraphReactOverlay = React.forwardRef<
           transformOrigin: '0 0',
         }}
       >
-        {Array.from(portals.values()).map((portal) => (
-          <div
-            key={portal.id}
-            className={`portal-item portal-${portal.type}`}
-            style={{
-              position: 'absolute',
-              transform: `translate(${portal.position.x - 36}px, ${portal.position.y - 36}px)`,
-              pointerEvents: portal.type === 'tooltip' ? 'none' : 'auto',
-              width: '72px',
-              height: '72px',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-          >
-            {portal.element}
-          </div>
-        ))}
+        {Array.from(portals.values()).map((portal) => {
+          if (portal.type === 'node' && portal.id.includes('0')) { // Log first node
+            console.log('[Portal] Rendering node:', portal.id, 'at position:', portal.position);
+          }
+          return (
+            <div
+              key={portal.id}
+              className={`portal-item portal-${portal.type}`}
+              style={{
+                position: 'absolute',
+                transform: `translate(${portal.position.x - 36}px, ${portal.position.y - 36}px)`,
+                pointerEvents: portal.type === 'tooltip' ? 'none' : 'auto',
+                width: '72px',
+                height: '72px',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+            >
+              {portal.element}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

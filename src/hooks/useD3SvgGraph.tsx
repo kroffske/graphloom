@@ -115,6 +115,11 @@ export function useD3SvgGraph({
   // ------ D3 Setup/Rendering: Runs only on simNodes/simEdges/layout/topology updates ------
   useEffect(() => {
     if (!svgRef.current || !simNodes.length) return;
+    
+    // Log SVG dimensions
+    const svgRect = svgRef.current.getBoundingClientRect();
+    console.log('[D3] SVG dimensions:', { width: svgRect.width, height: svgRect.height });
+    console.log('[D3] SVG viewBox:', svgRef.current.getAttribute('viewBox'));
 
     // Clean up any existing React roots before D3 removes elements
     nodeRootsMap.forEach((root, id) => {
@@ -352,6 +357,7 @@ export function useD3SvgGraph({
           positions.set(n.id, { x: n.x, y: n.y });
         }
       });
+      console.log('[D3] Initial positions:', positions);
       graphEventBus.emit('simulation:tick', { positions });
     }
 
