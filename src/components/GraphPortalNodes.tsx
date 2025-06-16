@@ -1,6 +1,6 @@
 import React from 'react';
 import { GraphNodePortal } from './GraphNodePortal';
-import { GraphNode } from '@/types/graph.types';
+import { GraphNode } from '@/types/graph';
 
 interface GraphPortalNodesProps {
   nodes: GraphNode[];
