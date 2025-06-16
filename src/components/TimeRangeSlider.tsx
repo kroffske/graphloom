@@ -111,13 +111,8 @@ export const TimeRangeSlider: React.FC<TimeRangeSliderProps> = ({ className }) =
     const nextIndex = (currentIndex + 1) % speeds.length;
     setPlaybackSpeed(speeds[nextIndex]);
   }, [playbackSpeed]);
-  
-  // If no time range is set, don't render
-  if (!timeRange || !timestampField) {
-    return null;
-  }
 
-  // Calculate active edges count
+  // Calculate active edges count - MUST be before any conditional returns
   const activeEdges = useMemo(() => {
     if (!selectedTimeRange || !timestampField) return edges.length;
     
@@ -132,6 +127,11 @@ export const TimeRangeSlider: React.FC<TimeRangeSliderProps> = ({ className }) =
       return !isNaN(timestamp) && timestamp >= currentRange.start && timestamp <= currentRange.end;
     }).length;
   }, [edges, timestampField, currentRange, selectedTimeRange]);
+  
+  // If no time range is set, don't render
+  if (!timeRange || !timestampField) {
+    return null;
+  }
 
   return (
     <div className={cn("bg-card border rounded-lg p-4", className)}>
