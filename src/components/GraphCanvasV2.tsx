@@ -4,6 +4,7 @@ import { useGraphStore } from '@/state/useGraphStore';
 import { GraphNodeV2 } from './GraphNodeV2';
 import { graphEventBus } from '@/lib/graphEventBus';
 import { LayoutSelector, LayoutType } from './LayoutSelector';
+import { PerformanceIndicator } from './PerformanceIndicator';
 import { 
   ForceAtlas2Layout,
   OpenOrdLayout,
@@ -82,9 +83,10 @@ export const GraphCanvasV2: React.FC = () => {
         }
       });
       
-      // Update React state at 30fps max
+      // Update React state less frequently for large graphs
       tickCount++;
-      if (tickCount % 2 === 0) {
+      const updateFrequency = nodes.length > 1000 ? 6 : 2; // 10fps for large graphs, 30fps for small
+      if (tickCount % updateFrequency === 0) {
         setPositionsVersion(v => v + 1);
       }
     };
@@ -325,7 +327,40 @@ export const GraphCanvasV2: React.FC = () => {
   // Get current positions
   const positions = positionsRef.current;
   
-  console.log('[GraphCanvasV2] Rendering with', nodes.length, 'nodes,', positions.size, 'positions');
+  // Viewport culling - only render visible nodes
+  const visibleNodes = React.useMemo(() => {
+    if (!svgRef.current) return nodes;
+    
+    const rect = svgRef.current.getBoundingClientRect();
+    const viewBox = { width: 900, height: 530 };
+    
+    // Calculate visible bounds in world coordinates
+    const padding = 100; // Extra padding to avoid pop-in
+    const visibleBounds = {
+      left: -transform.x / transform.k - padding,
+      right: (-transform.x + viewBox.width) / transform.k + padding,
+      top: -transform.y / transform.k - padding,
+      bottom: (-transform.y + viewBox.height) / transform.k + padding
+    };
+    
+    // Filter nodes that are within visible bounds
+    return nodes.filter(node => {
+      const pos = positions.get(node.id);
+      if (!pos) return false;
+      
+      return pos.x >= visibleBounds.left && 
+             pos.x <= visibleBounds.right && 
+             pos.y >= visibleBounds.top && 
+             pos.y <= visibleBounds.bottom;
+    });
+  }, [nodes, positions, transform, positionsVersion]);
+  
+  // Level of detail based on zoom
+  const showLabels = transform.k > 0.6;
+  const showIcons = transform.k > 0.3;
+  const simplifiedRendering = transform.k < 0.5;
+  
+  console.log('[GraphCanvasV2] Rendering', visibleNodes.length, 'of', nodes.length, 'nodes (zoom:', transform.k.toFixed(2), ')');
   
   return (
     <div className="flex flex-col h-full">
@@ -354,8 +389,27 @@ export const GraphCanvasV2: React.FC = () => {
             const source = positions.get(sourceId);
             const target = positions.get(targetId);
             
-            if (!source || !target) {
-              console.warn(`Edge ${edge.id} missing position for source ${sourceId} or target ${targetId}`);
+            if (!source || !target) return null;
+            
+            // Skip edges that are completely outside viewport
+            const edgeBounds = {
+              left: Math.min(source.x, target.x),
+              right: Math.max(source.x, target.x),
+              top: Math.min(source.y, target.y),
+              bottom: Math.max(source.y, target.y)
+            };
+            
+            const visibleBounds = {
+              left: -transform.x / transform.k - 100,
+              right: (-transform.x + 900) / transform.k + 100,
+              top: -transform.y / transform.k - 100,
+              bottom: (-transform.y + 530) / transform.k + 100
+            };
+            
+            if (edgeBounds.right < visibleBounds.left || 
+                edgeBounds.left > visibleBounds.right ||
+                edgeBounds.bottom < visibleBounds.top || 
+                edgeBounds.top > visibleBounds.bottom) {
               return null;
             }
             
@@ -367,8 +421,8 @@ export const GraphCanvasV2: React.FC = () => {
                 x2={target.x}
                 y2={target.y}
                 stroke={edge.appearance?.color || '#64748b'}
-                strokeWidth={edge.appearance?.width || 2}
-                opacity={0.6}
+                strokeWidth={simplifiedRendering ? 1 : (edge.appearance?.width || 2)}
+                opacity={simplifiedRendering ? 0.3 : 0.6}
                 className="dark:stroke-slate-500"
               />
             );
@@ -377,14 +431,26 @@ export const GraphCanvasV2: React.FC = () => {
         
         {/* Render nodes */}
         <g className="nodes">
-          {nodes.map(node => {
+          {visibleNodes.map(node => {
             const pos = positions.get(node.id);
-            if (!pos) {
-              console.warn('[GraphCanvasV2] No position for node:', node.id);
-              return null;
-            }
+            if (!pos) return null;
             
-            console.log('[GraphCanvasV2] Rendering node:', node.id, 'at position:', pos);
+            // Simplified rendering for performance when zoomed out
+            if (simplifiedRendering) {
+              return (
+                <circle
+                  key={node.id}
+                  cx={pos.x}
+                  cy={pos.y}
+                  r={8}
+                  fill={node.appearance?.backgroundColor || 'transparent'}
+                  stroke="#e5e7eb"
+                  strokeWidth={1}
+                  className="cursor-pointer"
+                  onClick={() => useGraphStore.getState().selectNode(node.id)}
+                />
+              );
+            }
             
             return (
               <GraphNodeV2
@@ -400,6 +466,12 @@ export const GraphCanvasV2: React.FC = () => {
         </g>
       </g>
     </svg>
+    <PerformanceIndicator
+      totalNodes={nodes.length}
+      visibleNodes={visibleNodes.length}
+      zoom={transform.k}
+      simplified={simplifiedRendering}
+    />
     </div>
   );
 };
