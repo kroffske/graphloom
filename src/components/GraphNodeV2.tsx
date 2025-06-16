@@ -31,7 +31,7 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
   
   // Drag state
   const [isDragging, setIsDragging] = useState(false);
-  const dragStart = useRef({ x: 0, y: 0, nodeX: 0, nodeY: 0 });
+  const dragOffset = useRef({ x: 0, y: 0 });
   
   const handleClick = useCallback((e: React.MouseEvent) => {
     // Left click now does nothing - dragging is handled by mousedown
@@ -72,9 +72,32 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
     e.stopPropagation();
     e.preventDefault();
     
+    // Calculate the offset between mouse position and node position
+    const svg = (e.target as SVGElement).ownerSVGElement;
+    if (!svg) return;
+    
+    const pt = svg.createSVGPoint();
+    pt.x = e.clientX;
+    pt.y = e.clientY;
+    
+    const ctm = svg.getScreenCTM();
+    if (!ctm) return;
+    
+    const svgP = pt.matrixTransform(ctm.inverse());
+    
+    // Apply the inverse of the group transform to get world coordinates
+    const mouseX = (svgP.x - transform.x) / transform.k;
+    const mouseY = (svgP.y - transform.y) / transform.k;
+    
+    // Store the offset between mouse and node center
+    dragOffset.current = {
+      x: mouseX - x,
+      y: mouseY - y
+    };
+    
     setIsDragging(true);
     onDrag(node.id, x, y, 'start');
-  }, [node.id, x, y, onDrag]);
+  }, [node.id, x, y, transform, onDrag]);
   
   // Handle drag with mouse move on document
   useEffect(() => {
@@ -96,10 +119,14 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
       const svgP = pt.matrixTransform(ctm.inverse());
       
       // Apply the inverse of the group transform to get world coordinates
-      const worldX = (svgP.x - transform.x) / transform.k;
-      const worldY = (svgP.y - transform.y) / transform.k;
+      const mouseX = (svgP.x - transform.x) / transform.k;
+      const mouseY = (svgP.y - transform.y) / transform.k;
       
-      onDrag(node.id, worldX, worldY, 'drag');
+      // Subtract the offset to keep the node under the same point where it was grabbed
+      const newX = mouseX - dragOffset.current.x;
+      const newY = mouseY - dragOffset.current.y;
+      
+      onDrag(node.id, newX, newY, 'drag');
     };
     
     const handleMouseUp = () => {
