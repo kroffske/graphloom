@@ -6,7 +6,6 @@ import GraphD3SvgLayer from "./GraphD3SvgLayer";
 import GraphTooltipManager from "./GraphTooltipManager";
 import EdgeContextMenu from "./EdgeContextMenu";
 import { useGraphStore, GraphStore } from "@/state/useGraphStore";
-import TimeRangeSlider from "./TimeRangeSlider";
 import { GraphPortalProvider } from "./GraphPortalProvider";
 import { GraphPortalNodes } from "./GraphPortalNodes";
 import { usePortalRendering } from "@/config/featureFlags";
@@ -233,16 +232,6 @@ const GraphD3Canvas: React.FC = () => {
         </GraphPortalProvider>
       ) : (
         content
-      )}
-      {timeRange && (
-        <div className="absolute bottom-2 left-4 right-4 p-2 bg-background/90 backdrop-blur-sm rounded-md border shadow-lg z-20">
-            <TimeRangeSlider
-                min={minTs}
-                max={maxTs}
-                value={timeRange}
-                onChange={stableSetTimeRange}
-            />
-        </div>
       )}
       {edgeMenu && (
         <EdgeContextMenu
