@@ -31,7 +31,6 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
   
   // Drag state
   const [isDragging, setIsDragging] = useState(false);
-  const dragOffset = useRef({ x: 0, y: 0 });
   
   const handleClick = useCallback((e: React.MouseEvent) => {
     // Left click now does nothing - dragging is handled by mousedown
@@ -72,32 +71,9 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
     e.stopPropagation();
     e.preventDefault();
     
-    // Calculate the offset between mouse position and node position
-    const svg = (e.target as SVGElement).ownerSVGElement;
-    if (!svg) return;
-    
-    const pt = svg.createSVGPoint();
-    pt.x = e.clientX;
-    pt.y = e.clientY;
-    
-    const ctm = svg.getScreenCTM();
-    if (!ctm) return;
-    
-    const svgP = pt.matrixTransform(ctm.inverse());
-    
-    // Apply the inverse of the group transform to get world coordinates
-    const mouseX = (svgP.x - transform.x) / transform.k;
-    const mouseY = (svgP.y - transform.y) / transform.k;
-    
-    // Store the offset between mouse and node center
-    dragOffset.current = {
-      x: mouseX - x,
-      y: mouseY - y
-    };
-    
     setIsDragging(true);
     onDrag(node.id, x, y, 'start');
-  }, [node.id, x, y, transform, onDrag]);
+  }, [node.id, x, y, onDrag]);
   
   // Handle drag with mouse move on document
   useEffect(() => {
@@ -107,26 +83,28 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
       const svg = document.querySelector('svg');
       if (!svg) return;
       
-      // Get the SVG point in screen coordinates
-      const pt = svg.createSVGPoint();
-      pt.x = e.clientX;
-      pt.y = e.clientY;
+      // Get the current transform from the main g element
+      const gElement = svg.querySelector('g');
+      if (!gElement) return;
       
-      // Transform to SVG coordinates
-      const ctm = svg.getScreenCTM();
-      if (!ctm) return;
+      // Parse transform attribute to get current zoom/pan
+      const transformMatch = gElement.getAttribute('transform')?.match(/translate\(([-\d.]+),([-\d.]+)\)\s*scale\(([-\d.]+)\)/);
+      if (!transformMatch) return;
       
-      const svgP = pt.matrixTransform(ctm.inverse());
+      const tx = parseFloat(transformMatch[1]);
+      const ty = parseFloat(transformMatch[2]);
+      const scale = parseFloat(transformMatch[3]);
       
-      // Apply the inverse of the group transform to get world coordinates
-      const mouseX = (svgP.x - transform.x) / transform.k;
-      const mouseY = (svgP.y - transform.y) / transform.k;
+      // Convert mouse position to SVG coordinates
+      const rect = svg.getBoundingClientRect();
+      const svgX = (e.clientX - rect.left) * (900 / rect.width);
+      const svgY = (e.clientY - rect.top) * (530 / rect.height);
       
-      // Subtract the offset to keep the node under the same point where it was grabbed
-      const newX = mouseX - dragOffset.current.x;
-      const newY = mouseY - dragOffset.current.y;
+      // Apply inverse transform to get world coordinates
+      const worldX = (svgX - tx) / scale;
+      const worldY = (svgY - ty) / scale;
       
-      onDrag(node.id, newX, newY, 'drag');
+      onDrag(node.id, worldX, worldY, 'drag');
     };
     
     const handleMouseUp = () => {

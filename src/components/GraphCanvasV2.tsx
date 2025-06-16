@@ -130,33 +130,45 @@ export const GraphCanvasV2: React.FC = () => {
     };
   }, []);
   
+  // Track drag subject
+  const dragSubjectRef = useRef<any>(null);
+  
   // Handle node drag
   const handleNodeDrag = useCallback((nodeId: string, dx: number, dy: number, type: 'start' | 'drag' | 'end') => {
     const simulation = simulationRef.current;
     if (!simulation) return;
     
-    const node = simulationRef.current?.nodes().find((n: any) => n.id === nodeId);
-    if (!node) return;
-    
     if (type === 'start') {
+      // Find the node in simulation
+      const node = simulation.nodes().find((n: any) => n.id === nodeId);
+      if (!node) return;
+      
+      dragSubjectRef.current = node;
+      
       if (!simulation.alpha()) {
         simulation.alphaTarget(0.3).restart();
       }
       node.fx = node.x;
       node.fy = node.y;
     } else if (type === 'drag') {
-      node.fx = dx;
-      node.fy = dy;
-      // Update position immediately for smooth dragging
-      positionsRef.current.set(nodeId, { x: dx, y: dy });
-      setPositionsVersion(v => v + 1);
-    } else if (type === 'end') {
-      if (!simulation.alpha()) {
-        simulation.alphaTarget(0);
+      // For drag, dx and dy are the mouse positions, not deltas
+      if (dragSubjectRef.current) {
+        dragSubjectRef.current.fx = dx;
+        dragSubjectRef.current.fy = dy;
+        // Update position immediately for smooth dragging
+        positionsRef.current.set(nodeId, { x: dx, y: dy });
+        setPositionsVersion(v => v + 1);
       }
-      // Release the node so it can continue moving with the simulation
-      node.fx = null;
-      node.fy = null;
+    } else if (type === 'end') {
+      if (dragSubjectRef.current) {
+        if (!simulation.alpha()) {
+          simulation.alphaTarget(0);
+        }
+        // Release the node so it can continue moving with the simulation
+        dragSubjectRef.current.fx = null;
+        dragSubjectRef.current.fy = null;
+        dragSubjectRef.current = null;
+      }
     }
   }, []);
   
