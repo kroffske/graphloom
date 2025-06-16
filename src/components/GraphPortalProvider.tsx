@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { graphEventBus } from '@/lib/graphEventBus';
+import { debugLog } from '@/lib/debugLogger';
 
 interface Point {
   x: number;
@@ -74,15 +75,15 @@ export const GraphPortalProvider: React.FC<{ children: React.ReactNode }> = ({ c
   // Listen to position updates from D3
   useEffect(() => {
     const handlePositionUpdate = ({ nodeId, x, y }: { nodeId: string; x: number; y: number }) => {
-      console.log('[Portal] Position update:', { nodeId, x, y });
+      debugLog('[Portal] Position update:', { nodeId, x, y });
       updatePortalPosition(nodeId, { x, y });
     };
 
     const handleSimulationTick = ({ positions }: { positions: Map<string, Point> }) => {
-      console.log('[Portal] Simulation tick, positions:', positions.size);
+      debugLog('[Portal] Simulation tick, positions:', positions.size);
       if (positions.size > 0) {
         const firstEntry = positions.entries().next().value;
-        console.log('[Portal] Sample position:', firstEntry);
+        debugLog('[Portal] Sample position:', firstEntry);
       }
       setPortals(prev => {
         const next = new Map(prev);
@@ -97,7 +98,7 @@ export const GraphPortalProvider: React.FC<{ children: React.ReactNode }> = ({ c
     };
 
     const handleTransformChange = (newTransform: { k: number; x: number; y: number }) => {
-      console.log('[Portal] Transform change:', newTransform);
+      debugLog('[Portal] Transform change:', newTransform);
       currentTransform = newTransform;
       setTransform(newTransform);
     };
@@ -124,7 +125,7 @@ export const GraphPortalProvider: React.FC<{ children: React.ReactNode }> = ({ c
   useEffect(() => {
     if (overlayRef.current) {
       const rect = overlayRef.current.getBoundingClientRect();
-      console.log('[Portal] Overlay dimensions:', { width: rect.width, height: rect.height });
+      debugLog('[Portal] Overlay dimensions:', { width: rect.width, height: rect.height });
     }
   }, []);
 
@@ -165,7 +166,7 @@ const GraphReactOverlay = React.forwardRef<
       >
         {Array.from(portals.values()).map((portal) => {
           if (portal.type === 'node' && portal.id.includes('0')) { // Log first node
-            console.log('[Portal] Rendering node:', portal.id, 'at position:', portal.position);
+            debugLog('[Portal] Rendering node:', portal.id, 'at position:', portal.position);
           }
           return (
             <div
