@@ -2,7 +2,8 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useGraphStore } from '@/state/useGraphStore';
 import { generateSmallTestGraph, generateMediumTestGraph, generateLargeTestGraph } from '@/utils/generateTestGraph';
-import { Loader2, Shuffle } from 'lucide-react';
+import { generateTransparentTestGraph } from '@/utils/generateTransparentTestGraph';
+import { Loader2, Shuffle, Circle } from 'lucide-react';
 import { graphEventBus } from '@/lib/graphEventBus';
 
 export const TestDataLoader: React.FC = () => {
@@ -12,7 +13,7 @@ export const TestDataLoader: React.FC = () => {
   const nodeCount = useGraphStore(state => state.nodes.length);
   const edgeCount = useGraphStore(state => state.edges.length);
 
-  const loadTestData = async (size: 'small' | 'medium' | 'large') => {
+  const loadTestData = async (size: 'small' | 'medium' | 'large' | 'transparent') => {
     setLoading(true);
     
     // Simulate async loading
@@ -28,6 +29,9 @@ export const TestDataLoader: React.FC = () => {
         break;
       case 'large':
         testData = generateLargeTestGraph();
+        break;
+      case 'transparent':
+        testData = generateTransparentTestGraph(50);
         break;
     }
     
@@ -62,6 +66,16 @@ export const TestDataLoader: React.FC = () => {
         size="sm"
       >
         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Load 5000 Nodes'}
+      </Button>
+      <div className="h-4 w-px bg-border mx-2" />
+      <Button 
+        onClick={() => loadTestData('transparent')} 
+        disabled={loading}
+        variant="outline"
+        size="sm"
+        title="Load nodes with transparent backgrounds"
+      >
+        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Circle className="h-4 w-4 mr-2" />Transparent</>}
       </Button>
       {(nodeCount > 0 || edgeCount > 0) && (
         <>

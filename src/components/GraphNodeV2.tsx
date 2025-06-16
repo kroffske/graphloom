@@ -37,7 +37,10 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
     : typeAppearance;
   
   // Extract appearance properties with defaults
-  const backgroundColor = appearance.backgroundColor || '#ffffff';
+  // Important: Don't default backgroundColor to white - respect transparent/empty values
+  const backgroundColor = (appearance.backgroundColor !== undefined && appearance.backgroundColor !== '')
+    ? appearance.backgroundColor 
+    : 'transparent';
   const iconColor = appearance.color || appearance.iconColor || '#374151';
   const icon = appearance.icon || node.type;
   
