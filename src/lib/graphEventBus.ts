@@ -46,6 +46,7 @@ export interface GraphEvents {
   'transform:change': { k: number; x: number; y: number };
   'simulation:tick': { positions: Map<string, { x: number; y: number }> };
   'svg:dimensions': { svgScale: { x: number; y: number } };
+  'simulation:reheat': {};
 }
 
 class TypedEventEmitter extends SimpleEventEmitter {

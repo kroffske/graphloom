@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as d3 from 'd3';
 import { useGraphStore } from '@/state/useGraphStore';
 import { GraphNodeV2 } from './GraphNodeV2';
+import { graphEventBus } from '@/lib/graphEventBus';
 
 interface Transform {
   k: number;
@@ -35,10 +36,12 @@ export const GraphCanvasV2: React.FC = () => {
     
     // Create simulation
     const simulation = d3.forceSimulation(simNodes)
-      .force('link', d3.forceLink(simEdges).id((d: any) => d.id).distance(100))
-      .force('charge', d3.forceManyBody().strength(-300))
+      .force('link', d3.forceLink(simEdges).id((d: any) => d.id).distance(100).strength(1))
+      .force('charge', d3.forceManyBody().strength(-400))
       .force('center', d3.forceCenter(450, 265))
-      .force('collision', d3.forceCollide().radius(50));
+      .force('collision', d3.forceCollide().radius(40))
+      .velocityDecay(0.4)  // Add some friction
+      .alphaDecay(0.02);   // Slower cooling for smoother animation
     
     simulationRef.current = simulation;
     
@@ -90,6 +93,28 @@ export const GraphCanvasV2: React.FC = () => {
     d3.select(svgRef.current).on('dblclick.zoom', null);
   }, []);
   
+  // Listen for reheat events
+  useEffect(() => {
+    const handleReheat = () => {
+      const simulation = simulationRef.current;
+      if (!simulation) return;
+      
+      // Release all fixed positions
+      simulation.nodes().forEach((node: any) => {
+        node.fx = null;
+        node.fy = null;
+      });
+      
+      // Reheat the simulation
+      simulation.alpha(0.5).restart();
+    };
+    
+    graphEventBus.on('simulation:reheat', handleReheat);
+    return () => {
+      graphEventBus.off('simulation:reheat', handleReheat);
+    };
+  }, []);
+  
   // Handle node drag
   const handleNodeDrag = useCallback((nodeId: string, dx: number, dy: number, type: 'start' | 'drag' | 'end') => {
     const simulation = simulationRef.current;
@@ -99,7 +124,9 @@ export const GraphCanvasV2: React.FC = () => {
     if (!node) return;
     
     if (type === 'start') {
-      simulation.alphaTarget(0.3).restart();
+      if (!simulation.alpha()) {
+        simulation.alphaTarget(0.3).restart();
+      }
       node.fx = node.x;
       node.fy = node.y;
     } else if (type === 'drag') {
@@ -109,11 +136,14 @@ export const GraphCanvasV2: React.FC = () => {
       positionsRef.current.set(nodeId, { x: dx, y: dy });
       setPositionsVersion(v => v + 1);
     } else if (type === 'end') {
-      simulation.alphaTarget(0);
+      if (!simulation.alpha()) {
+        simulation.alphaTarget(0);
+      }
+      // Release the node so it can continue moving with the simulation
       node.fx = null;
       node.fy = null;
     }
-  }, [nodes]);
+  }, []);
   
   // Get current positions
   const positions = positionsRef.current;
