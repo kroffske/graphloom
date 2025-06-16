@@ -29,9 +29,13 @@ export const GraphCanvasV2: React.FC = () => {
   useEffect(() => {
     if (!nodes.length) return;
     
+    // Copy nodes to avoid mutating the store
+    const simNodes = nodes.map(n => ({ ...n }));
+    const simEdges = edges.map(e => ({ ...e }));
+    
     // Create simulation
-    const simulation = d3.forceSimulation(nodes)
-      .force('link', d3.forceLink(edges).id((d: any) => d.id).distance(100))
+    const simulation = d3.forceSimulation(simNodes)
+      .force('link', d3.forceLink(simEdges).id((d: any) => d.id).distance(100))
       .force('charge', d3.forceManyBody().strength(-300))
       .force('center', d3.forceCenter(450, 265))
       .force('collision', d3.forceCollide().radius(50));
@@ -42,7 +46,7 @@ export const GraphCanvasV2: React.FC = () => {
     let rafId: number;
     let tickCount = 0;
     const updatePositions = () => {
-      nodes.forEach(node => {
+      simNodes.forEach(node => {
         if (typeof node.x === 'number' && typeof node.y === 'number') {
           positionsRef.current.set(node.id, { x: node.x, y: node.y });
         }
@@ -91,7 +95,7 @@ export const GraphCanvasV2: React.FC = () => {
     const simulation = simulationRef.current;
     if (!simulation) return;
     
-    const node = nodes.find(n => n.id === nodeId);
+    const node = simulationRef.current?.nodes().find((n: any) => n.id === nodeId);
     if (!node) return;
     
     if (type === 'start') {
