@@ -34,7 +34,14 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
   const dragStart = useRef({ x: 0, y: 0, nodeX: 0, nodeY: 0 });
   
   const handleClick = useCallback((e: React.MouseEvent) => {
+    // Left click now does nothing - dragging is handled by mousedown
     e.stopPropagation();
+  }, []);
+  
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Right-click selects the node (for context menu/info)
     selectNode(node.id);
   }, [node.id, selectNode]);
   
@@ -59,7 +66,8 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
   }, [setHoveredNodeId, isDragging]);
   
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (!onDrag) return;
+    // Only handle left mouse button (0) for dragging
+    if (!onDrag || e.button !== 0) return;
     
     e.stopPropagation();
     e.preventDefault();
@@ -111,7 +119,7 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
   return (
     <g 
       transform={`translate(${x},${y})`}
-      style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+      style={{ cursor: isDragging ? 'grabbing' : 'pointer' }}
     >
       {/* Background circle */}
       <circle
@@ -125,6 +133,7 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
           transition: 'stroke 0.2s, stroke-width 0.2s'
         }}
         onClick={handleClick}
+        onContextMenu={handleContextMenu}
         onDoubleClick={handleDoubleClick}
         onMouseDown={handleMouseDown}
         onMouseEnter={handleMouseEnter}
@@ -160,18 +169,18 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
         </text>
       )}
       
-      {/* Selection indicator */}
+      {/* Selection indicator (shown when right-clicked) */}
       {isSelected && (
         <circle
-          r={40}
+          r={42}
           fill="none"
           stroke="#3b82f6"
-          strokeWidth={2}
-          strokeDasharray="4 2"
-          opacity={0.5}
+          strokeWidth={3}
+          strokeDasharray="6 3"
+          opacity={0.8}
           pointerEvents="none"
           style={{
-            animation: 'rotate 10s linear infinite',
+            animation: 'rotate 20s linear infinite',
             transformOrigin: 'center'
           }}
         />
