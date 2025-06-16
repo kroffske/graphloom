@@ -21,24 +21,37 @@ export const TimeRangeSlider: React.FC<TimeRangeSliderProps> = ({ className }) =
   const [isPlaying, setIsPlaying] = React.useState(false);
   const [playbackSpeed, setPlaybackSpeed] = React.useState(1);
   const animationRef = React.useRef<number>();
-
-  // If no time range is set, don't render
-  if (!timeRange || !timestampField) {
-    return null;
-  }
-
-  const { min, max } = timeRange;
-  const range = max - min;
-  
-  // Initialize selected range to full range if not set
-  const currentRange = selectedTimeRange || { start: min, end: max };
   
   // Set initial range if not set
   React.useEffect(() => {
     if (!selectedTimeRange && timeRange) {
-      setSelectedTimeRange({ start: min, end: max });
+      setSelectedTimeRange({ start: timeRange.min, end: timeRange.max });
     }
-  }, [selectedTimeRange, timeRange, min, max, setSelectedTimeRange]);
+  }, [selectedTimeRange, timeRange, setSelectedTimeRange]);
+  
+  // Cleanup animation on unmount
+  React.useEffect(() => {
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, []);
+  
+  // Memoized values
+  const { min, max, range } = React.useMemo(() => {
+    if (!timeRange) return { min: 0, max: 0, range: 0 };
+    return { 
+      min: timeRange.min, 
+      max: timeRange.max, 
+      range: timeRange.max - timeRange.min 
+    };
+  }, [timeRange]);
+  
+  const currentRange = React.useMemo(() => {
+    if (!selectedTimeRange) return { start: min, end: max };
+    return selectedTimeRange;
+  }, [selectedTimeRange, min, max]);
 
   const handleSliderChange = useCallback((value: number[]) => {
     if (value.length === 2) {
@@ -98,10 +111,15 @@ export const TimeRangeSlider: React.FC<TimeRangeSliderProps> = ({ className }) =
     const nextIndex = (currentIndex + 1) % speeds.length;
     setPlaybackSpeed(speeds[nextIndex]);
   }, [playbackSpeed]);
+  
+  // If no time range is set, don't render
+  if (!timeRange || !timestampField) {
+    return null;
+  }
 
   // Calculate active edges count
   const activeEdges = useMemo(() => {
-    if (!selectedTimeRange) return edges.length;
+    if (!selectedTimeRange || !timestampField) return edges.length;
     
     return edges.filter(edge => {
       const value = timestampField.includes('.') 
@@ -114,15 +132,6 @@ export const TimeRangeSlider: React.FC<TimeRangeSliderProps> = ({ className }) =
       return !isNaN(timestamp) && timestamp >= currentRange.start && timestamp <= currentRange.end;
     }).length;
   }, [edges, timestampField, currentRange, selectedTimeRange]);
-
-  // Cleanup animation on unmount
-  React.useEffect(() => {
-    return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-    };
-  }, []);
 
   return (
     <div className={cn("bg-card border rounded-lg p-4", className)}>
