@@ -48,6 +48,15 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
   const iconColor = appearance.color || appearance.iconColor || '#374151';
   const icon = appearance.icon || node.type;
   
+  // Border settings
+  const borderEnabled = appearance.borderEnabled ?? false;
+  const borderColor = appearance.borderColor || '#e5e7eb';
+  const borderWidth = appearance.borderWidth ?? 1.5;
+  
+  // Size setting
+  const nodeSize = appearance.size ?? 38; // Default 38px diameter
+  const radius = nodeSize / 2;
+  
   // Use prop override for label visibility
   const shouldShowLabel = showLabel && transform.k > 0.6;
   
@@ -164,11 +173,11 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
     >
       {/* Background circle */}
       <circle
-        r={19}
+        r={radius}
         fill={backgroundColor}
-        stroke={isSelected ? '#3b82f6' : '#e5e7eb'}
-        strokeWidth={isSelected ? 3 : 1.5}
-        className="dark:stroke-slate-600"
+        stroke={isSelected ? '#3b82f6' : (borderEnabled ? borderColor : 'transparent')}
+        strokeWidth={isSelected ? 3 : (borderEnabled ? borderWidth : 0)}
+        className={borderEnabled && !isSelected ? "dark:stroke-slate-600" : ""}
         style={{ 
           filter: isHovered ? 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3))' : undefined,
           transition: 'stroke 0.2s, stroke-width 0.2s',
@@ -191,7 +200,7 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
             <text
               textAnchor="middle"
               dominantBaseline="central"
-              fontSize={14}
+              fontSize={radius * 0.7}
               fill={iconColor}
               pointerEvents="none"
               style={{ userSelect: 'none' }}
@@ -205,14 +214,14 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
               if (IconComponent) {
                 return (
                   <foreignObject
-                    x={-10}
-                    y={-10}
-                    width={20}
-                    height={20}
+                    x={-radius * 0.5}
+                    y={-radius * 0.5}
+                    width={radius}
+                    height={radius}
                     pointerEvents="none"
                   >
                     <IconComponent 
-                      className="w-5 h-5"
+                      style={{ width: radius * 0.7, height: radius * 0.7 }}
                       filled={false}
                       aria-label={icon}
                     />
@@ -240,7 +249,7 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
       {/* Label (hidden when zoomed out) */}
       {shouldShowLabel && (
         <text
-          y={35}
+          y={radius + 16}
           textAnchor="middle"
           fontSize={12}
           fill="#6b7280"
@@ -255,7 +264,7 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
       {/* Selection indicator (shown when right-clicked) */}
       {isSelected && (
         <circle
-          r={22}
+          r={radius + 3}
           fill="none"
           stroke="#3b82f6"
           strokeWidth={3}
