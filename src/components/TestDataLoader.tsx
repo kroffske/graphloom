@@ -36,7 +36,7 @@ export const TestDataLoader: React.FC = () => {
         break;
     }
     
-    console.log(`Loading ${testData.nodes.length} nodes and ${testData.edges.length} edges`);
+    // console.log(`Loading ${testData.nodes.length} nodes and ${testData.edges.length} edges`);
     setNodes(testData.nodes);
     setEdges(testData.edges);
     

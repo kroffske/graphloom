@@ -1,6 +1,6 @@
-# Graph Explorer
+# GraphLoom Explorer
 
-An interactive graph visualization tool for exploring network data with advanced filtering, layouts, and time-based analysis.
+Weave your data into interactive network visualizations. GraphLoom is a powerful graph visualization tool for exploring network data with advanced filtering, layouts, and time-based analysis.
 
 ## Features
 
@@ -23,8 +23,8 @@ An interactive graph visualization tool for exploring network data with advanced
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
-   cd icon-graph-explorer
+   git clone https://github.com/kroffske/graphloom.git
+   cd graphloom
    ```
 
 2. **Install dependencies**
