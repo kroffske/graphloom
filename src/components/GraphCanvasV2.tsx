@@ -103,7 +103,7 @@ export const GraphCanvasV2: React.FC = () => {
     
     // Copy nodes to avoid mutating the store
     const simNodes = filteredNodes.map(n => ({ ...n }));
-    const simEdges = edges.map(e => ({ ...e }));
+    const simEdges = filteredEdges.map(e => ({ ...e }));
     
     // Initialize positions if needed
     simNodes.forEach(node => {
