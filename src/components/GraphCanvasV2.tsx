@@ -135,13 +135,20 @@ export const GraphCanvasV2: React.FC = () => {
   
   // Handle node drag
   const handleNodeDrag = useCallback((nodeId: string, dx: number, dy: number, type: 'start' | 'drag' | 'end') => {
+    // console.log('handleNodeDrag called:', { nodeId, dx, dy, type });
     const simulation = simulationRef.current;
-    if (!simulation) return;
+    if (!simulation) {
+      // console.warn('No simulation available');
+      return;
+    }
     
     if (type === 'start') {
       // Find the node in simulation
       const node = simulation.nodes().find((n: any) => n.id === nodeId);
-      if (!node) return;
+      if (!node) {
+        // console.warn('Node not found in simulation:', nodeId);
+        return;
+      }
       
       dragSubjectRef.current = node;
       
@@ -150,6 +157,7 @@ export const GraphCanvasV2: React.FC = () => {
       }
       node.fx = node.x;
       node.fy = node.y;
+      // console.log('Drag started, fixed node at:', node.x, node.y);
     } else if (type === 'drag') {
       // For drag, dx and dy are the mouse positions, not deltas
       if (dragSubjectRef.current) {
