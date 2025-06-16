@@ -1,73 +1,112 @@
-# Welcome to your Lovable project
+# Graph Explorer
 
-## Project info
+An interactive graph visualization tool for exploring network data with advanced filtering, layouts, and time-based analysis.
 
-**URL**: https://lovable.dev/projects/141ead63-4031-4d36-9a3e-4db0bfb0c175
+## Features
 
-## How can I edit this code?
+- **Interactive Graph Visualization**: Explore nodes and edges with drag-and-drop functionality
+- **Multiple Layout Algorithms**: Force-directed, ForceAtlas2, OpenOrd, Circle, Hierarchy, Radial, and Fast layouts
+- **Time-based Filtering**: Filter edges based on timestamps with an interactive timeline slider
+- **Node & Edge Customization**: Customize appearance with colors, sizes, icons, and emojis
+- **Performance Optimized**: Handles graphs with 5000+ nodes using viewport culling and LOD rendering
+- **CSV Import**: Upload your own graph data in CSV format
+- **Real-time Tooltips**: Hover over nodes and edges to see detailed information
 
-There are several ways of editing your application.
+## Installation
 
-**Use Lovable**
+### Prerequisites
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/141ead63-4031-4d36-9a3e-4db0bfb0c175) and start prompting.
+- Node.js (v16 or higher) & npm - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- Git
 
-Changes made via Lovable will be committed automatically to this repo.
+### Setup
 
-**Use your preferred IDE**
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd icon-graph-explorer
+   ```
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+3. **Start the development server**
+   ```bash
+   npm run dev
+   ```
+   The application will be available at `http://localhost:3000`
 
-Follow these steps:
+## Usage
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Quick Start
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+1. **Load Test Data**: Click on "Load 50/500/5000 Nodes" buttons to load sample graphs
+2. **Upload Your Data**: Go to "Upload & Explore" tab to import CSV files
+3. **Interact with the Graph**:
+   - Drag nodes to reposition them
+   - Scroll to zoom in/out
+   - Right-click nodes for context menu
+   - Hover over nodes/edges to see details
 
-# Step 3: Install the necessary dependencies.
-npm i
+### CSV Data Format
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+The application expects two CSV files:
+
+**Nodes CSV**:
+```csv
+id,type,label,icon,color,size
+node1,person,John Doe,👤,#3b82f6,40
+node2,company,Acme Corp,🏢,#10b981,50
 ```
 
-**Edit a file directly in GitHub**
+**Edges CSV**:
+```csv
+id,source,target,type,timestamp
+edge1,node1,node2,WORKS_AT,2024-01-15T10:30:00Z
+```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Time Filtering
 
-**Use GitHub Codespaces**
+If your edges contain timestamp data, a timeline slider will automatically appear:
+- Use the slider to filter edges by time range
+- Play/pause animation to see the graph evolve over time
+- Adjust playback speed (1x, 2x, 5x, 10x)
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Available Scripts
 
-## What technologies are used for this project?
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
+- `npm run test` - Run tests
 
-This project is built with:
+## Technologies
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- **React 18** with TypeScript
+- **Vite** for fast development
+- **D3.js** for graph physics and layouts
+- **Zustand** for state management
+- **shadcn/ui** for UI components
+- **Tailwind CSS** for styling
 
-## How can I deploy this project?
+## Documentation
 
-Simply open [Lovable](https://lovable.dev/projects/141ead63-4031-4d36-9a3e-4db0bfb0c175) and click on Share -> Publish.
+See the `docs/` directory for detailed guides:
+- [Node Customization Guide](docs/node-customization.md)
+- [Performance Optimization](docs/performance-optimization.md)
+- [Layout Algorithms](docs/layouts.md)
+- [Time-based Filtering](docs/time-filtering.md)
 
-## Can I connect a custom domain to my Lovable project?
+## Contributing
 
-Yes, you can!
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## License
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+This project is licensed under the MIT License.
