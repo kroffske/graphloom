@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useGraphPortal } from './GraphPortalProvider';
-import { GraphNode } from '@/types/graph.types';
+import { GraphNode } from '@/types/graph';
 import GraphD3NodeMount from './GraphD3NodeMount';
 
 interface GraphNodePortalProps {

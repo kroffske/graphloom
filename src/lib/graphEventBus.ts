@@ -1,41 +1,37 @@
-import { EventEmitter } from 'events';
-
-// Fix for Vite environments that don't have EventEmitter
-const EventEmitterClass = typeof EventEmitter !== 'undefined' 
-  ? EventEmitter 
-  : class SimpleEventEmitter {
-      private events: Map<string, Array<(...args: any[]) => void>> = new Map();
-      
-      emit(event: string, ...args: any[]): boolean {
-        const handlers = this.events.get(event);
-        if (!handlers) return false;
-        handlers.forEach(handler => handler(...args));
-        return true;
-      }
-      
-      on(event: string, handler: (...args: any[]) => void): this {
-        const handlers = this.events.get(event) || [];
-        handlers.push(handler);
-        this.events.set(event, handlers);
-        return this;
-      }
-      
-      off(event: string, handler: (...args: any[]) => void): this {
-        const handlers = this.events.get(event);
-        if (!handlers) return this;
-        const index = handlers.indexOf(handler);
-        if (index > -1) handlers.splice(index, 1);
-        return this;
-      }
-      
-      once(event: string, handler: (...args: any[]) => void): this {
-        const wrappedHandler = (...args: any[]) => {
-          handler(...args);
-          this.off(event, wrappedHandler);
-        };
-        return this.on(event, wrappedHandler);
-      }
+// Simple EventEmitter implementation for browser
+class SimpleEventEmitter {
+  private events: Map<string, Array<(...args: any[]) => void>> = new Map();
+  
+  emit(event: string, ...args: any[]): boolean {
+    const handlers = this.events.get(event);
+    if (!handlers) return false;
+    handlers.forEach(handler => handler(...args));
+    return true;
+  }
+  
+  on(event: string, handler: (...args: any[]) => void): this {
+    const handlers = this.events.get(event) || [];
+    handlers.push(handler);
+    this.events.set(event, handlers);
+    return this;
+  }
+  
+  off(event: string, handler: (...args: any[]) => void): this {
+    const handlers = this.events.get(event);
+    if (!handlers) return this;
+    const index = handlers.indexOf(handler);
+    if (index > -1) handlers.splice(index, 1);
+    return this;
+  }
+  
+  once(event: string, handler: (...args: any[]) => void): this {
+    const wrappedHandler = (...args: any[]) => {
+      handler(...args);
+      this.off(event, wrappedHandler);
     };
+    return this.on(event, wrappedHandler);
+  }
+}
 
 export interface GraphEvents {
   'node:position': { nodeId: string; x: number; y: number };
@@ -51,7 +47,7 @@ export interface GraphEvents {
   'simulation:tick': { positions: Map<string, { x: number; y: number }> };
 }
 
-class TypedEventEmitter extends EventEmitterClass {
+class TypedEventEmitter extends SimpleEventEmitter {
   emit<K extends keyof GraphEvents>(event: K, data: GraphEvents[K]): boolean {
     return super.emit(event, data);
   }

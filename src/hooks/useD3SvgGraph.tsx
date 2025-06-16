@@ -1,5 +1,5 @@
 
-import { useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import * as d3 from "d3";
 import { setupD3DragNodes } from "@/hooks/useD3DragNodes";
 import { useD3ZoomAndPan } from "@/hooks/useD3ZoomAndPan";
@@ -7,7 +7,6 @@ import GraphD3NodeMount from "@/components/GraphD3NodeMount";
 import { useGraphStore, GraphStore } from "@/state/useGraphStore";
 import { resolveLabelTemplate } from "@/utils/labelTemplate";
 import { graphEventBus } from "@/lib/graphEventBus";
-import { GraphNodePortal } from "@/components/GraphNodePortal";
 
 // Break out the shape constants since they may be used outside the hook as well
 export const WIDTH = 900;
