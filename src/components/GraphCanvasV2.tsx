@@ -83,6 +83,21 @@ export const GraphCanvasV2: React.FC = () => {
     
     const zoom = d3.zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.1, 8])
+      .filter((event) => {
+        // Allow zoom on wheel events
+        if (event.type === 'wheel') return true;
+        
+        // Allow keyboard shortcuts
+        if (event.type !== 'mousedown') return true;
+        
+        // For mouse events, check if we're clicking on a node
+        const target = event.target as Element;
+        // Check if the target or any parent is part of a node
+        const isNode = target.closest('circle') || target.closest('.graph-node-svg');
+        
+        // Only allow pan if not clicking on a node
+        return !isNode;
+      })
       .on('zoom', (event) => {
         setTransform(event.transform);
       });

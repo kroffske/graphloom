@@ -118,8 +118,10 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
   
   return (
     <g 
+      className="graph-node-svg"
       transform={`translate(${x},${y})`}
       style={{ cursor: isDragging ? 'grabbing' : 'pointer' }}
+      data-node-id={node.id}
     >
       {/* Background circle */}
       <circle
