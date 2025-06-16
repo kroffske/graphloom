@@ -144,12 +144,12 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
       const svgCoords = pt.matrixTransform(screenCTM.inverse());
       
       // console.log('[GraphNodeV2] Drag move:', { 
-        nodeId: node.id, 
-        clientX: e.clientX, 
-        clientY: e.clientY, 
-        worldX: svgCoords.x, 
-        worldY: svgCoords.y
-      });
+      //   nodeId: node.id, 
+      //   clientX: e.clientX, 
+      //   clientY: e.clientY, 
+      //   worldX: svgCoords.x, 
+      //   worldY: svgCoords.y
+      // });
       
       onDrag(node.id, svgCoords.x, svgCoords.y, 'drag');
     };
