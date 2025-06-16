@@ -33,6 +33,8 @@ const Index = () => {
           <h1 className="text-2xl font-bold tracking-wide text-primary">
             GraphLoom Explorer
           </h1>
+          <span className="text-xs text-muted-foreground">v0.0.1</span>
+          <div className="flex-1" />
           <ThemeToggle />
         </header>
         {/* Tabs for Graph & Upload Only (Graph now leftmost) */}
