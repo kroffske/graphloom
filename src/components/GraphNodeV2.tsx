@@ -199,8 +199,8 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
             // Render emoji directly as text
             <text
               textAnchor="middle"
-              dominantBaseline="central"
-              fontSize={radius * 0.7}
+              dominantBaseline="middle"
+              fontSize={radius * 0.65}
               fill={iconColor}
               pointerEvents="none"
               style={{ userSelect: 'none' }}
@@ -219,12 +219,21 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
                     width={radius}
                     height={radius}
                     pointerEvents="none"
+                    style={{ overflow: 'visible' }}
                   >
-                    <IconComponent 
-                      style={{ width: radius * 0.7, height: radius * 0.7 }}
-                      filled={false}
-                      aria-label={icon}
-                    />
+                    <div style={{ 
+                      width: '100%', 
+                      height: '100%', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center' 
+                    }}>
+                      <IconComponent 
+                        style={{ width: radius * 0.6, height: radius * 0.6 }}
+                        filled={false}
+                        aria-label={icon}
+                      />
+                    </div>
                   </foreignObject>
                 );
               }
@@ -232,8 +241,8 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
               return (
                 <text
                   textAnchor="middle"
-                  dominantBaseline="central"
-                  fontSize={14}
+                  dominantBaseline="middle"
+                  fontSize={radius * 0.5}
                   fill={iconColor}
                   pointerEvents="none"
                   style={{ userSelect: 'none' }}
