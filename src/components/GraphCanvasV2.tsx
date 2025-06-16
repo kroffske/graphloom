@@ -6,6 +6,7 @@ import { graphEventBus } from '@/lib/graphEventBus';
 import { LayoutSelector, LayoutType } from './LayoutSelector';
 import { 
   ForceAtlas2Layout,
+  OpenOrdLayout,
   applyCircleLayout,
   applyHierarchyLayout,
   applyRadialLayout
@@ -22,6 +23,7 @@ export const GraphCanvasV2: React.FC = () => {
   const gRef = useRef<SVGGElement>(null);
   const simulationRef = useRef<d3.Simulation<any, any>>();
   const forceAtlas2Ref = useRef<ForceAtlas2Layout>();
+  const openOrdRef = useRef<OpenOrdLayout>();
   const animationFrameRef = useRef<number>();
   
   // Layout state
@@ -51,6 +53,9 @@ export const GraphCanvasV2: React.FC = () => {
     }
     if (forceAtlas2Ref.current) {
       forceAtlas2Ref.current.stop();
+    }
+    if (openOrdRef.current) {
+      openOrdRef.current.stop();
     }
     
     // Copy nodes to avoid mutating the store
@@ -134,6 +139,35 @@ export const GraphCanvasV2: React.FC = () => {
         break;
       }
       
+      case 'openord': {
+        // OpenOrd Layout
+        const openOrd = new OpenOrdLayout(simNodes, simEdges, {
+          stages: {
+            liquid: { iterations: 100, temperature: 0.2, attraction: 2.0, damping: 0.9 },
+            expansion: { iterations: 100, temperature: 0.15, attraction: 10.0, damping: 0.85 },
+            cooldown: { iterations: 100, temperature: 0.1, attraction: 1.0, damping: 0.8 },
+            crunch: { iterations: 50, temperature: 0.05, attraction: 10.0, damping: 0.75 },
+            simmer: { iterations: 25, temperature: 0.01, attraction: 1.0, damping: 0.7 },
+          },
+          preventOverlap: true
+        });
+        
+        openOrdRef.current = openOrd;
+        openOrd.start();
+        
+        const animateOpenOrd = () => {
+          openOrd.tick();
+          updatePositions();
+          
+          if (openOrd.isRunning()) {
+            animationFrameRef.current = requestAnimationFrame(animateOpenOrd);
+          }
+        };
+        
+        animateOpenOrd();
+        break;
+      }
+      
       case 'circle': {
         // Circle Layout
         applyCircleLayout(simNodes, {
@@ -175,6 +209,9 @@ export const GraphCanvasV2: React.FC = () => {
       }
       if (forceAtlas2Ref.current) {
         forceAtlas2Ref.current.stop();
+      }
+      if (openOrdRef.current) {
+        openOrdRef.current.stop();
       }
     };
   }, [nodes, edges, currentLayout]);
@@ -246,7 +283,7 @@ export const GraphCanvasV2: React.FC = () => {
     }
     
     // Only handle simulation-specific logic for force layouts
-    if (currentLayout === 'force' || currentLayout === 'forceatlas2') {
+    if (currentLayout === 'force' || currentLayout === 'forceatlas2' || currentLayout === 'openord') {
       const simulation = simulationRef.current;
       
       if (currentLayout === 'force' && simulation) {

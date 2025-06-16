@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { graphEventBus } from '@/lib/graphEventBus';
 
-export type LayoutType = 'force' | 'forceatlas2' | 'circle' | 'hierarchy' | 'radial';
+export type LayoutType = 'force' | 'forceatlas2' | 'openord' | 'circle' | 'hierarchy' | 'radial';
 
 interface LayoutSelectorProps {
   currentLayout: LayoutType;
@@ -34,6 +34,12 @@ export const LayoutSelector: React.FC<LayoutSelectorProps> = ({
       description: 'Gephi-style layout for communities'
     },
     { 
+      type: 'openord' as LayoutType, 
+      label: 'OpenOrd', 
+      icon: Layers,
+      description: 'Multi-stage layout for large graphs'
+    },
+    { 
       type: 'circle' as LayoutType, 
       label: 'Circle', 
       icon: Circle,
@@ -48,7 +54,7 @@ export const LayoutSelector: React.FC<LayoutSelectorProps> = ({
     { 
       type: 'radial' as LayoutType, 
       label: 'Radial', 
-      icon: Layers,
+      icon: Activity,
       description: 'Radial tree layout'
     }
   ];
