@@ -71,14 +71,12 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
     e.stopPropagation();
     e.preventDefault();
     
-    setIsDragging(true);
-    onDrag(node.id, x, y, 'start');
-  }, [node.id, x, y, onDrag]);
-  
-  // Handle drag with mouse move on document
-  useEffect(() => {
-    if (!isDragging || !onDrag) return;
+    // console.log('Mouse down on node:', node.id, 'at position:', x, y);
     
+    // Start drag
+    onDrag(node.id, x, y, 'start');
+    
+    // Set up drag handlers immediately
     const handleMouseMove = (e: MouseEvent) => {
       const svg = document.querySelector('svg');
       if (!svg) return;
@@ -89,7 +87,10 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
       
       // Parse transform attribute to get current zoom/pan
       const transformMatch = gElement.getAttribute('transform')?.match(/translate\(([-\d.]+),([-\d.]+)\)\s*scale\(([-\d.]+)\)/);
-      if (!transformMatch) return;
+      if (!transformMatch) {
+        console.warn('No transform found on g element');
+        return;
+      }
       
       const tx = parseFloat(transformMatch[1]);
       const ty = parseFloat(transformMatch[2]);
@@ -104,22 +105,24 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
       const worldX = (svgX - tx) / scale;
       const worldY = (svgY - ty) / scale;
       
+      // console.log('Drag move:', { svgX, svgY, worldX, worldY, tx, ty, scale });
       onDrag(node.id, worldX, worldY, 'drag');
     };
     
-    const handleMouseUp = () => {
+    const handleMouseUp = (e: MouseEvent) => {
+      // console.log('Mouse up, ending drag for node:', node.id);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
       setIsDragging(false);
       onDrag(node.id, 0, 0, 'end');
     };
     
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-    
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isDragging, node.id, transform, onDrag]);
+    setIsDragging(true);
+  }, [node.id, x, y, onDrag]);
+  
+  // No longer needed - drag is handled entirely in handleMouseDown
   
   return (
     <g 
