@@ -78,6 +78,7 @@ Detailed documentation is available in the `docs/` directory:
 - **[Performance Optimization Guide](docs/performance-optimization.md)** - Techniques for handling large graphs efficiently
 - **[Layout Algorithms Guide](docs/layouts.md)** - Description of available layouts and when to use them
 - **[Test Data Generation Guide](docs/test-data-generation.md)** - How to generate and customize test data
+- **[Time-Based Edge Filtering](docs/time-filtering.md)** - Filter edges by timestamp with interactive slider
 
 ### Quick Reference
 
@@ -97,6 +98,12 @@ Detailed documentation is available in the `docs/` directory:
 - Emoji icons: Edit `src/config/emojiIcons.ts`
 - SVG icons: Add to icon registry
 - Icon selection: Settings → Icon Style
+
+#### Time Filtering
+- Automatic timestamp detection from CSV
+- Time slider below graph when timestamps found
+- Play/pause animation with speed control
+- Edges filtered in real-time
 
 ## Task Management
 
