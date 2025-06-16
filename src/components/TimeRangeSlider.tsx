@@ -166,6 +166,7 @@ export const TimeRangeSlider: React.FC<TimeRangeSliderProps> = ({ className }) =
               size="sm"
               onClick={handlePlayPause}
               className="w-8 h-8 p-0"
+              title={isPlaying ? "Pause animation" : "Play from current position (Reset to play from beginning)"}
             >
               {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
             </Button>
@@ -185,6 +186,7 @@ export const TimeRangeSlider: React.FC<TimeRangeSliderProps> = ({ className }) =
               size="sm"
               onClick={handleReset}
               className="w-8 h-8 p-0"
+              title="Reset timeline to show all data"
             >
               <RotateCcw className="h-4 w-4" />
             </Button>
@@ -200,6 +202,11 @@ export const TimeRangeSlider: React.FC<TimeRangeSliderProps> = ({ className }) =
         {/* Time labels */}
         <div className="flex justify-between text-xs text-muted-foreground">
           <span>{formatTimestamp(currentRange.start, 'datetime')}</span>
+          {currentRange.start > min && !isPlaying && (
+            <span className="text-yellow-600 dark:text-yellow-500 text-xs italic">
+              Timeline filtered - Reset to see full animation
+            </span>
+          )}
           <span>{formatTimestamp(currentRange.end, 'datetime')}</span>
         </div>
 
