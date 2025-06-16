@@ -6,6 +6,8 @@ import { useD3ZoomAndPan } from "@/hooks/useD3ZoomAndPan";
 import GraphD3NodeMount from "@/components/GraphD3NodeMount";
 import { useGraphStore, GraphStore } from "@/state/useGraphStore";
 import { resolveLabelTemplate } from "@/utils/labelTemplate";
+import { graphEventBus } from "@/lib/graphEventBus";
+import { GraphNodePortal } from "@/components/GraphNodePortal";
 
 // Break out the shape constants since they may be used outside the hook as well
 export const WIDTH = 900;
@@ -38,6 +40,7 @@ type UseD3SvgGraphProps = {
   simulation?: any;
   simNodes: any[];
   simEdges: any[];
+  usePortalRendering?: boolean;
 };
 
 function getEdgeLabel(
@@ -96,6 +99,7 @@ export function useD3SvgGraph({
   simNodes,
   simEdges,
   onEdgeContextMenu,
+  usePortalRendering = false,
 }: UseD3SvgGraphProps) {
   // Get edge selection API - use individual selectors to prevent infinite re-renders
   const selectedEdgeId = useGraphStore((state) => state.selectedEdgeId);
@@ -215,18 +219,21 @@ export function useD3SvgGraph({
       .attr("stroke-width", 1.5)
       .style("opacity", 0.01);
 
-    nodeG
-      .append("foreignObject")
-      .attr("width", NODE_RADIUS * 2)
-      .attr("height", NODE_RADIUS * 2)
-      .attr("x", -NODE_RADIUS)
-      .attr("y", -NODE_RADIUS)
-      .append("xhtml:div")
-      .attr(
-        "style",
-        "display: flex;justify-content:center;align-items:center;width:100%;height:100%;"
-      )
-      .html((d: any) => `<div id="d3-node-${d.id}"></div>`);
+    // Only add foreignObject if not using portal rendering
+    if (!usePortalRendering) {
+      nodeG
+        .append("foreignObject")
+        .attr("width", NODE_RADIUS * 2)
+        .attr("height", NODE_RADIUS * 2)
+        .attr("x", -NODE_RADIUS)
+        .attr("y", -NODE_RADIUS)
+        .append("xhtml:div")
+        .attr(
+          "style",
+          "display: flex;justify-content:center;align-items:center;width:100%;height:100%;"
+        )
+        .html((d: any) => `<div id="d3-node-${d.id}"></div>`);
+    }
 
     if (layoutMode === "manual") {
       setupD3DragNodes({
@@ -298,47 +305,72 @@ export function useD3SvgGraph({
       }
     });
 
-    setTimeout(() => {
-      simNodes.forEach((n) => {
-        const mountPoint = document.getElementById(`d3-node-${n.id}`);
-        if (mountPoint) {
-          import("react-dom/client").then((ReactDOMClient) => {
-            // Check if we already have a root for this node
-            let root = nodeRootsMap.get(n.id);
-            
-            // Only create a new root if we don't have one
-            if (!root) {
-              try {
-                root = ReactDOMClient.createRoot(mountPoint);
-                nodeRootsMap.set(n.id, root);
-              } catch (e) {
-                console.warn(`Failed to create root for node ${n.id}:`, e);
-                return;
+    // Handle React component rendering
+    if (!usePortalRendering) {
+      // Legacy: Mount React components inside D3 foreignObjects
+      setTimeout(() => {
+        simNodes.forEach((n) => {
+          const mountPoint = document.getElementById(`d3-node-${n.id}`);
+          if (mountPoint) {
+            import("react-dom/client").then((ReactDOMClient) => {
+              // Check if we already have a root for this node
+              let root = nodeRootsMap.get(n.id);
+              
+              // Only create a new root if we don't have one
+              if (!root) {
+                try {
+                  root = ReactDOMClient.createRoot(mountPoint);
+                  nodeRootsMap.set(n.id, root);
+                } catch (e) {
+                  console.warn(`Failed to create root for node ${n.id}:`, e);
+                  return;
+                }
               }
-            }
-            
-            // Render the component
-            try {
-              root.render(
-                <GraphD3NodeMount
-                  node={n}
-                  hiddenNodeIds={hiddenNodeIds}
-                  setHiddenNodeIds={setHiddenNodeIds}
-                  setContextNodeId={setContextNodeId}
-                />
-              );
-            } catch (e) {
-              console.warn(`Failed to render node ${n.id}:`, e);
-              nodeRootsMap.delete(n.id);
-            }
-          });
+              
+              // Render the component
+              try {
+                root.render(
+                  <GraphD3NodeMount
+                    node={n}
+                    hiddenNodeIds={hiddenNodeIds}
+                    setHiddenNodeIds={setHiddenNodeIds}
+                    setContextNodeId={setContextNodeId}
+                  />
+                );
+              } catch (e) {
+                console.warn(`Failed to render node ${n.id}:`, e);
+                nodeRootsMap.delete(n.id);
+              }
+            });
+          }
+        });
+      }, 0);
+    } else {
+      // New: Emit initial positions for portal rendering
+      const positions = new Map<string, { x: number; y: number }>();
+      simNodes.forEach((n) => {
+        if (typeof n.x === 'number' && typeof n.y === 'number') {
+          positions.set(n.id, { x: n.x, y: n.y });
         }
       });
-    }, 0);
+      graphEventBus.emit('simulation:tick', { positions });
+    }
 
     if (layoutMode === "force") {
       simulation.on("tick", () => {
         captureSimulationPositions(simNodes);
+        
+        // Emit positions for portal rendering
+        if (usePortalRendering) {
+          const positions = new Map<string, { x: number; y: number }>();
+          simNodes.forEach((n) => {
+            if (typeof n.x === 'number' && typeof n.y === 'number') {
+              positions.set(n.id, { x: n.x, y: n.y });
+            }
+          });
+          graphEventBus.emit('simulation:tick', { positions });
+        }
+        
         link
           .attr("x1", (d: any) => (d.source as any).x!)
           .attr("y1", (d: any) => (d.source as any).y!)
@@ -398,6 +430,17 @@ export function useD3SvgGraph({
 
       nodeG.attr("transform", (d: any) => `translate(${d.x},${d.y})`);
       captureSimulationPositions(simNodes);
+      
+      // Emit positions for static layouts
+      if (usePortalRendering) {
+        const positions = new Map<string, { x: number; y: number }>();
+        simNodes.forEach((n) => {
+          if (typeof n.x === 'number' && typeof n.y === 'number') {
+            positions.set(n.id, { x: n.x, y: n.y });
+          }
+        });
+        graphEventBus.emit('simulation:tick', { positions });
+      }
       // For static layouts, visually indicate selection state as well
       link
         .attr("opacity", (d: any) => (selectedEdgeId === d.id ? 1 : 0.7))
@@ -413,15 +456,17 @@ export function useD3SvgGraph({
     }
 
     return () => {
-      // Clean up React roots before stopping simulation
-      nodeRootsMap.forEach((root, id) => {
-        try {
-          root.unmount();
-        } catch (e) {
-          // Ignore errors if already unmounted
-        }
-      });
-      nodeRootsMap.clear();
+      // Clean up React roots before stopping simulation (only for legacy rendering)
+      if (!usePortalRendering) {
+        nodeRootsMap.forEach((root, id) => {
+          try {
+            root.unmount();
+          } catch (e) {
+            // Ignore errors if already unmounted
+          }
+        });
+        nodeRootsMap.clear();
+      }
       
       simulation.stop && simulation.stop();
       svg.on(".zoom", null);
@@ -444,6 +489,7 @@ export function useD3SvgGraph({
     captureSimulationPositions,
     simulation,
     initialPositions,
+    usePortalRendering,
   ]);
 
   // ----- NEW: Selection and appearance highlighting only (does not change graph structure) -----
