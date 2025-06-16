@@ -5,6 +5,20 @@ All notable changes to GraphLoom will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0] - 2024-12-16
+
+### Changed
+- **BREAKING**: Removed feature flag system - React-first approach (GraphCanvasV2) is now the default
+- Removed old D3-first implementation completely (~2100 lines of code removed)
+- Simplified codebase with single graph implementation
+- TestDataLoader is now always visible
+
+### Removed
+- All GraphD3* components
+- useFeatureFlag hook
+- Portal-based rendering system
+- TestDragNode experimental component
+
 ## [0.0.1] - 2024-12-16
 
 ### Added
