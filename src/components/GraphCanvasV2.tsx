@@ -405,7 +405,7 @@ export const GraphCanvasV2: React.FC = () => {
   
   // Handle node drag
   const handleNodeDrag = useCallback((nodeId: string, dx: number, dy: number, type: 'start' | 'drag' | 'end') => {
-    console.log('[GraphCanvasV2] handleNodeDrag called:', { nodeId, dx, dy, type });
+    // console.log('[GraphCanvasV2] handleNodeDrag called:', { nodeId, dx, dy, type });
     
     if (type === 'drag') {
       // Update position immediately for all layout types
@@ -494,7 +494,7 @@ export const GraphCanvasV2: React.FC = () => {
   const showIcons = transform.k > 0.3;
   const simplifiedRendering = transform.k < 0.5;
   
-  console.log('[GraphCanvasV2] Rendering', visibleNodes.length, 'of', filteredNodes.length, 'nodes (zoom:', transform.k.toFixed(2), ')');
+  // console.log('[GraphCanvasV2] Rendering', visibleNodes.length, 'of', filteredNodes.length, 'nodes (zoom:', transform.k.toFixed(2), ')');
   
   // Get hovered items
   const hoveredNode = hoveredNodeId ? nodes.find(n => n.id === hoveredNodeId) : null;

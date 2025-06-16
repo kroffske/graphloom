@@ -18,7 +18,7 @@ const Index = () => {
   const useReactFirstApproach = useFeatureFlag('USE_REACT_FIRST_GRAPH');
   const testDrag = useFeatureFlag('TEST_DRAG');
   
-  console.log('[Index] Using React-First approach:', useReactFirstApproach);
+  // console.log('[Index] Using React-First approach:', useReactFirstApproach);
 
   // Test drag implementation
   if (testDrag) {
@@ -31,7 +31,7 @@ const Index = () => {
         {/* Header */}
         <header className="w-full flex items-center gap-4 px-6 py-4 border-b border-border shadow-sm bg-card z-20 relative">
           <h1 className="text-2xl font-bold tracking-wide text-primary">
-            Graph Visualization UI
+            GraphLoom Explorer
           </h1>
           <ThemeToggle />
         </header>

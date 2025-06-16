@@ -102,14 +102,14 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
   }, [setHoveredNodeId, isDragging, onMouseLeave]);
   
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    console.log('[GraphNodeV2] handleMouseDown called, button:', e.button, 'onDrag available:', !!onDrag);
+    // console.log('[GraphNodeV2] handleMouseDown called, button:', e.button, 'onDrag available:', !!onDrag);
     // Only handle left mouse button (0) for dragging
     if (!onDrag || e.button !== 0) return;
     
     e.stopPropagation();
     e.preventDefault();
     
-    console.log('[GraphNodeV2] Mouse down on node:', node.id, 'at position:', x, y);
+    // console.log('[GraphNodeV2] Mouse down on node:', node.id, 'at position:', x, y);
     
     // Start drag
     onDrag(node.id, x, y, 'start');
@@ -143,7 +143,7 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
       
       const svgCoords = pt.matrixTransform(screenCTM.inverse());
       
-      console.log('[GraphNodeV2] Drag move:', { 
+      // console.log('[GraphNodeV2] Drag move:', { 
         nodeId: node.id, 
         clientX: e.clientX, 
         clientY: e.clientY, 
@@ -155,7 +155,7 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
     };
     
     const handleMouseUp = (e: MouseEvent) => {
-      console.log('[GraphNodeV2] Mouse up, ending drag for node:', node.id);
+      // console.log('[GraphNodeV2] Mouse up, ending drag for node:', node.id);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
       setIsDragging(false);
