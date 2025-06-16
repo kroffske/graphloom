@@ -7,11 +7,15 @@ import GraphTooltipManager from "./GraphTooltipManager";
 import EdgeContextMenu from "./EdgeContextMenu";
 import { useGraphStore, GraphStore } from "@/state/useGraphStore";
 import TimeRangeSlider from "./TimeRangeSlider";
+import { GraphPortalProvider } from "./GraphPortalProvider";
+import { GraphPortalNodes } from "./GraphPortalNodes";
+import { usePortalRendering } from "@/config/featureFlags";
 
 /**
  * This D3 graph canvas component now composes specialized pieces for simulation and rendering.
  */
 const GraphD3Canvas: React.FC = () => {
+  const usePortals = usePortalRendering();
   const {
     nodes,
     edges,
@@ -184,8 +188,8 @@ const GraphD3Canvas: React.FC = () => {
     [selectEdge]
   );
 
-  return (
-    <div className="relative w-full h-full flex-1 bg-background border rounded-lg overflow-hidden shadow-lg p-0 m-0 flex flex-col" style={{ minHeight: 0, minWidth: 0 }} onMouseMove={handleMouseMove}>
+  const content = (
+    <>
       <GraphD3Toolbar
         layoutMode={layoutMode}
         setLayoutMode={handleSetLayoutMode}
@@ -210,8 +214,26 @@ const GraphD3Canvas: React.FC = () => {
           initialPositions={layoutMode === "force" ? d3InitialPositions : undefined}
           // Pass edge context menu handler
           onEdgeContextMenu={handleEdgeContextMenu}
+          usePortalRendering={usePortals}
         />
-      </div>
+      </div></>
+  );
+
+  return (
+    <div className="relative w-full h-full flex-1 bg-background border rounded-lg overflow-hidden shadow-lg p-0 m-0 flex flex-col" style={{ minHeight: 0, minWidth: 0 }} onMouseMove={handleMouseMove}>
+      {usePortals ? (
+        <GraphPortalProvider>
+          {content}
+          <GraphPortalNodes
+            nodes={filteredNodes}
+            hiddenNodeIds={hiddenNodeIds}
+            setHiddenNodeIds={setHiddenNodeIds}
+            setContextNodeId={setContextNodeId}
+          />
+        </GraphPortalProvider>
+      ) : (
+        content
+      )}
       {timeRange && (
         <div className="absolute bottom-2 left-4 right-4 p-2 bg-background/90 backdrop-blur-sm rounded-md border shadow-lg z-20">
             <TimeRangeSlider

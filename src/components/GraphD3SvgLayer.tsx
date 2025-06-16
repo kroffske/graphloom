@@ -21,6 +21,7 @@ type GraphD3SvgLayerProps = {
   initialPositions?: Record<string, { x: number; y: number }>;
   // NEW: edge context menu handler
   onEdgeContextMenu?: (edgeId: string, event: MouseEvent | React.MouseEvent) => void;
+  usePortalRendering?: boolean;
 };
 
 const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = (props) => {
@@ -41,6 +42,7 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = (props) => {
     captureSimulationPositions,
     initialPositions,
     onEdgeContextMenu,
+    usePortalRendering = false,
   } = props;
 
   const svgRef = useRef<SVGSVGElement | null>(null);
@@ -78,6 +80,7 @@ const GraphD3SvgLayer: React.FC<GraphD3SvgLayerProps> = (props) => {
     simNodes,
     simEdges,
     onEdgeContextMenu: onEdgeContextMenu as any,
+    usePortalRendering,
   });
 
   // Pass svgRef down to GraphD3SvgFrame
