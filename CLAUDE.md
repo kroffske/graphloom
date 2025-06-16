@@ -82,9 +82,10 @@ Detailed documentation is available in the `docs/` directory:
 ### Quick Reference
 
 #### Changing Node Sizes
-- GraphNodeV2: Edit hardcoded radius in `src/components/GraphNodeV2.tsx` (line 167)
-- GraphD3Node: Change default size in `src/components/GraphD3Node.tsx` (line 37)
-- Current defaults: 19px radius (38px diameter)
+- Use appearance settings: `size` property (in pixels)
+- GraphNodeV2 & GraphD3Node: Default 38px diameter
+- Borders: Use `borderEnabled`, `borderColor`, `borderWidth`
+- All appearance settings are now fully respected
 
 #### Performance Tips
 - Use "Fast" layout for 5000+ nodes

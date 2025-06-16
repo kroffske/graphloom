@@ -8,12 +8,13 @@ This guide explains how to customize node appearance, including icon sizes, icon
 
 The application uses two rendering systems with different size configurations:
 
-1. **GraphNodeV2 (SVG-based)** - Uses hardcoded values:
-   - Circle radius: `19px`
-   - Selection circle radius: `22px`
-   - Icon container: `20x20px`
-   - Emoji font size: `14px`
-   - Label position: `y=35` (below the node)
+1. **GraphNodeV2 (SVG-based)** - Now fully configurable:
+   - Default node size: `38px` (diameter)
+   - Circle radius: Calculated from `appearance.size / 2`
+   - Selection circle radius: `radius + 3`
+   - Icon container: Scales with node size
+   - Emoji font size: `radius * 0.7`
+   - Label position: `radius + 16` (below the node)
 
 2. **GraphD3Node (HTML-based)** - Uses configurable values:
    - Default node size: `38px` (radius = 19px)
@@ -22,28 +23,37 @@ The application uses two rendering systems with different size configurations:
 
 ### Changing Node Sizes
 
-#### Method 1: Global Changes (Code Modification)
+#### Method 1: Appearance System (Recommended)
 
-To change the default node sizes globally, modify these files:
+Use the appearance settings in the UI or programmatically:
+
+```typescript
+// Per node type
+nodeTypeAppearances: {
+  person: {
+    size: 48,  // 48px diameter
+    borderEnabled: true,
+    borderColor: '#3b82f6',
+    borderWidth: 2,
+    // ... other properties
+  }
+}
+
+// Per individual node
+node.appearance = {
+  size: 60,  // Override for specific node
+  // ... other properties
+}
+```
+
+#### Method 2: Global Default (Code Modification)
+
+To change the default size for all nodes:
 
 **For GraphNodeV2** (`src/components/GraphNodeV2.tsx`):
 ```tsx
-// Line 167: Main circle radius
-<circle r={19} />  // Change this value
-
-// Line 258: Selection circle
-<circle r={22} />  // Change this value
-
-// Lines 208-211: Icon container size
-<foreignObject
-  x={-10}      // Adjust to center icon
-  y={-10}      // Adjust to center icon
-  width={20}    // Icon container width
-  height={20}   // Icon container height
-/>
-
-// Line 194: Emoji font size
-fontSize={14}  // Change for emoji size
+// Line ~57: Default node size
+const nodeSize = appearance.size ?? 38;  // Change default value
 ```
 
 **For GraphD3Node** (`src/components/GraphD3Node.tsx`):
@@ -52,19 +62,19 @@ fontSize={14}  // Change for emoji size
 const nodeSize = appearance.size ?? 38;  // Change default
 ```
 
-#### Method 2: Appearance System (Runtime Configuration)
+### Border Configuration
 
-Use the appearance system to configure sizes per node type:
+Node borders are now fully configurable:
 
 ```typescript
-// In appearance presets or node type settings
 {
-  size: 48,  // Node diameter in pixels
-  icon: '🏢',
-  backgroundColor: 'rgba(34, 197, 94, 0.1)',
-  // ... other properties
+  borderEnabled: true,     // Enable/disable border
+  borderColor: '#3b82f6',  // Border color
+  borderWidth: 2,          // Border width in pixels
 }
 ```
+
+**Note:** Selected nodes always show a blue border regardless of settings.
 
 ### Force Simulation Adjustments
 
