@@ -35,6 +35,14 @@ Generate realistic test data:
 - Creating subgraph structures
 - Performance testing scenarios
 
+### ⏱️ [Time-Based Edge Filtering](time-filtering.md)
+Filter edges by timestamp:
+- Automatic timestamp detection
+- Interactive time range slider
+- Play/pause animation controls
+- Support for multiple timestamp formats
+- Performance optimized for large datasets
+
 ## Quick Start
 
 For most common tasks:
