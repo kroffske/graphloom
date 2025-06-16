@@ -42,9 +42,13 @@ export type GraphStore = {
   showEdgeLabels: boolean;
   toggleEdgeLabels: () => void;
 
-  // New: time range filtering
-  timeRange: [number, number] | null;
-  setTimeRange: (range: [number, number] | null) => void;
+  // Time range filtering
+  timeRange: { min: number; max: number } | null;
+  selectedTimeRange: { start: number; end: number } | null;
+  timestampField: string | null;
+  setTimeRange: (range: { min: number; max: number } | null) => void;
+  setSelectedTimeRange: (range: { start: number; end: number } | null) => void;
+  setTimestampField: (field: string | null) => void;
 
   // Add: persistent uploaded file names & setters
   nodeFilename: string | null;
@@ -165,9 +169,13 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   setNodeFilename: (filename) => set({ nodeFilename: filename }),
   setEdgeFilename: (filename) => set({ edgeFilename: filename }),
 
-  // NEW: time range filtering
+  // Time range filtering
   timeRange: null,
+  selectedTimeRange: null,
+  timestampField: null,
   setTimeRange: (range) => set({ timeRange: range }),
+  setSelectedTimeRange: (range) => set({ selectedTimeRange: range }),
+  setTimestampField: (field) => set({ timestampField: field }),
 
   // NEW: selected appearance types state
   selectedNodeType: null,

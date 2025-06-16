@@ -5,6 +5,7 @@ import UploadCsvSection from "./UploadCsvSection";
 import MainSettingsSection from "./MainSettingsSection";
 import { ScrollArea } from "./ui/scroll-area";
 import { parseCsvData } from "@/utils/csvParser";
+import { analyzeTimestampFields, findTimeRange } from "@/utils/timestampUtils";
 
 const UploadPanel = () => {
   const { setNodes, setEdges } = useGraphStore();
@@ -17,6 +18,19 @@ const UploadPanel = () => {
     );
     setNodes(defaultNodes);
     setEdges(defaultEdges);
+    
+    // Analyze timestamps in edges
+    const timestampFields = analyzeTimestampFields(defaultEdges);
+    if (timestampFields.length > 0) {
+      const bestField = timestampFields[0];
+      useGraphStore.getState().setTimestampField(bestField.field);
+      
+      const timeRange = findTimeRange(defaultEdges, bestField.field);
+      if (timeRange) {
+        useGraphStore.getState().setTimeRange(timeRange);
+        useGraphStore.getState().setSelectedTimeRange(timeRange);
+      }
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -25,6 +39,24 @@ const UploadPanel = () => {
     const { nodes, edges } = parseCsvData(SAMPLE_TAB_CSVS.example.nodes, SAMPLE_TAB_CSVS.example.edges);
     setNodes(nodes);
     setEdges(edges);
+    
+    // Analyze timestamps in edges
+    const timestampFields = analyzeTimestampFields(edges);
+    if (timestampFields.length > 0) {
+      const bestField = timestampFields[0];
+      useGraphStore.getState().setTimestampField(bestField.field);
+      
+      const timeRange = findTimeRange(edges, bestField.field);
+      if (timeRange) {
+        useGraphStore.getState().setTimeRange(timeRange);
+        useGraphStore.getState().setSelectedTimeRange(timeRange);
+      }
+    } else {
+      // Clear time range if no timestamps found
+      useGraphStore.getState().setTimestampField(null);
+      useGraphStore.getState().setTimeRange(null);
+      useGraphStore.getState().setSelectedTimeRange(null);
+    }
   };
 
   // --- Show Upload/Examples and Settings SIDE BY SIDE, responsive layout ---

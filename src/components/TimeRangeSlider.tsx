@@ -1,46 +1,185 @@
+import React, { useCallback, useMemo } from 'react';
+import { Slider } from '@/components/ui/slider';
+import { Button } from '@/components/ui/button';
+import { Play, Pause, FastForward, RotateCcw } from 'lucide-react';
+import { useGraphStore } from '@/state/useGraphStore';
+import { formatTimestamp } from '@/utils/timestampUtils';
+import { cn } from '@/lib/utils';
 
-import * as React from "react";
-import { format } from "date-fns";
-import { Slider } from "@/components/ui/slider";
-
-type TimeRangeSliderProps = {
-  min: number;
-  max: number;
-  value: [number, number];
-  onChange: (value: [number, number]) => void;
+interface TimeRangeSliderProps {
   className?: string;
-};
+}
 
-const TimeRangeSlider: React.FC<TimeRangeSliderProps> = ({
-  min,
-  max,
-  value,
-  onChange,
-  className,
-}) => {
-  const handleValueChange = (newValue: number[]) => {
-    onChange([newValue[0], newValue[1]]);
-  };
-  
-  if (min >= max) {
-    return <div className="text-sm text-muted-foreground p-2 text-center">Not enough time data to create a filter range.</div>;
+export const TimeRangeSlider: React.FC<TimeRangeSliderProps> = ({ className }) => {
+  const timeRange = useGraphStore(state => state.timeRange);
+  const selectedTimeRange = useGraphStore(state => state.selectedTimeRange);
+  const setSelectedTimeRange = useGraphStore(state => state.setSelectedTimeRange);
+  const edges = useGraphStore(state => state.edges);
+  const timestampField = useGraphStore(state => state.timestampField);
+
+  // Animation state
+  const [isPlaying, setIsPlaying] = React.useState(false);
+  const [playbackSpeed, setPlaybackSpeed] = React.useState(1);
+  const animationRef = React.useRef<number>();
+
+  // If no time range is set, don't render
+  if (!timeRange || !timestampField) {
+    return null;
   }
 
+  const { min, max } = timeRange;
+  const range = max - min;
+  
+  // Initialize selected range to full range if not set
+  const currentRange = selectedTimeRange || { start: min, end: max };
+
+  const handleSliderChange = useCallback((value: number[]) => {
+    if (value.length === 2) {
+      setSelectedTimeRange({
+        start: value[0],
+        end: value[1]
+      });
+    }
+  }, [setSelectedTimeRange]);
+
+  const handlePlayPause = useCallback(() => {
+    if (isPlaying) {
+      // Pause
+      setIsPlaying(false);
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    } else {
+      // Play
+      setIsPlaying(true);
+      const startTime = Date.now();
+      const duration = 10000 / playbackSpeed; // 10 seconds at 1x speed
+      const startRange = currentRange.start;
+      const endRange = currentRange.end;
+      
+      const animate = () => {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        if (progress < 1) {
+          const newEnd = startRange + (endRange - startRange) * progress;
+          setSelectedTimeRange({
+            start: startRange,
+            end: newEnd
+          });
+          animationRef.current = requestAnimationFrame(animate);
+        } else {
+          setIsPlaying(false);
+        }
+      };
+      
+      animate();
+    }
+  }, [isPlaying, playbackSpeed, currentRange, setSelectedTimeRange]);
+
+  const handleReset = useCallback(() => {
+    setSelectedTimeRange({ start: min, end: max });
+    setIsPlaying(false);
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
+    }
+  }, [min, max, setSelectedTimeRange]);
+
+  const handleSpeedChange = useCallback(() => {
+    const speeds = [1, 2, 5, 10];
+    const currentIndex = speeds.indexOf(playbackSpeed);
+    const nextIndex = (currentIndex + 1) % speeds.length;
+    setPlaybackSpeed(speeds[nextIndex]);
+  }, [playbackSpeed]);
+
+  // Calculate active edges count
+  const activeEdges = useMemo(() => {
+    if (!selectedTimeRange) return edges.length;
+    
+    return edges.filter(edge => {
+      const value = timestampField.includes('.') 
+        ? timestampField.split('.').reduce((obj: any, key) => obj?.[key], edge)
+        : (edge as any)[timestampField];
+      
+      if (!value) return true; // Include edges without timestamps
+      
+      const timestamp = new Date(value).getTime();
+      return !isNaN(timestamp) && timestamp >= currentRange.start && timestamp <= currentRange.end;
+    }).length;
+  }, [edges, timestampField, currentRange, selectedTimeRange]);
+
+  // Cleanup animation on unmount
+  React.useEffect(() => {
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, []);
+
   return (
-    <div className={`flex flex-col gap-2 ${className}`}>
-      <div className="flex justify-between text-xs text-muted-foreground px-1">
-        <span>{format(new Date(value[0]), "MMM d, yyyy HH:mm")}</span>
-        <span>{format(new Date(value[1]), "MMM d, yyyy HH:mm")}</span>
+    <div className={cn("bg-card border rounded-lg p-4", className)}>
+      <div className="space-y-3">
+        {/* Header with controls */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePlayPause}
+              className="w-8 h-8 p-0"
+            >
+              {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+            </Button>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSpeedChange}
+              className="h-8 px-2"
+            >
+              <FastForward className="h-4 w-4 mr-1" />
+              {playbackSpeed}x
+            </Button>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleReset}
+              className="w-8 h-8 p-0"
+            >
+              <RotateCcw className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          <div className="text-sm text-muted-foreground">
+            {activeEdges} / {edges.length} edges
+          </div>
+        </div>
+
+        {/* Time labels */}
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span>{formatTimestamp(currentRange.start, 'datetime')}</span>
+          <span>{formatTimestamp(currentRange.end, 'datetime')}</span>
+        </div>
+
+        {/* Slider */}
+        <Slider
+          min={min}
+          max={max}
+          step={Math.max(1, Math.floor(range / 1000))} // Max 1000 steps
+          value={[currentRange.start, currentRange.end]}
+          onValueChange={handleSliderChange}
+          className="py-4"
+          disabled={isPlaying}
+        />
+
+        {/* Min/Max labels */}
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span>Min: {formatTimestamp(min, 'date')}</span>
+          <span>Max: {formatTimestamp(max, 'date')}</span>
+        </div>
       </div>
-      <Slider
-        min={min}
-        max={max}
-        step={1000 * 60} // 1 minute steps
-        value={value}
-        onValueChange={handleValueChange}
-      />
     </div>
   );
 };
-
-export default TimeRangeSlider;

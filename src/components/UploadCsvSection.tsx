@@ -5,6 +5,7 @@ import { useGraphStore } from "@/state/useGraphStore";
 import { SAMPLE_TAB_CSVS, SampleTabs } from "./SampleTabs";
 import { Upload as UploadIcon } from "lucide-react";
 import { castToSupportedType } from "@/utils/csvParser";
+import { analyzeTimestampFields, findTimeRange } from "@/utils/timestampUtils";
 
 type UploadCsvSectionProps = {
   onExample: (preset?: "example") => void;
@@ -107,7 +108,27 @@ const UploadCsvSection: React.FC<UploadCsvSectionProps> = ({ onExample }) => {
           };
         });
         setEdges(edges);
-        toast.success("Loaded edges!");
+        
+        // Analyze timestamps in edges
+        const timestampFields = analyzeTimestampFields(edges);
+        if (timestampFields.length > 0) {
+          // Use the field with highest coverage
+          const bestField = timestampFields[0];
+          useGraphStore.getState().setTimestampField(bestField.field);
+          
+          const timeRange = findTimeRange(edges, bestField.field);
+          if (timeRange) {
+            useGraphStore.getState().setTimeRange(timeRange);
+            useGraphStore.getState().setSelectedTimeRange(timeRange);
+            toast.success(`Loaded edges with timestamps from ${bestField.field} field!`);
+          }
+        } else {
+          // Clear time range if no timestamps found
+          useGraphStore.getState().setTimestampField(null);
+          useGraphStore.getState().setTimeRange(null);
+          useGraphStore.getState().setSelectedTimeRange(null);
+          toast.success("Loaded edges!");
+        }
       },
       error: () => toast.error("Failed to parse edges.csv"),
     });
