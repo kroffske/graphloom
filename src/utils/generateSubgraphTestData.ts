@@ -27,7 +27,7 @@ export function generateSubgraphTestData(
       icon: '👤',
       color: '#1e40af',
       backgroundColor: 'rgba(59, 130, 246, 0.1)',
-      internalEdgeDensity: 0.8 // Highly connected
+      internalEdgeDensity: 0.4 // Moderately connected
     },
     {
       id: 'companies',
@@ -36,7 +36,7 @@ export function generateSubgraphTestData(
       icon: '🏢',
       color: '#065f46',
       backgroundColor: 'rgba(34, 197, 94, 0.1)',
-      internalEdgeDensity: 0.6
+      internalEdgeDensity: 0.3
     },
     {
       id: 'products',
@@ -45,7 +45,7 @@ export function generateSubgraphTestData(
       icon: '📦',
       color: '#92400e',
       backgroundColor: 'rgba(251, 191, 36, 0.1)',
-      internalEdgeDensity: 0.5
+      internalEdgeDensity: 0.25
     },
     {
       id: 'locations',
@@ -54,7 +54,7 @@ export function generateSubgraphTestData(
       icon: '📍',
       color: '#9f1239',
       backgroundColor: 'rgba(239, 68, 68, 0.1)',
-      internalEdgeDensity: 0.3 // Loosely connected
+      internalEdgeDensity: 0.15 // Sparsely connected
     }
   ].slice(0, subgraphCount);
   
@@ -112,7 +112,7 @@ export function generateSubgraphTestData(
   subgraphConfigs.forEach(config => {
     const range = subgraphNodeRanges.get(config.id)!;
     const nodeCount = range.end - range.start + 1;
-    const edgeCount = Math.floor(nodeCount * config.internalEdgeDensity * 2);
+    const edgeCount = Math.floor(nodeCount * config.internalEdgeDensity * 1);
     
     const addedEdges = new Set<string>();
     

@@ -4,7 +4,7 @@ import { generateSubgraphTestData } from './generateSubgraphTestData';
 export function generateTestGraph(nodeCount: number = 5000) {
   // For large graphs, use subgraph structure for better performance
   if (nodeCount >= 500) {
-    return generateSubgraphTestData(nodeCount, 4, Math.floor(nodeCount * 0.01));
+    return generateSubgraphTestData(nodeCount, 4, Math.floor(nodeCount * 0.005));
   }
   
   // Original implementation for small graphs
@@ -36,8 +36,8 @@ export function generateTestGraph(nodeCount: number = 5000) {
     });
   }
   
-  // Generate edges (sparse graph, ~2-3 edges per node average)
-  const edgeCount = Math.floor(nodeCount * 2.5);
+  // Generate edges (sparse graph, ~1-1.5 edges per node average)
+  const edgeCount = Math.floor(nodeCount * 1.25);
   const edgeTypes = ['CONNECTED_TO', 'KNOWS', 'WORKS_AT', 'OWNS', 'LOCATED_IN'];
   
   for (let i = 0; i < edgeCount; i++) {

@@ -102,7 +102,7 @@ export const GraphCanvasV2: React.FC = () => {
             .id((d: any) => d.id)
             .distance((d: any) => {
               // Shorter distances for internal edges, longer for inter-subgraph
-              return d.type === 'INTER_SUBGRAPH' ? 200 : 80;
+              return d.type === 'INTER_SUBGRAPH' ? 150 : 60;
             })
             .strength((d: any) => {
               // Stronger internal connections, weaker inter-subgraph
@@ -116,7 +116,7 @@ export const GraphCanvasV2: React.FC = () => {
           )
           .force('center', d3.forceCenter(450, 265).strength(0.05))
           .force('collision', d3.forceCollide()
-            .radius(isLargeGraph ? 30 : 40)
+            .radius(isLargeGraph ? 16 : 22)
             .strength(0.7)
             .iterations(isLargeGraph ? 1 : 2) // Fewer iterations for performance
           );
@@ -249,7 +249,7 @@ export const GraphCanvasV2: React.FC = () => {
         // Optional: Run a quick force simulation to separate overlapping nodes
         if (nodes.length < 1000) {
           const quickSim = d3.forceSimulation(simNodes)
-            .force('collision', d3.forceCollide().radius(35))
+            .force('collision', d3.forceCollide().radius(20))
             .velocityDecay(0.8)
             .alphaDecay(0.1)
             .alpha(0.1);
@@ -505,7 +505,7 @@ export const GraphCanvasV2: React.FC = () => {
                   key={node.id}
                   cx={pos.x}
                   cy={pos.y}
-                  r={8}
+                  r={5}
                   fill={node.appearance?.backgroundColor || 'transparent'}
                   stroke="#e5e7eb"
                   strokeWidth={1}
