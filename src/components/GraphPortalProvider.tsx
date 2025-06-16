@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useCallback, useRef, useEff
 import { createPortal } from 'react-dom';
 import { graphEventBus } from '@/lib/graphEventBus';
 import { debugLog } from '@/lib/debugLogger';
+import { copyLog } from '@/lib/copyableLog';
 
 interface Point {
   x: number;
@@ -126,8 +127,21 @@ export const GraphPortalProvider: React.FC<{ children: React.ReactNode }> = ({ c
     if (overlayRef.current) {
       const rect = overlayRef.current.getBoundingClientRect();
       debugLog('[Portal] Overlay dimensions:', { width: rect.width, height: rect.height });
+      
+      // Log diagnostic info as copyable string
+      setTimeout(() => {
+        const diagnostics = {
+          overlayDimensions: { width: rect.width, height: rect.height },
+          currentTransform: transform,
+          portalCount: portals.size,
+          firstPortal: portals.size > 0 ? Array.from(portals.values())[0] : null
+        };
+        console.log('=== PORTAL DIAGNOSTICS (copy this) ===');
+        console.log(JSON.stringify(diagnostics, null, 2));
+        console.log('=== END DIAGNOSTICS ===');
+      }, 1000);
     }
-  }, []);
+  }, [transform, portals]);
 
   return (
     <GraphPortalContext.Provider value={contextValue}>
