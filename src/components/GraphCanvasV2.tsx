@@ -616,6 +616,8 @@ export const GraphCanvasV2: React.FC = () => {
         <PerformanceIndicator
           totalNodes={filteredNodes.length}
           visibleNodes={visibleNodes.length}
+          totalEdges={filteredEdges.length}
+          visibleEdges={filteredEdges.length}
           zoom={transform.k}
           simplified={simplifiedRendering}
         />
