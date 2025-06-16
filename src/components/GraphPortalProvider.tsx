@@ -23,6 +23,9 @@ interface GraphPortalContextValue {
 
 const GraphPortalContext = createContext<GraphPortalContextValue | null>(null);
 
+// Store current transform
+let currentTransform = { k: 1, x: 0, y: 0 };
+
 export const useGraphPortal = () => {
   const context = useContext(GraphPortalContext);
   if (!context) {
@@ -33,6 +36,7 @@ export const useGraphPortal = () => {
 
 export const GraphPortalProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [portals, setPortals] = useState<Map<string, PortalInfo>>(new Map());
+  const [transform, setTransform] = useState({ k: 1, x: 0, y: 0 });
   const overlayRef = useRef<HTMLDivElement>(null);
 
   const registerPortal = useCallback((id: string, element: React.ReactElement, type: PortalInfo['type']) => {
@@ -86,12 +90,19 @@ export const GraphPortalProvider: React.FC<{ children: React.ReactNode }> = ({ c
       });
     };
 
+    const handleTransformChange = (newTransform: { k: number; x: number; y: number }) => {
+      currentTransform = newTransform;
+      setTransform(newTransform);
+    };
+
     graphEventBus.on('node:position', handlePositionUpdate);
     graphEventBus.on('simulation:tick', handleSimulationTick);
+    graphEventBus.on('transform:change', handleTransformChange);
 
     return () => {
       graphEventBus.off('node:position', handlePositionUpdate);
       graphEventBus.off('simulation:tick', handleSimulationTick);
+      graphEventBus.off('transform:change', handleTransformChange);
     };
   }, [updatePortalPosition]);
 
@@ -106,7 +117,7 @@ export const GraphPortalProvider: React.FC<{ children: React.ReactNode }> = ({ c
     <GraphPortalContext.Provider value={contextValue}>
       <div style={{ position: 'relative', width: '100%', height: '100%' }}>
         {children}
-        <GraphReactOverlay portals={portals} ref={overlayRef} />
+        <GraphReactOverlay portals={portals} transform={transform} ref={overlayRef} />
       </div>
     </GraphPortalContext.Provider>
   );
@@ -115,8 +126,8 @@ export const GraphPortalProvider: React.FC<{ children: React.ReactNode }> = ({ c
 // Separate component for the overlay to prevent re-renders of the main content
 const GraphReactOverlay = React.forwardRef<
   HTMLDivElement,
-  { portals: Map<string, PortalInfo> }
->(({ portals }, ref) => {
+  { portals: Map<string, PortalInfo>; transform: { k: number; x: number; y: number } }
+>(({ portals, transform }, ref) => {
   return (
     <div
       ref={ref}
@@ -131,19 +142,26 @@ const GraphReactOverlay = React.forwardRef<
         overflow: 'hidden',
       }}
     >
-      {Array.from(portals.values()).map((portal) => (
-        <div
-          key={portal.id}
-          className={`portal-item portal-${portal.type}`}
-          style={{
-            position: 'absolute',
-            transform: `translate(${portal.position.x}px, ${portal.position.y}px)`,
-            pointerEvents: portal.type === 'tooltip' ? 'none' : 'auto',
-          }}
-        >
-          {portal.element}
-        </div>
-      ))}
+      <div
+        style={{
+          transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.k})`,
+          transformOrigin: '0 0',
+        }}
+      >
+        {Array.from(portals.values()).map((portal) => (
+          <div
+            key={portal.id}
+            className={`portal-item portal-${portal.type}`}
+            style={{
+              position: 'absolute',
+              transform: `translate(${portal.position.x - 36}px, ${portal.position.y - 36}px)`,
+              pointerEvents: portal.type === 'tooltip' ? 'none' : 'auto',
+            }}
+          >
+            {portal.element}
+          </div>
+        ))}
+      </div>
     </div>
   );
 });
