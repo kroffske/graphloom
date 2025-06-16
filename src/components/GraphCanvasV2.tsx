@@ -135,10 +135,10 @@ export const GraphCanvasV2: React.FC = () => {
   
   // Handle node drag
   const handleNodeDrag = useCallback((nodeId: string, dx: number, dy: number, type: 'start' | 'drag' | 'end') => {
-    // console.log('handleNodeDrag called:', { nodeId, dx, dy, type });
+    console.log('[GraphCanvasV2] handleNodeDrag called:', { nodeId, dx, dy, type });
     const simulation = simulationRef.current;
     if (!simulation) {
-      // console.warn('No simulation available');
+      console.warn('[GraphCanvasV2] No simulation available');
       return;
     }
     
@@ -146,7 +146,7 @@ export const GraphCanvasV2: React.FC = () => {
       // Find the node in simulation
       const node = simulation.nodes().find((n: any) => n.id === nodeId);
       if (!node) {
-        // console.warn('Node not found in simulation:', nodeId);
+        console.warn('[GraphCanvasV2] Node not found in simulation:', nodeId);
         return;
       }
       
@@ -157,7 +157,7 @@ export const GraphCanvasV2: React.FC = () => {
       }
       node.fx = node.x;
       node.fy = node.y;
-      // console.log('Drag started, fixed node at:', node.x, node.y);
+      console.log('[GraphCanvasV2] Drag started, fixed node at:', node.x, node.y);
     } else if (type === 'drag') {
       // For drag, dx and dy are the mouse positions, not deltas
       if (dragSubjectRef.current) {
@@ -190,7 +190,7 @@ export const GraphCanvasV2: React.FC = () => {
       height="100%"
       viewBox="0 0 900 530"
       className="bg-background"
-      style={{ cursor: 'default' }}
+      style={{ cursor: 'default', touchAction: 'none' }}
       onContextMenu={(e) => e.preventDefault()}
     >
       <g 
@@ -230,7 +230,12 @@ export const GraphCanvasV2: React.FC = () => {
         <g className="nodes">
           {nodes.map(node => {
             const pos = positions.get(node.id);
-            if (!pos) return null;
+            if (!pos) {
+              console.warn('[GraphCanvasV2] No position for node:', node.id);
+              return null;
+            }
+            
+            console.log('[GraphCanvasV2] Rendering node:', node.id, 'at position:', pos);
             
             return (
               <GraphNodeV2

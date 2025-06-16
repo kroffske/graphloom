@@ -15,6 +15,8 @@ const Index = () => {
   // Only "graph" and "upload", now "graph" leftmost
   const [mainTab, setMainTab] = useState<"graph" | "upload">("graph");
   const useReactFirstApproach = useFeatureFlag('USE_REACT_FIRST_GRAPH');
+  
+  console.log('[Index] Using React-First approach:', useReactFirstApproach);
 
   return (
     <IconRegistryProvider>
