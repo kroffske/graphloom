@@ -137,6 +137,9 @@ export function useD3SvgGraph({
         foreignObjectSize: NODE_RADIUS * 2
       }, null, 2));
       console.log('=== END D3 DIAGNOSTICS ===');
+      
+      // Emit scale for portal rendering
+      graphEventBus.emit('svg:dimensions', { svgScale: { x: scaleX, y: scaleY } });
     }
 
     // Clean up any existing React roots before D3 removes elements

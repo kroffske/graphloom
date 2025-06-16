@@ -39,6 +39,7 @@ export const useGraphPortal = () => {
 export const GraphPortalProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [portals, setPortals] = useState<Map<string, PortalInfo>>(new Map());
   const [transform, setTransform] = useState({ k: 1, x: 0, y: 0 });
+  const [svgScale, setSvgScale] = useState({ x: 1, y: 1 });
   const overlayRef = useRef<HTMLDivElement>(null);
 
   const registerPortal = useCallback((id: string, element: React.ReactElement, type: PortalInfo['type']) => {
@@ -104,14 +105,21 @@ export const GraphPortalProvider: React.FC<{ children: React.ReactNode }> = ({ c
       setTransform(newTransform);
     };
 
+    const handleSvgDimensions = ({ svgScale }: { svgScale: { x: number; y: number } }) => {
+      debugLog('[Portal] SVG scale update:', svgScale);
+      setSvgScale(svgScale);
+    };
+
     graphEventBus.on('node:position', handlePositionUpdate);
     graphEventBus.on('simulation:tick', handleSimulationTick);
     graphEventBus.on('transform:change', handleTransformChange);
+    graphEventBus.on('svg:dimensions', handleSvgDimensions);
 
     return () => {
       graphEventBus.off('node:position', handlePositionUpdate);
       graphEventBus.off('simulation:tick', handleSimulationTick);
       graphEventBus.off('transform:change', handleTransformChange);
+      graphEventBus.off('svg:dimensions', handleSvgDimensions);
     };
   }, [updatePortalPosition]);
 
@@ -133,6 +141,7 @@ export const GraphPortalProvider: React.FC<{ children: React.ReactNode }> = ({ c
         const diagnostics = {
           overlayDimensions: { width: rect.width, height: rect.height },
           currentTransform: transform,
+          svgScale: svgScale,
           portalCount: portals.size,
           firstPortal: portals.size > 0 ? Array.from(portals.values())[0] : null
         };
@@ -147,7 +156,7 @@ export const GraphPortalProvider: React.FC<{ children: React.ReactNode }> = ({ c
     <GraphPortalContext.Provider value={contextValue}>
       <div style={{ position: 'relative', width: '100%', height: '100%' }}>
         {children}
-        <GraphReactOverlay portals={portals} transform={transform} ref={overlayRef} />
+        <GraphReactOverlay portals={portals} transform={transform} svgScale={svgScale} ref={overlayRef} />
       </div>
     </GraphPortalContext.Provider>
   );
@@ -156,8 +165,8 @@ export const GraphPortalProvider: React.FC<{ children: React.ReactNode }> = ({ c
 // Separate component for the overlay to prevent re-renders of the main content
 const GraphReactOverlay = React.forwardRef<
   HTMLDivElement,
-  { portals: Map<string, PortalInfo>; transform: { k: number; x: number; y: number } }
->(({ portals, transform }, ref) => {
+  { portals: Map<string, PortalInfo>; transform: { k: number; x: number; y: number }; svgScale: { x: number; y: number } }
+>(({ portals, transform, svgScale }, ref) => {
   return (
     <div
       ref={ref}
@@ -179,8 +188,12 @@ const GraphReactOverlay = React.forwardRef<
         }}
       >
         {Array.from(portals.values()).map((portal) => {
+          // Apply SVG scale to convert from viewBox coordinates to pixel coordinates
+          const scaledX = portal.position.x * svgScale.x;
+          const scaledY = portal.position.y * svgScale.y;
+          
           if (portal.type === 'node' && portal.id.includes('0')) { // Log first node
-            debugLog('[Portal] Rendering node:', portal.id, 'at position:', portal.position);
+            debugLog('[Portal] Rendering node:', portal.id, 'at position:', portal.position, 'scaled to:', { x: scaledX, y: scaledY });
           }
           return (
             <div
@@ -188,7 +201,7 @@ const GraphReactOverlay = React.forwardRef<
               className={`portal-item portal-${portal.type}`}
               style={{
                 position: 'absolute',
-                transform: `translate(${portal.position.x - 36}px, ${portal.position.y - 36}px)`,
+                transform: `translate(${scaledX - 36}px, ${scaledY - 36}px)`,
                 pointerEvents: portal.type === 'tooltip' ? 'none' : 'auto',
                 width: '72px',
                 height: '72px',
