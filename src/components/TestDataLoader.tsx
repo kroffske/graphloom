@@ -2,7 +2,8 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useGraphStore } from '@/state/useGraphStore';
 import { generateSmallTestGraph, generateMediumTestGraph, generateLargeTestGraph } from '@/utils/generateTestGraph';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Shuffle } from 'lucide-react';
+import { graphEventBus } from '@/lib/graphEventBus';
 
 export const TestDataLoader: React.FC = () => {
   const [loading, setLoading] = React.useState(false);
@@ -63,9 +64,21 @@ export const TestDataLoader: React.FC = () => {
         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Load 5000 Nodes'}
       </Button>
       {(nodeCount > 0 || edgeCount > 0) && (
-        <span className="text-sm text-muted-foreground ml-4">
-          Current: {nodeCount} nodes, {edgeCount} edges
-        </span>
+        <>
+          <div className="h-4 w-px bg-border mx-2" />
+          <Button
+            onClick={() => graphEventBus.emit('simulation:reheat', {})}
+            variant="ghost"
+            size="sm"
+            title="Reorganize layout"
+          >
+            <Shuffle className="h-4 w-4 mr-2" />
+            Reorganize
+          </Button>
+          <span className="text-sm text-muted-foreground ml-4">
+            Current: {nodeCount} nodes, {edgeCount} edges
+          </span>
+        </>
       )}
     </div>
   );

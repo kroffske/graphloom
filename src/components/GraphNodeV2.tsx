@@ -38,6 +38,14 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
     selectNode(node.id);
   }, [node.id, selectNode]);
   
+  const handleDoubleClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Double-click releases the node from fixed position
+    if (onDrag) {
+      onDrag(node.id, 0, 0, 'end');
+    }
+  }, [node.id, onDrag]);
+  
   const handleMouseEnter = useCallback(() => {
     if (!isDragging) {
       setHoveredNodeId(node.id);
@@ -117,6 +125,7 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
           transition: 'stroke 0.2s, stroke-width 0.2s'
         }}
         onClick={handleClick}
+        onDoubleClick={handleDoubleClick}
         onMouseDown={handleMouseDown}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
