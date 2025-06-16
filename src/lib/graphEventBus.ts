@@ -45,6 +45,7 @@ export interface GraphEvents {
   'edge:contextmenu': { edgeId: string; x: number; y: number };
   'transform:change': { k: number; x: number; y: number };
   'simulation:tick': { positions: Map<string, { x: number; y: number }> };
+  'svg:dimensions': { svgScale: { x: number; y: number } };
 }
 
 class TypedEventEmitter extends SimpleEventEmitter {
