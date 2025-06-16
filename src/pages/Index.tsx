@@ -4,6 +4,7 @@ import { IconRegistryProvider } from "@/components/IconRegistry";
 import GraphD3Canvas from "@/components/GraphD3Canvas";
 import { GraphCanvasV2 } from "@/components/GraphCanvasV2";
 import { useFeatureFlag } from "@/hooks/useFeatureFlag";
+import { TestDataLoader } from "@/components/TestDataLoader";
 import UploadPanel from "@/components/UploadPanel";
 import InspectorPanel from "@/components/InspectorPanel";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -42,8 +43,11 @@ const Index = () => {
           <SidebarProvider>
             <div className="flex-1 flex flex-row w-full min-h-0 max-h-[calc(100vh-70px)] overflow-hidden">
               <main className="flex-1 flex flex-col pl-7 pr-2 pt-6 pb-0 max-w-[calc(100vw-370px)]">
-                <TabsContent value="graph" className="p-0 h-full w-full">
-                  {useReactFirstApproach ? <GraphCanvasV2 /> : <GraphD3Canvas />}
+                <TabsContent value="graph" className="p-0 h-full w-full flex flex-col">
+                  {useReactFirstApproach && <TestDataLoader />}
+                  <div className="flex-1">
+                    {useReactFirstApproach ? <GraphCanvasV2 /> : <GraphD3Canvas />}
+                  </div>
                 </TabsContent>
                 <TabsContent value="upload" className="p-0 h-full w-full">
                   <UploadPanel />
