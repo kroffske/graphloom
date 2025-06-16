@@ -7,6 +7,7 @@ import GraphD3NodeMount from "@/components/GraphD3NodeMount";
 import { useGraphStore, GraphStore } from "@/state/useGraphStore";
 import { resolveLabelTemplate } from "@/utils/labelTemplate";
 import { graphEventBus } from "@/lib/graphEventBus";
+import { debugLog } from "@/lib/debugLogger";
 
 // Break out the shape constants since they may be used outside the hook as well
 export const WIDTH = 900;
@@ -118,8 +119,8 @@ export function useD3SvgGraph({
     
     // Log SVG dimensions
     const svgRect = svgRef.current.getBoundingClientRect();
-    console.log('[D3] SVG dimensions:', { width: svgRect.width, height: svgRect.height });
-    console.log('[D3] SVG viewBox:', svgRef.current.getAttribute('viewBox'));
+    debugLog('[D3] SVG dimensions:', { width: svgRect.width, height: svgRect.height });
+    debugLog('[D3] SVG viewBox:', svgRef.current.getAttribute('viewBox'));
 
     // Clean up any existing React roots before D3 removes elements
     nodeRootsMap.forEach((root, id) => {
@@ -357,7 +358,7 @@ export function useD3SvgGraph({
           positions.set(n.id, { x: n.x, y: n.y });
         }
       });
-      console.log('[D3] Initial positions:', positions);
+      debugLog('[D3] Initial positions:', positions);
       graphEventBus.emit('simulation:tick', { positions });
     }
 
