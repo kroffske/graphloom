@@ -65,13 +65,14 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
   }, [setHoveredNodeId, isDragging]);
   
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    console.log('[GraphNodeV2] handleMouseDown called, button:', e.button, 'onDrag available:', !!onDrag);
     // Only handle left mouse button (0) for dragging
     if (!onDrag || e.button !== 0) return;
     
     e.stopPropagation();
     e.preventDefault();
     
-    // console.log('Mouse down on node:', node.id, 'at position:', x, y);
+    console.log('[GraphNodeV2] Mouse down on node:', node.id, 'at position:', x, y);
     
     // Start drag
     onDrag(node.id, x, y, 'start');
@@ -79,38 +80,46 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
     // Set up drag handlers immediately
     const handleMouseMove = (e: MouseEvent) => {
       const svg = document.querySelector('svg');
-      if (!svg) return;
-      
-      // Get the current transform from the main g element
-      const gElement = svg.querySelector('g');
-      if (!gElement) return;
-      
-      // Parse transform attribute to get current zoom/pan
-      const transformMatch = gElement.getAttribute('transform')?.match(/translate\(([-\d.]+),([-\d.]+)\)\s*scale\(([-\d.]+)\)/);
-      if (!transformMatch) {
-        console.warn('No transform found on g element');
+      if (!svg) {
+        console.error('[GraphNodeV2] No SVG element found');
         return;
       }
       
-      const tx = parseFloat(transformMatch[1]);
-      const ty = parseFloat(transformMatch[2]);
-      const scale = parseFloat(transformMatch[3]);
+      // Get mouse position relative to SVG viewport
+      const pt = svg.createSVGPoint();
+      pt.x = e.clientX;
+      pt.y = e.clientY;
       
-      // Convert mouse position to SVG coordinates
-      const rect = svg.getBoundingClientRect();
-      const svgX = (e.clientX - rect.left) * (900 / rect.width);
-      const svgY = (e.clientY - rect.top) * (530 / rect.height);
+      // Get the transform matrix from the g element
+      const gElement = svg.querySelector('g');
+      if (!gElement) {
+        console.error('[GraphNodeV2] No g element found');
+        return;
+      }
       
-      // Apply inverse transform to get world coordinates
-      const worldX = (svgX - tx) / scale;
-      const worldY = (svgY - ty) / scale;
+      // Convert to SVG coordinates
+      const screenCTM = gElement.getScreenCTM();
+      if (!screenCTM) {
+        console.error('[GraphNodeV2] No screen CTM available');
+        return;
+      }
       
-      // console.log('Drag move:', { svgX, svgY, worldX, worldY, tx, ty, scale });
-      onDrag(node.id, worldX, worldY, 'drag');
+      const svgCoords = pt.matrixTransform(screenCTM.inverse());
+      
+      console.log('[GraphNodeV2] Drag move:', { 
+        nodeId: node.id, 
+        clientX: e.clientX, 
+        clientY: e.clientY, 
+        worldX: svgCoords.x, 
+        worldY: svgCoords.y,
+        transform: transform
+      });
+      
+      onDrag(node.id, svgCoords.x, svgCoords.y, 'drag');
     };
     
     const handleMouseUp = (e: MouseEvent) => {
-      // console.log('Mouse up, ending drag for node:', node.id);
+      console.log('[GraphNodeV2] Mouse up, ending drag for node:', node.id);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
       setIsDragging(false);
@@ -128,8 +137,9 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
     <g 
       className="graph-node-svg"
       transform={`translate(${x},${y})`}
-      style={{ cursor: isDragging ? 'grabbing' : 'pointer' }}
+      style={{ cursor: isDragging ? 'grabbing' : 'pointer', pointerEvents: 'all' }}
       data-node-id={node.id}
+      onMouseDown={handleMouseDown}
     >
       {/* Background circle */}
       <circle
@@ -140,7 +150,9 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
         className="dark:stroke-slate-600"
         style={{ 
           filter: isHovered ? 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3))' : undefined,
-          transition: 'stroke 0.2s, stroke-width 0.2s'
+          transition: 'stroke 0.2s, stroke-width 0.2s',
+          cursor: 'grab',
+          pointerEvents: 'all'
         }}
         onClick={handleClick}
         onContextMenu={handleContextMenu}
@@ -148,6 +160,7 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
         onMouseDown={handleMouseDown}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
+        onPointerDown={(e) => console.log('[GraphNodeV2] Pointer down on circle:', node.id, e)}
       />
       
       {/* Icon/Emoji */}
