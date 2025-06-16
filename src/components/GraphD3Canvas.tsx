@@ -1,5 +1,5 @@
 
-import React, { useRef, useCallback, useState, useMemo } from "react";
+import React, { useRef, useCallback, useState } from "react";
 import { useD3GraphState } from "@/hooks/useD3GraphState";
 import GraphD3Toolbar from "./GraphD3Toolbar";
 import GraphD3SvgLayer from "./GraphD3SvgLayer";
@@ -32,16 +32,12 @@ const GraphD3Canvas: React.FC = () => {
   const [dragging, setDragging] = React.useState<null | { id: string; offsetX: number; offsetY: number }>(null);
   const [hiddenNodeIds, setHiddenNodeIds] = React.useState<Set<string>>(new Set());
 
-  // Memoize the store selector to prevent infinite re-renders
-  const storeSelector = useMemo(() => (state: GraphStore) => ({
-    timeRange: state.timeRange,
-    setTimeRange: state.setTimeRange,
-    hoveredEdgeId: state.hoveredEdgeId,
-    setHoveredEdgeId: state.setHoveredEdgeId,
-    selectEdge: state.selectEdge,
-  }), []);
-
-  const { timeRange, setTimeRange, hoveredEdgeId, setHoveredEdgeId, selectEdge } = useGraphStore(storeSelector);
+  // Use individual selectors to prevent infinite re-renders
+  const timeRange = useGraphStore((state) => state.timeRange);
+  const setTimeRange = useGraphStore((state) => state.setTimeRange);
+  const hoveredEdgeId = useGraphStore((state) => state.hoveredEdgeId);
+  const setHoveredEdgeId = useGraphStore((state) => state.setHoveredEdgeId);
+  const selectEdge = useGraphStore((state) => state.selectEdge);
 
   const [mousePosition, setMousePosition] = React.useState<{ x: number, y: number } | null>(null);
 

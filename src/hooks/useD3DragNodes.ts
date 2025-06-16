@@ -14,7 +14,7 @@ type UseD3DragNodesProps = {
  * Manual mode: Only the dragged node is moved (one at a time). The node position is set directly from cursor.
  * This is a strict "holding" approach: on drag, node moves to cursor; on end, position is saved.
  */
-export function useD3DragNodes({
+export function setupD3DragNodes({
   nodeG,
   link,
   layoutMode,

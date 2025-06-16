@@ -1,7 +1,7 @@
 
 import { useEffect, useRef } from "react";
 import * as d3 from "d3";
-import { useD3DragNodes } from "@/hooks/useD3DragNodes";
+import { setupD3DragNodes } from "@/hooks/useD3DragNodes";
 import { useD3ZoomAndPan } from "@/hooks/useD3ZoomAndPan";
 import GraphD3NodeMount from "@/components/GraphD3NodeMount";
 import { useGraphStore, GraphStore } from "@/state/useGraphStore";
@@ -71,6 +71,9 @@ function getEdgeLabel(
   return label || "";
 }
 
+// Store React roots globally to ensure proper cleanup
+const nodeRootsMap = new Map<string, any>();
+
 export function useD3SvgGraph({
   svgRef,
   svgGroupRef,
@@ -94,16 +97,12 @@ export function useD3SvgGraph({
   simEdges,
   onEdgeContextMenu,
 }: UseD3SvgGraphProps) {
-  // Get edge selection API
-  const { selectedEdgeId, selectEdge, edgeAppearances, showEdgeLabels, edgeTypeAppearances } = useGraphStore(
-    (state: GraphStore) => ({
-      selectedEdgeId: state.selectedEdgeId,
-      selectEdge: state.selectEdge,
-      edgeAppearances: state.edgeAppearances,
-      showEdgeLabels: state.showEdgeLabels,
-      edgeTypeAppearances: state.edgeTypeAppearances,
-    })
-  );
+  // Get edge selection API - use individual selectors to prevent infinite re-renders
+  const selectedEdgeId = useGraphStore((state) => state.selectedEdgeId);
+  const selectEdge = useGraphStore((state) => state.selectEdge);
+  const edgeAppearances = useGraphStore((state) => state.edgeAppearances);
+  const showEdgeLabels = useGraphStore((state) => state.showEdgeLabels);
+  const edgeTypeAppearances = useGraphStore((state) => state.edgeTypeAppearances);
 
   useD3ZoomAndPan({
     svgRef,
@@ -113,6 +112,16 @@ export function useD3SvgGraph({
   // ------ D3 Setup/Rendering: Runs only on simNodes/simEdges/layout/topology updates ------
   useEffect(() => {
     if (!svgRef.current || !simNodes.length) return;
+
+    // Clean up any existing React roots before D3 removes elements
+    nodeRootsMap.forEach((root, id) => {
+      try {
+        root.unmount();
+      } catch (e) {
+        // Ignore errors if already unmounted
+      }
+    });
+    nodeRootsMap.clear();
 
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
@@ -220,7 +229,7 @@ export function useD3SvgGraph({
       .html((d: any) => `<div id="d3-node-${d.id}"></div>`);
 
     if (layoutMode === "manual") {
-      useD3DragNodes({
+      setupD3DragNodes({
         nodeG,
         link,
         layoutMode,
@@ -294,14 +303,34 @@ export function useD3SvgGraph({
         const mountPoint = document.getElementById(`d3-node-${n.id}`);
         if (mountPoint) {
           import("react-dom/client").then((ReactDOMClient) => {
-            ReactDOMClient.createRoot(mountPoint).render(
-              <GraphD3NodeMount
-                node={n}
-                hiddenNodeIds={hiddenNodeIds}
-                setHiddenNodeIds={setHiddenNodeIds}
-                setContextNodeId={setContextNodeId}
-              />
-            );
+            // Check if we already have a root for this node
+            let root = nodeRootsMap.get(n.id);
+            
+            // Only create a new root if we don't have one
+            if (!root) {
+              try {
+                root = ReactDOMClient.createRoot(mountPoint);
+                nodeRootsMap.set(n.id, root);
+              } catch (e) {
+                console.warn(`Failed to create root for node ${n.id}:`, e);
+                return;
+              }
+            }
+            
+            // Render the component
+            try {
+              root.render(
+                <GraphD3NodeMount
+                  node={n}
+                  hiddenNodeIds={hiddenNodeIds}
+                  setHiddenNodeIds={setHiddenNodeIds}
+                  setContextNodeId={setContextNodeId}
+                />
+              );
+            } catch (e) {
+              console.warn(`Failed to render node ${n.id}:`, e);
+              nodeRootsMap.delete(n.id);
+            }
           });
         }
       });
@@ -384,6 +413,16 @@ export function useD3SvgGraph({
     }
 
     return () => {
+      // Clean up React roots before stopping simulation
+      nodeRootsMap.forEach((root, id) => {
+        try {
+          root.unmount();
+        } catch (e) {
+          // Ignore errors if already unmounted
+        }
+      });
+      nodeRootsMap.clear();
+      
       simulation.stop && simulation.stop();
       svg.on(".zoom", null);
     };
