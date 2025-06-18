@@ -3,7 +3,6 @@ import * as d3 from 'd3';
 import { useGraphStore } from '@/state/useGraphStore';
 import { GraphNodeV2 } from './GraphNodeV2';
 import { graphEventBus } from '@/lib/graphEventBus';
-import { LayoutSelector, LayoutType } from './LayoutSelector';
 import { PerformanceIndicator } from './PerformanceIndicator';
 import { TimeRangeSlider } from './TimeRangeSlider';
 import { isEdgeInTimeRange } from '@/utils/timestampUtils';
@@ -27,13 +26,17 @@ interface Transform {
 export const GraphCanvasV2: React.FC = () => {
   const svgRef = useRef<SVGSVGElement>(null);
   const gRef = useRef<SVGGElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const simulationRef = useRef<d3.Simulation<any, any>>();
   const forceAtlas2Ref = useRef<ForceAtlas2Layout>();
   const openOrdRef = useRef<OpenOrdLayout>();
   const animationFrameRef = useRef<number>();
   
+  // Container dimensions
+  const [dimensions, setDimensions] = useState({ width: 900, height: 530 });
+  
   // Layout state
-  const [currentLayout, setCurrentLayout] = useState<LayoutType>('force');
+  const [currentLayout, setCurrentLayout] = useState<string>('force');
   
   // Single transform state for zoom/pan
   const [transform, setTransform] = useState<Transform>({ k: 1, x: 0, y: 0 });
@@ -88,6 +91,28 @@ export const GraphCanvasV2: React.FC = () => {
     }
     return nodes.filter(node => connectedNodeIds.has(node.id));
   }, [nodes, showIsolatedNodes, connectedNodeIds]);
+  
+  // Track container dimensions
+  useEffect(() => {
+    if (!containerRef.current) return;
+    
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        setDimensions({ width, height });
+      }
+    });
+    
+    resizeObserver.observe(containerRef.current);
+    
+    // Initial measurement
+    const rect = containerRef.current.getBoundingClientRect();
+    setDimensions({ width: rect.width, height: rect.height });
+    
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
   
   // Initialize layout based on current type
   useEffect(() => {
@@ -378,6 +403,19 @@ export const GraphCanvasV2: React.FC = () => {
     d3.select(svgRef.current).on('dblclick.zoom', null);
   }, []);
   
+  // Listen for layout change events
+  useEffect(() => {
+    const handleLayoutChange = ({ layout }: { layout: string }) => {
+      console.log('[GraphCanvasV2] Layout change event received:', layout);
+      setCurrentLayout(layout);
+    };
+    
+    graphEventBus.on('layout:change', handleLayoutChange);
+    return () => {
+      graphEventBus.off('layout:change', handleLayoutChange);
+    };
+  }, []);
+  
   // Listen for reheat events
   useEffect(() => {
     const handleReheat = () => {
@@ -503,18 +541,14 @@ export const GraphCanvasV2: React.FC = () => {
   return (
     <div className="flex flex-col h-full overflow-hidden" onMouseMove={handleMouseMove}>
       <div className="flex gap-2 mb-2">
-        <LayoutSelector 
-          currentLayout={currentLayout}
-          onLayoutChange={setCurrentLayout}
-        />
         <VisibilitySettings />
       </div>
-      <div className="flex-1 min-h-0 relative">
+      <div ref={containerRef} className="flex-1 min-h-0 relative">
         <svg 
           ref={svgRef}
           width="100%"
           height="100%"
-          viewBox="0 0 900 530"
+          viewBox={`0 0 ${dimensions.width} ${dimensions.height}`}
           className="bg-background graph-canvas-svg absolute inset-0"
           style={{ cursor: 'default', touchAction: 'none' }}
           onContextMenu={(e) => e.preventDefault()}
@@ -543,9 +577,9 @@ export const GraphCanvasV2: React.FC = () => {
             
             const visibleBounds = {
               left: -transform.x / transform.k - 100,
-              right: (-transform.x + 900) / transform.k + 100,
+              right: (-transform.x + dimensions.width) / transform.k + 100,
               top: -transform.y / transform.k - 100,
-              bottom: (-transform.y + 530) / transform.k + 100
+              bottom: (-transform.y + dimensions.height) / transform.k + 100
             };
             
             if (edgeBounds.right < visibleBounds.left || 

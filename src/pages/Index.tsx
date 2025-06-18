@@ -2,60 +2,93 @@
 import React, { useState } from "react";
 import { IconRegistryProvider } from "@/components/IconRegistry";
 import { GraphCanvasV2 } from "@/components/GraphCanvasV2";
-import { TestDataLoader } from "@/components/TestDataLoader";
 import UploadPanel from "@/components/UploadPanel";
 import InspectorPanel from "@/components/InspectorPanel";
-import ThemeToggle from "@/components/ThemeToggle";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Header } from "@/components/Header";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { CollapsibleRightSidebar } from "@/components/CollapsibleRightSidebar";
+import { LayoutSettingsSection } from "@/components/sidebar/LayoutSettingsSection";
+import { TestDataSection } from "@/components/sidebar/TestDataSection";
+import { AppearanceSettingsSection } from "@/components/sidebar/AppearanceSettingsSection";
+import { Layout, Palette, Database } from "lucide-react";
 
 const Index = () => {
-  // Only "graph" and "upload", now "graph" leftmost
-  const [mainTab, setMainTab] = useState<"graph" | "upload">("graph");
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  const sidebarSections = [
+    {
+      id: 'layout',
+      title: 'Layout',
+      icon: <Layout className="h-4 w-4" />,
+      content: <LayoutSettingsSection />,
+      defaultOpen: true
+    },
+    {
+      id: 'test-data',
+      title: 'Test Data',
+      icon: <Database className="h-4 w-4" />,
+      content: <TestDataSection />,
+      defaultOpen: true
+    },
+    {
+      id: 'appearance',
+      title: 'Appearance',
+      icon: <Palette className="h-4 w-4" />,
+      content: <AppearanceSettingsSection />,
+      defaultOpen: false
+    }
+  ];
 
   return (
     <IconRegistryProvider>
       <div className="bg-background min-h-screen w-full flex flex-col">
-        {/* Header */}
-        <header className="w-full flex items-center gap-4 px-6 py-4 border-b border-border shadow-sm bg-card z-20 relative">
-          <h1 className="text-2xl font-bold tracking-wide text-primary">
-            GraphLoom Explorer
-          </h1>
-          <span className="text-xs text-muted-foreground">v0.1.0</span>
-          <div className="flex-1" />
-          <ThemeToggle />
-        </header>
-        {/* Tabs for Graph & Upload Only (Graph now leftmost) */}
-        <Tabs
-          value={mainTab}
-          onValueChange={(v) => setMainTab(v as "graph" | "upload")}
-          className="w-full"
-        >
-          <TabsList className="w-full mb-0 border-b border-border pt-2 px-2 bg-background">
-            <TabsTrigger value="graph" className="flex-1 text-lg py-2">
-              Graph
-            </TabsTrigger>
-            <TabsTrigger value="upload" className="flex-1 text-lg py-2">
-              Upload & Explore
-            </TabsTrigger>
-          </TabsList>
-          <SidebarProvider>
-            <div className="flex-1 flex flex-row w-full min-h-0 max-h-[calc(100vh-70px)] overflow-hidden">
-              <main className="flex-1 flex flex-col pl-7 pr-2 pt-6 pb-4 max-w-[calc(100vw-370px)]">
-                <TabsContent value="graph" className="p-0 h-full w-full flex flex-col overflow-hidden">
-                  <TestDataLoader />
-                  <div className="flex-1 min-h-0 overflow-hidden">
-                    <GraphCanvasV2 />
-                  </div>
-                </TabsContent>
-                <TabsContent value="upload" className="p-0 h-full w-full">
-                  <UploadPanel />
-                </TabsContent>
-              </main>
+        <Header 
+          onUploadClick={() => setUploadOpen(true)}
+          onSettingsClick={() => setSettingsOpen(true)}
+        />
+        
+        <SidebarProvider>
+          <div className="flex-1 flex flex-row w-full min-h-0 overflow-hidden">
+            <main className="flex-1 flex flex-col p-2">
+              <div className="flex-1 min-h-0 overflow-hidden">
+                <GraphCanvasV2 />
+              </div>
+            </main>
+            
+            {/* Right sidebar area */}
+            <div className="flex">
               <InspectorPanel />
+              <CollapsibleRightSidebar sections={sidebarSections} />
             </div>
-          </SidebarProvider>
-        </Tabs>
+          </div>
+        </SidebarProvider>
+
+        {/* Upload Sheet */}
+        <Sheet open={uploadOpen} onOpenChange={setUploadOpen}>
+          <SheetContent className="w-[400px] sm:w-[540px]">
+            <SheetHeader>
+              <SheetTitle>Upload & Explore</SheetTitle>
+            </SheetHeader>
+            <div className="mt-6">
+              <UploadPanel />
+            </div>
+          </SheetContent>
+        </Sheet>
+
+        {/* Settings Sheet */}
+        <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
+          <SheetContent className="w-[400px] sm:w-[540px]">
+            <SheetHeader>
+              <SheetTitle>Settings</SheetTitle>
+            </SheetHeader>
+            <div className="mt-6">
+              {/* Settings content will go here */}
+              <p className="text-muted-foreground">Settings panel coming soon...</p>
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
     </IconRegistryProvider>
   );
