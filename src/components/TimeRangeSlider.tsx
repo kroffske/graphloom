@@ -123,8 +123,10 @@ export const TimeRangeSlider: React.FC<TimeRangeSliderProps> = ({ className }) =
     
     const filteredEdges = edges.filter(edge => {
       const value = timestampField.includes('.') 
-        ? timestampField.split('.').reduce((obj: any, key) => obj?.[key], edge)
-        : (edge as any)[timestampField];
+        ? timestampField.split('.').reduce((obj: unknown, key) => {
+            return obj && typeof obj === 'object' ? (obj as Record<string, unknown>)[key] : undefined;
+          }, edge as unknown)
+        : (edge as Record<string, unknown>)[timestampField];
       
       if (!value) return true; // Include edges without timestamps
       

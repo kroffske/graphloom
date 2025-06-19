@@ -1,4 +1,4 @@
-import { Edge } from '@/types/graph.types';
+import { GraphEdge } from '@/types/graph';
 import { TimestampFieldInfo } from '@/types/timeFiltering.types';
 
 // Common timestamp field names to check
@@ -108,13 +108,13 @@ export function detectTimestampFields(obj: Record<string, unknown>): string[] {
 /**
  * Get value from nested path (e.g., "attributes.created_at")
  */
-function getNestedValue(obj: any, path: string): unknown {
+function getNestedValue(obj: Record<string, unknown>, path: string): unknown {
   const parts = path.split('.');
-  let current = obj;
+  let current: unknown = obj;
   
   for (const part of parts) {
     if (current && typeof current === 'object' && part in current) {
-      current = current[part];
+      current = (current as Record<string, unknown>)[part];
     } else {
       return undefined;
     }
@@ -126,7 +126,7 @@ function getNestedValue(obj: any, path: string): unknown {
 /**
  * Analyze timestamp fields in edges to find the best one
  */
-export function analyzeTimestampFields(edges: Edge[]): TimestampFieldInfo[] {
+export function analyzeTimestampFields(edges: GraphEdge[]): TimestampFieldInfo[] {
   if (!edges.length) return [];
   
   // Get all potential fields from first few edges
@@ -134,7 +134,7 @@ export function analyzeTimestampFields(edges: Edge[]): TimestampFieldInfo[] {
   const potentialFields = new Set<string>();
   
   for (let i = 0; i < sampleSize; i++) {
-    const fields = detectTimestampFields(edges[i] as any);
+    const fields = detectTimestampFields(edges[i] as Record<string, unknown>);
     fields.forEach(f => potentialFields.add(f));
   }
   
@@ -146,7 +146,7 @@ export function analyzeTimestampFields(edges: Edge[]): TimestampFieldInfo[] {
     const samples: number[] = [];
     
     for (const edge of edges) {
-      const value = getNestedValue(edge, field);
+      const value = getNestedValue(edge as Record<string, unknown>, field);
       const parsed = parseTimestamp(value);
       
       if (parsed !== null) {
@@ -174,13 +174,13 @@ export function analyzeTimestampFields(edges: Edge[]): TimestampFieldInfo[] {
 /**
  * Find the time range from edges using the specified timestamp field
  */
-export function findTimeRange(edges: Edge[], timestampField: string): { min: number; max: number } | null {
+export function findTimeRange(edges: GraphEdge[], timestampField: string): { min: number; max: number } | null {
   let min = Infinity;
   let max = -Infinity;
   let foundAny = false;
   
   for (const edge of edges) {
-    const value = getNestedValue(edge, timestampField);
+    const value = getNestedValue(edge as Record<string, unknown>, timestampField);
     const timestamp = parseTimestamp(value);
     
     if (timestamp !== null) {
@@ -231,7 +231,7 @@ export function formatTimestamp(timestamp: number, format: 'date' | 'time' | 'da
 /**
  * Check if an edge falls within the selected time range
  */
-export function isEdgeInTimeRange(edge: Edge, timestampField: string, range: { start: number; end: number }): boolean {
+export function isEdgeInTimeRange(edge: GraphEdge, timestampField: string, range: { start: number; end: number }): boolean {
   const value = getNestedValue(edge, timestampField);
   const timestamp = parseTimestamp(value);
   

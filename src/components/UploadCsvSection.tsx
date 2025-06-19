@@ -6,6 +6,23 @@ import { SAMPLE_TAB_CSVS, SampleTabs } from "./SampleTabs";
 import { Upload as UploadIcon } from "lucide-react";
 import { castToSupportedType } from "@/utils/csvParser";
 import { analyzeTimestampFields, findTimeRange } from "@/utils/timestampUtils";
+import { GraphNode, GraphEdge } from "@/types/graph";
+
+// Type for parsed CSV row data
+type NodeCsvRow = {
+  node_id: string;
+  node_type: string;
+  label?: string;
+  [key: string]: unknown;
+};
+
+type EdgeCsvRow = {
+  source: string;
+  target: string;
+  edge_type?: string;
+  timestamp?: string;
+  [key: string]: unknown;
+};
 
 type UploadCsvSectionProps = {
   onExample: (preset?: "example") => void;
@@ -29,8 +46,8 @@ const UploadCsvSection: React.FC<UploadCsvSectionProps> = ({ onExample }) => {
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
-      complete: (results: Papa.ParseResult<any>) => {
-        const data = results.data as any[];
+      complete: (results: Papa.ParseResult<NodeCsvRow>) => {
+        const data = results.data;
         if (!data.length) {
           toast.error("nodes.csv has no data rows.");
           return;
@@ -69,7 +86,7 @@ const UploadCsvSection: React.FC<UploadCsvSectionProps> = ({ onExample }) => {
         if (hasInvalidRow) {
           toast.warning("One or more invalid node rows were skipped.");
         }
-        setNodes(nodes as any);
+        setNodes(nodes as GraphNode[]);
         toast.success("Loaded nodes!");
       },
       error: () => toast.error("Failed to parse nodes.csv"),
@@ -83,8 +100,8 @@ const UploadCsvSection: React.FC<UploadCsvSectionProps> = ({ onExample }) => {
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
-      complete: (results: Papa.ParseResult<any>) => {
-        const data = results.data as any[];
+      complete: (results: Papa.ParseResult<EdgeCsvRow>) => {
+        const data = results.data;
         if (!data.length) {
           toast.error("edges.csv has no data rows.");
           return;

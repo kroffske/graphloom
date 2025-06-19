@@ -16,6 +16,7 @@ import {
   applyRadialLayout,
   applyFastLayout
 } from '@/utils/layouts';
+import { D3SimulationNode, D3SimulationLink, D3ForceSimulation } from '@/types/d3';
 
 interface Transform {
   k: number;
@@ -27,7 +28,7 @@ export const GraphCanvasV2: React.FC = () => {
   const svgRef = useRef<SVGSVGElement>(null);
   const gRef = useRef<SVGGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const simulationRef = useRef<d3.Simulation<any, any>>();
+  const simulationRef = useRef<D3ForceSimulation>();
   const forceAtlas2Ref = useRef<ForceAtlas2Layout>();
   const openOrdRef = useRef<OpenOrdLayout>();
   const animationFrameRef = useRef<number>();
@@ -133,8 +134,8 @@ export const GraphCanvasV2: React.FC = () => {
     }
     
     // Copy nodes to avoid mutating the store
-    const simNodes = filteredNodes.map(n => ({ ...n }));
-    const simEdges = filteredEdges.map(e => ({ ...e }));
+    const simNodes: D3SimulationNode[] = filteredNodes.map(n => ({ ...n }));
+    const simEdges: D3SimulationLink[] = filteredEdges.map(e => ({ ...e }));
     
     // Initialize positions if needed
     simNodes.forEach(node => {
@@ -171,12 +172,12 @@ export const GraphCanvasV2: React.FC = () => {
         
         const simulation = d3.forceSimulation(simNodes)
           .force('link', d3.forceLink(simEdges)
-            .id((d: any) => d.id)
-            .distance((d: any) => {
+            .id((d: D3SimulationNode | D3SimulationLink) => d.id)
+            .distance((d: D3SimulationLink) => {
               // Shorter distances for internal edges, longer for inter-subgraph
               return d.type === 'INTER_SUBGRAPH' ? 150 : 60;
             })
-            .strength((d: any) => {
+            .strength((d: D3SimulationLink) => {
               // Stronger internal connections, weaker inter-subgraph
               return d.type === 'INTER_SUBGRAPH' ? 0.2 : 0.8;
             })
@@ -188,7 +189,7 @@ export const GraphCanvasV2: React.FC = () => {
           )
           .force('center', d3.forceCenter(450, 265).strength(0.05))
           .force('collision', d3.forceCollide()
-            .radius((d: any) => {
+            .radius((d: D3SimulationNode) => {
               // Get node appearance to determine size
               const node = nodes.find(n => n.id === d.id);
               if (!node) return 19; // Default radius
@@ -331,7 +332,7 @@ export const GraphCanvasV2: React.FC = () => {
         // Optional: Run a quick force simulation to separate overlapping nodes
         if (nodes.length < 1000) {
           const quickSim = d3.forceSimulation(simNodes)
-            .force('collision', d3.forceCollide().radius((d: any) => {
+            .force('collision', d3.forceCollide<D3SimulationNode>().radius((d: D3SimulationNode) => {
               const node = nodes.find(n => n.id === d.id);
               if (!node) return 19;
               const typeAppearance = nodeTypeAppearances?.[node.type] ?? {};
@@ -423,7 +424,7 @@ export const GraphCanvasV2: React.FC = () => {
       if (!simulation) return;
       
       // Release all fixed positions
-      simulation.nodes().forEach((node: any) => {
+      simulation.nodes().forEach((node: D3SimulationNode) => {
         node.fx = null;
         node.fy = null;
       });
@@ -439,7 +440,7 @@ export const GraphCanvasV2: React.FC = () => {
   }, []);
   
   // Track drag subject
-  const dragSubjectRef = useRef<any>(null);
+  const dragSubjectRef = useRef<D3SimulationNode | null>(null);
   
   // Handle node drag
   const handleNodeDrag = useCallback((nodeId: string, dx: number, dy: number, type: 'start' | 'drag' | 'end') => {
