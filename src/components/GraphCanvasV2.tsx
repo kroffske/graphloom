@@ -3,7 +3,6 @@ import * as d3 from 'd3';
 import { useGraphStore } from '@/state/useGraphStore';
 import { GraphNodeV2 } from './GraphNodeV2';
 import { graphEventBus } from '@/lib/graphEventBus';
-import { LayoutSelector, LayoutType } from './LayoutSelector';
 import { PerformanceIndicator } from './PerformanceIndicator';
 import { TimeRangeSlider } from './TimeRangeSlider';
 import { isEdgeInTimeRange } from '@/utils/timestampUtils';
@@ -17,6 +16,7 @@ import {
   applyRadialLayout,
   applyFastLayout
 } from '@/utils/layouts';
+import { D3SimulationNode, D3SimulationLink, D3ForceSimulation } from '@/types/d3';
 
 interface Transform {
   k: number;
@@ -27,13 +27,17 @@ interface Transform {
 export const GraphCanvasV2: React.FC = () => {
   const svgRef = useRef<SVGSVGElement>(null);
   const gRef = useRef<SVGGElement>(null);
-  const simulationRef = useRef<d3.Simulation<any, any>>();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const simulationRef = useRef<D3ForceSimulation>();
   const forceAtlas2Ref = useRef<ForceAtlas2Layout>();
   const openOrdRef = useRef<OpenOrdLayout>();
   const animationFrameRef = useRef<number>();
   
+  // Container dimensions
+  const [dimensions, setDimensions] = useState({ width: 900, height: 530 });
+  
   // Layout state
-  const [currentLayout, setCurrentLayout] = useState<LayoutType>('force');
+  const [currentLayout, setCurrentLayout] = useState<string>('force');
   
   // Single transform state for zoom/pan
   const [transform, setTransform] = useState<Transform>({ k: 1, x: 0, y: 0 });
@@ -89,6 +93,28 @@ export const GraphCanvasV2: React.FC = () => {
     return nodes.filter(node => connectedNodeIds.has(node.id));
   }, [nodes, showIsolatedNodes, connectedNodeIds]);
   
+  // Track container dimensions
+  useEffect(() => {
+    if (!containerRef.current) return;
+    
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        setDimensions({ width, height });
+      }
+    });
+    
+    resizeObserver.observe(containerRef.current);
+    
+    // Initial measurement
+    const rect = containerRef.current.getBoundingClientRect();
+    setDimensions({ width: rect.width, height: rect.height });
+    
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
+  
   // Initialize layout based on current type
   useEffect(() => {
     if (!filteredNodes.length) return;
@@ -108,8 +134,8 @@ export const GraphCanvasV2: React.FC = () => {
     }
     
     // Copy nodes to avoid mutating the store
-    const simNodes = filteredNodes.map(n => ({ ...n }));
-    const simEdges = filteredEdges.map(e => ({ ...e }));
+    const simNodes: D3SimulationNode[] = filteredNodes.map(n => ({ ...n }));
+    const simEdges: D3SimulationLink[] = filteredEdges.map(e => ({ ...e }));
     
     // Initialize positions if needed
     simNodes.forEach(node => {
@@ -146,12 +172,12 @@ export const GraphCanvasV2: React.FC = () => {
         
         const simulation = d3.forceSimulation(simNodes)
           .force('link', d3.forceLink(simEdges)
-            .id((d: any) => d.id)
-            .distance((d: any) => {
+            .id((d: D3SimulationNode | D3SimulationLink) => d.id)
+            .distance((d: D3SimulationLink) => {
               // Shorter distances for internal edges, longer for inter-subgraph
               return d.type === 'INTER_SUBGRAPH' ? 150 : 60;
             })
-            .strength((d: any) => {
+            .strength((d: D3SimulationLink) => {
               // Stronger internal connections, weaker inter-subgraph
               return d.type === 'INTER_SUBGRAPH' ? 0.2 : 0.8;
             })
@@ -163,7 +189,7 @@ export const GraphCanvasV2: React.FC = () => {
           )
           .force('center', d3.forceCenter(450, 265).strength(0.05))
           .force('collision', d3.forceCollide()
-            .radius((d: any) => {
+            .radius((d: D3SimulationNode) => {
               // Get node appearance to determine size
               const node = nodes.find(n => n.id === d.id);
               if (!node) return 19; // Default radius
@@ -306,7 +332,7 @@ export const GraphCanvasV2: React.FC = () => {
         // Optional: Run a quick force simulation to separate overlapping nodes
         if (nodes.length < 1000) {
           const quickSim = d3.forceSimulation(simNodes)
-            .force('collision', d3.forceCollide().radius((d: any) => {
+            .force('collision', d3.forceCollide<D3SimulationNode>().radius((d: D3SimulationNode) => {
               const node = nodes.find(n => n.id === d.id);
               if (!node) return 19;
               const typeAppearance = nodeTypeAppearances?.[node.type] ?? {};
@@ -378,6 +404,19 @@ export const GraphCanvasV2: React.FC = () => {
     d3.select(svgRef.current).on('dblclick.zoom', null);
   }, []);
   
+  // Listen for layout change events
+  useEffect(() => {
+    const handleLayoutChange = ({ layout }: { layout: string }) => {
+      console.log('[GraphCanvasV2] Layout change event received:', layout);
+      setCurrentLayout(layout);
+    };
+    
+    graphEventBus.on('layout:change', handleLayoutChange);
+    return () => {
+      graphEventBus.off('layout:change', handleLayoutChange);
+    };
+  }, []);
+  
   // Listen for reheat events
   useEffect(() => {
     const handleReheat = () => {
@@ -385,7 +424,7 @@ export const GraphCanvasV2: React.FC = () => {
       if (!simulation) return;
       
       // Release all fixed positions
-      simulation.nodes().forEach((node: any) => {
+      simulation.nodes().forEach((node: D3SimulationNode) => {
         node.fx = null;
         node.fy = null;
       });
@@ -401,7 +440,7 @@ export const GraphCanvasV2: React.FC = () => {
   }, []);
   
   // Track drag subject
-  const dragSubjectRef = useRef<any>(null);
+  const dragSubjectRef = useRef<D3SimulationNode | null>(null);
   
   // Handle node drag
   const handleNodeDrag = useCallback((nodeId: string, dx: number, dy: number, type: 'start' | 'drag' | 'end') => {
@@ -503,18 +542,14 @@ export const GraphCanvasV2: React.FC = () => {
   return (
     <div className="flex flex-col h-full overflow-hidden" onMouseMove={handleMouseMove}>
       <div className="flex gap-2 mb-2">
-        <LayoutSelector 
-          currentLayout={currentLayout}
-          onLayoutChange={setCurrentLayout}
-        />
         <VisibilitySettings />
       </div>
-      <div className="flex-1 min-h-0 relative">
+      <div ref={containerRef} className="flex-1 min-h-0 relative">
         <svg 
           ref={svgRef}
           width="100%"
           height="100%"
-          viewBox="0 0 900 530"
+          viewBox={`0 0 ${dimensions.width} ${dimensions.height}`}
           className="bg-background graph-canvas-svg absolute inset-0"
           style={{ cursor: 'default', touchAction: 'none' }}
           onContextMenu={(e) => e.preventDefault()}
@@ -543,9 +578,9 @@ export const GraphCanvasV2: React.FC = () => {
             
             const visibleBounds = {
               left: -transform.x / transform.k - 100,
-              right: (-transform.x + 900) / transform.k + 100,
+              right: (-transform.x + dimensions.width) / transform.k + 100,
               top: -transform.y / transform.k - 100,
-              bottom: (-transform.y + 530) / transform.k + 100
+              bottom: (-transform.y + dimensions.height) / transform.k + 100
             };
             
             if (edgeBounds.right < visibleBounds.left || 

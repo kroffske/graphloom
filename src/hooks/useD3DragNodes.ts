@@ -1,12 +1,13 @@
 
 import * as d3 from "d3";
+import { D3Selection, D3LinkSelection, D3SimulationNode, D3SimulationLink } from '@/types/d3';
 
 type UseD3DragNodesProps = {
-  nodeG: d3.Selection<SVGGElement, any, null, undefined>;
-  link: d3.Selection<SVGLineElement, any, null, undefined>;
+  nodeG: D3Selection<SVGGElement>;
+  link: D3LinkSelection<SVGLineElement>;
   layoutMode: "simulation" | "manual";
   manualPositions: Record<string, { x: number; y: number }>;
-  setDragging: (val: any) => void;
+  setDragging: (val: { id: string } | null) => void;
   saveManualPosition: (id: string, pos: { x: number; y: number }) => void;
 };
 
@@ -25,7 +26,7 @@ export function setupD3DragNodes({
   if (layoutMode === "manual") {
     nodeG.call(
       d3
-        .drag<SVGGElement, any>()
+        .drag<SVGGElement, D3SimulationNode>()
         .on("start", function (event, d) {
           // Start holding only this node
           setDragging({ id: d.id });
@@ -35,10 +36,13 @@ export function setupD3DragNodes({
           const moved = { x: event.x, y: event.y };
           d3.select(this).attr("transform", `translate(${moved.x},${moved.y})`);
           // Move connected links for immediate feedback (optional, could be omitted for simplicity)
-          link.each(function (l: any) {
-            if (l.source.id === d.id) {
+          link.each(function (l: D3SimulationLink) {
+            const sourceId = typeof l.source === 'string' ? l.source : l.source.id;
+            const targetId = typeof l.target === 'string' ? l.target : l.target.id;
+            
+            if (sourceId === d.id) {
               d3.select(this).attr("x1", moved.x).attr("y1", moved.y);
-            } else if (l.target.id === d.id) {
+            } else if (targetId === d.id) {
               d3.select(this).attr("x2", moved.x).attr("y2", moved.y);
             }
           });

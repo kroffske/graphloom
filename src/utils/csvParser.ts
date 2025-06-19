@@ -2,6 +2,24 @@
 import * as Papa from "papaparse";
 import { GraphNode, GraphEdge } from "@/types/graph";
 
+// Type for raw CSV row data
+type CsvRow = Record<string, string | number | boolean | null | undefined>;
+
+// Type for parsed node CSV row
+interface NodeCsvRow extends CsvRow {
+  node_id: string;
+  node_type: string;
+  label?: string;
+}
+
+// Type for parsed edge CSV row
+interface EdgeCsvRow extends CsvRow {
+  source: string;
+  target: string;
+  edge_type?: string;
+  timestamp?: string;
+}
+
 export function castToSupportedType(val: unknown): string | number | boolean {
   if (typeof val === "string") {
     const num = Number(val);
@@ -18,11 +36,11 @@ export function parseCsvData(
   nodesCsv: string,
   edgesCsv: string
 ): { nodes: GraphNode[]; edges: GraphEdge[] } {
-  const resultsNodes = Papa.parse(nodesCsv.trim(), {
+  const resultsNodes = Papa.parse<NodeCsvRow>(nodesCsv.trim(), {
     header: true,
     skipEmptyLines: true,
   });
-  const dataNodes = resultsNodes.data as any[];
+  const dataNodes = resultsNodes.data;
   const nodeIds = new Set<string>();
   const nodes = dataNodes
     .map((row) => {
@@ -31,7 +49,7 @@ export function parseCsvData(
       nodeIds.add(nodeId);
       const attributes: Record<string, string | number | boolean> = {};
       Object.entries(row).forEach(([k, v]) => {
-        attributes[k] = castToSupportedType(v);
+        attributes[k] = castToSupportedType(v as string | number | boolean | null | undefined);
       });
       return {
         id: nodeId,
@@ -42,18 +60,18 @@ export function parseCsvData(
     })
     .filter(Boolean);
 
-  const resultsEdges = Papa.parse(edgesCsv.trim(), {
+  const resultsEdges = Papa.parse<EdgeCsvRow>(edgesCsv.trim(), {
     header: true,
     skipEmptyLines: true,
   });
-  const dataEdges = resultsEdges.data as any[];
+  const dataEdges = resultsEdges.data;
   const edges = dataEdges.map((row, i) => {
     const attributes: Record<string, string | number | boolean> = {};
     Object.entries(row).forEach(([k, v]) => {
       attributes[k] = castToSupportedType(v);
     });
     const timestamp = row.timestamp ? Date.parse(row.timestamp) : undefined;
-    if (row.timestamp && isNaN(timestamp)) {
+    if (row.timestamp && isNaN(timestamp as number)) {
         console.warn(`Invalid timestamp in edges.csv row ${i + 2}: "${row.timestamp}"`);
     }
 
@@ -67,5 +85,5 @@ export function parseCsvData(
     };
   });
 
-  return { nodes: nodes as GraphNode[], edges: edges as GraphEdge[] };
+  return { nodes: nodes as GraphNode[], edges };
 }

@@ -1,22 +1,24 @@
 // Simple EventEmitter implementation for browser
+type EventHandler<T = unknown> = (data: T) => void;
+
 class SimpleEventEmitter {
-  private events: Map<string, Array<(...args: any[]) => void>> = new Map();
+  private events: Map<string, Array<EventHandler<unknown>>> = new Map();
   
-  emit(event: string, ...args: any[]): boolean {
+  emit(event: string, data: unknown): boolean {
     const handlers = this.events.get(event);
     if (!handlers) return false;
-    handlers.forEach(handler => handler(...args));
+    handlers.forEach(handler => handler(data));
     return true;
   }
   
-  on(event: string, handler: (...args: any[]) => void): this {
+  on(event: string, handler: EventHandler<unknown>): this {
     const handlers = this.events.get(event) || [];
     handlers.push(handler);
     this.events.set(event, handlers);
     return this;
   }
   
-  off(event: string, handler: (...args: any[]) => void): this {
+  off(event: string, handler: EventHandler<unknown>): this {
     const handlers = this.events.get(event);
     if (!handlers) return this;
     const index = handlers.indexOf(handler);
@@ -24,9 +26,9 @@ class SimpleEventEmitter {
     return this;
   }
   
-  once(event: string, handler: (...args: any[]) => void): this {
-    const wrappedHandler = (...args: any[]) => {
-      handler(...args);
+  once(event: string, handler: EventHandler<unknown>): this {
+    const wrappedHandler: EventHandler<unknown> = (data: unknown) => {
+      handler(data);
       this.off(event, wrappedHandler);
     };
     return this.on(event, wrappedHandler);
