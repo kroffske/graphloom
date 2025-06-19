@@ -3,40 +3,46 @@ import React, { useState } from "react";
 import { IconRegistryProvider } from "@/components/IconRegistry";
 import { GraphCanvasV2 } from "@/components/GraphCanvasV2";
 import UploadPanel from "@/components/UploadPanel";
-import InspectorPanel from "@/components/InspectorPanel";
 import { Header } from "@/components/Header";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { CollapsibleRightSidebar } from "@/components/CollapsibleRightSidebar";
 import { LayoutSettingsSection } from "@/components/sidebar/LayoutSettingsSection";
 import { TestDataSection } from "@/components/sidebar/TestDataSection";
-import { AppearanceSettingsSection } from "@/components/sidebar/AppearanceSettingsSection";
-import { Layout, Palette, Database } from "lucide-react";
+import { DetailsSection } from "@/components/sidebar/DetailsSection";
+import { SettingsPage } from "@/components/SettingsPage";
+import { useGraphStore } from "@/state/useGraphStore";
+import { Layout, Database, Info } from "lucide-react";
 
 const Index = () => {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const { selectedNodeId, selectedEdgeId } = useGraphStore();
+  
+  // Show details section when something is selected
+  const hasSelection = selectedNodeId || selectedEdgeId;
 
   const sidebarSections = [
+    // Only show details section when something is selected
+    ...(hasSelection ? [{
+      id: 'details',
+      title: 'Details & Settings',
+      icon: <Info className="h-4 w-4" />,
+      content: <DetailsSection />,
+      defaultOpen: true
+    }] : []),
     {
       id: 'layout',
       title: 'Layout',
       icon: <Layout className="h-4 w-4" />,
       content: <LayoutSettingsSection />,
-      defaultOpen: true
+      defaultOpen: !hasSelection
     },
     {
       id: 'test-data',
       title: 'Test Data',
       icon: <Database className="h-4 w-4" />,
       content: <TestDataSection />,
-      defaultOpen: true
-    },
-    {
-      id: 'appearance',
-      title: 'Appearance',
-      icon: <Palette className="h-4 w-4" />,
-      content: <AppearanceSettingsSection />,
       defaultOpen: false
     }
   ];
@@ -51,17 +57,14 @@ const Index = () => {
         
         <SidebarProvider>
           <div className="flex-1 flex flex-row w-full min-h-0 overflow-hidden">
-            <main className="flex-1 flex flex-col p-2">
+            <main className="flex-1 flex flex-col">
               <div className="flex-1 min-h-0 overflow-hidden">
                 <GraphCanvasV2 />
               </div>
             </main>
             
-            {/* Right sidebar area */}
-            <div className="flex">
-              <InspectorPanel />
-              <CollapsibleRightSidebar sections={sidebarSections} />
-            </div>
+            {/* Right sidebar */}
+            <CollapsibleRightSidebar sections={sidebarSections} />
           </div>
         </SidebarProvider>
 
@@ -79,13 +82,12 @@ const Index = () => {
 
         {/* Settings Sheet */}
         <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
-          <SheetContent className="w-[400px] sm:w-[540px]">
+          <SheetContent className="w-[600px] sm:w-[720px]">
             <SheetHeader>
               <SheetTitle>Settings</SheetTitle>
             </SheetHeader>
-            <div className="mt-6">
-              {/* Settings content will go here */}
-              <p className="text-muted-foreground">Settings panel coming soon...</p>
+            <div className="mt-6 h-[calc(100vh-8rem)]">
+              <SettingsPage />
             </div>
           </SheetContent>
         </Sheet>

@@ -15,7 +15,7 @@ type AppearancePresetDropdownProps = {
 };
 
 const AppearancePresetDropdown: React.FC<AppearancePresetDropdownProps> = ({
-  presets,
+  presets = [],
   selectedKey,
   onSelect,
 }) => {

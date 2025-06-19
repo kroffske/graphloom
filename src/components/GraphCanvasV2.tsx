@@ -540,17 +540,14 @@ export const GraphCanvasV2: React.FC = () => {
   const hoveredEdge = hoveredEdgeId ? edges.find(e => e.id === hoveredEdgeId) : null;
   
   return (
-    <div className="flex flex-col h-full overflow-hidden" onMouseMove={handleMouseMove}>
-      <div className="flex gap-2 mb-2">
-        <VisibilitySettings />
-      </div>
-      <div ref={containerRef} className="flex-1 min-h-0 relative">
+    <div className="h-full w-full relative" onMouseMove={handleMouseMove}>
+      <div ref={containerRef} className="h-full w-full relative">
         <svg 
           ref={svgRef}
           width="100%"
           height="100%"
           viewBox={`0 0 ${dimensions.width} ${dimensions.height}`}
-          className="bg-background graph-canvas-svg absolute inset-0"
+          className="bg-background graph-canvas-svg absolute inset-0 w-full h-full"
           style={{ cursor: 'default', touchAction: 'none' }}
           onContextMenu={(e) => e.preventDefault()}
         >
@@ -683,16 +680,29 @@ export const GraphCanvasV2: React.FC = () => {
         </g>
       </g>
     </svg>
-        <PerformanceIndicator
-          totalNodes={filteredNodes.length}
-          visibleNodes={visibleNodes.length}
-          totalEdges={filteredEdges.length}
-          visibleEdges={filteredEdges.length}
-          zoom={transform.k}
-          simplified={simplifiedRendering}
-        />
       </div>
-      <TimeRangeSlider className="mt-2 flex-shrink-0" />
+      
+      {/* Overlay controls */}
+      <div className="absolute top-2 left-2 z-10">
+        <VisibilitySettings />
+      </div>
+      
+      {/* Performance indicator overlay */}
+      <PerformanceIndicator
+        totalNodes={filteredNodes.length}
+        visibleNodes={visibleNodes.length}
+        totalEdges={filteredEdges.length}
+        visibleEdges={filteredEdges.length}
+        zoom={transform.k}
+        simplified={simplifiedRendering}
+      />
+      
+      {/* Time slider at bottom */}
+      <div className="absolute bottom-0 left-0 right-0 z-10">
+        <TimeRangeSlider className="bg-background/80 backdrop-blur-sm" />
+      </div>
+      
+      {/* Tooltip manager */}
       <GraphTooltipManager 
         hoveredNode={hoveredNode} 
         hoveredEdge={hoveredEdge} 

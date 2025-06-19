@@ -37,9 +37,9 @@ export const AppearanceSettingsSection: React.FC = () => {
           <div>
             <Label className="text-sm font-medium mb-2 block">Appearance Preset</Label>
             <AppearancePresetDropdown
-              allPresets={displayedPresets}
-              selectedPresetKey={selectedPresetKey}
-              onPresetSelect={handlePresetSelect}
+              presets={displayedPresets}
+              selectedKey={selectedPresetKey}
+              onSelect={handlePresetSelect}
             />
           </div>
           {isPresetDirty && (
