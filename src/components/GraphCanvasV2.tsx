@@ -187,7 +187,7 @@ export const GraphCanvasV2: React.FC = () => {
             .theta(isLargeGraph ? 0.9 : 0.8) // More approximate for large graphs
             .distanceMax(isLargeGraph ? 200 : 500) // Limit interaction distance
           )
-          .force('center', d3.forceCenter(450, 265).strength(0.05))
+          .force('center', d3.forceCenter(dimensions.width / 2, dimensions.height / 2).strength(0.05))
           .force('collision', d3.forceCollide()
             .radius((d: D3SimulationNode) => {
               // Get node appearance to determine size
@@ -293,8 +293,8 @@ export const GraphCanvasV2: React.FC = () => {
       case 'circle': {
         // Circle Layout
         applyCircleLayout(simNodes, {
-          center: [450, 265],
-          radius: 200
+          center: [dimensions.width / 2, dimensions.height / 2],
+          radius: Math.min(dimensions.width, dimensions.height) * 0.35
         });
         updatePositions();
         break;
@@ -303,8 +303,8 @@ export const GraphCanvasV2: React.FC = () => {
       case 'hierarchy': {
         // Hierarchy Layout
         applyHierarchyLayout(simNodes, simEdges, {
-          width: 900,
-          height: 530
+          width: dimensions.width,
+          height: dimensions.height
         });
         updatePositions();
         break;
@@ -313,8 +313,8 @@ export const GraphCanvasV2: React.FC = () => {
       case 'radial': {
         // Radial Layout
         applyRadialLayout(simNodes, simEdges, {
-          center: [450, 265],
-          radius: 200
+          center: [dimensions.width / 2, dimensions.height / 2],
+          radius: Math.min(dimensions.width, dimensions.height) * 0.35
         });
         updatePositions();
         break;
@@ -371,7 +371,7 @@ export const GraphCanvasV2: React.FC = () => {
         openOrdRef.current.stop();
       }
     };
-  }, [filteredNodes, filteredEdges, currentLayout]);
+  }, [filteredNodes, filteredEdges, currentLayout, dimensions, nodeTypeAppearances]);
   
   // Setup zoom behavior
   useEffect(() => {
@@ -504,16 +504,13 @@ export const GraphCanvasV2: React.FC = () => {
   const visibleNodes = React.useMemo(() => {
     if (!svgRef.current) return filteredNodes;
     
-    const rect = svgRef.current.getBoundingClientRect();
-    const viewBox = { width: 900, height: 530 };
-    
     // Calculate visible bounds in world coordinates
     const padding = 100; // Extra padding to avoid pop-in
     const visibleBounds = {
       left: -transform.x / transform.k - padding,
-      right: (-transform.x + viewBox.width) / transform.k + padding,
+      right: (-transform.x + dimensions.width) / transform.k + padding,
       top: -transform.y / transform.k - padding,
-      bottom: (-transform.y + viewBox.height) / transform.k + padding
+      bottom: (-transform.y + dimensions.height) / transform.k + padding
     };
     
     // Filter nodes that are within visible bounds
@@ -526,7 +523,7 @@ export const GraphCanvasV2: React.FC = () => {
              pos.y >= visibleBounds.top && 
              pos.y <= visibleBounds.bottom;
     });
-  }, [filteredNodes, positions, transform, positionsVersion]);
+  }, [filteredNodes, positions, transform, positionsVersion, dimensions]);
   
   // Level of detail based on zoom
   const showLabels = transform.k > 0.6;
