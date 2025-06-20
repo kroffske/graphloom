@@ -12,7 +12,7 @@ import { TestDataSection } from "@/components/sidebar/TestDataSection";
 import { DetailsSection } from "@/components/sidebar/DetailsSection";
 import { SettingsPage } from "@/components/SettingsPage";
 import { useGraphStore } from "@/state/useGraphStore";
-import { Layout, Database, Info } from "lucide-react";
+import { Layout, Database, Palette } from "lucide-react";
 
 const Index = () => {
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -25,9 +25,9 @@ const Index = () => {
   const sidebarSections = [
     // Only show details section when something is selected
     ...(hasSelection ? [{
-      id: 'details',
-      title: 'Details & Settings',
-      icon: <Info className="h-4 w-4" />,
+      id: 'appearance',
+      title: 'Appearance',
+      icon: <Palette className="h-4 w-4" />,
       content: <DetailsSection />,
       defaultOpen: true
     }] : []),
