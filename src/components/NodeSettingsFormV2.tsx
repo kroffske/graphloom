@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -80,28 +80,24 @@ export default function NodeSettingsFormV2({ node }: NodeSettingsFormV2Props) {
   // Toggle state for single node vs all nodes of type
   const [applyToAllOfType, setApplyToAllOfType] = useState(true);
   
-  // Store original appearance
-  const [originalAppearance] = useState(() => ({ ...node.appearance } || {}));
+  // Store original appearance for the current node
+  const [originalAppearance, setOriginalAppearance] = useState(() => ({ ...node.appearance } || {}));
   
   // Local state for preview
   const [previewAppearance, setPreviewAppearance] = useState(() => ({ ...node.appearance } || {}));
   const [isDirty, setIsDirty] = useState(false);
 
+  // Keep track of the previous node ID
+  const prevNodeIdRef = useRef(node.id);
+
   // Count nodes of same type
   const nodesOfSameType = nodes.filter(n => n.type === node.type).length;
 
-  // Reset when node changes (different node selected)
-  useEffect(() => {
-    if (node.id) {
-      const newAppearance = { ...node.appearance } || {};
-      setPreviewAppearance(newAppearance);
-      setIsDirty(false);
-    }
-  }, [node.id]);
-
   // Update preview on node(s) for real-time visualization
-  const applyPreview = useCallback((appearance: typeof previewAppearance) => {
-    if (applyToAllOfType) {
+  const applyPreview = useCallback((appearance: typeof previewAppearance, useCurrentSettings = true) => {
+    const applyToAll = useCurrentSettings ? applyToAllOfType : true; // When reverting, apply to all if that was the setting
+    
+    if (applyToAll) {
       // Update all nodes of the same type
       nodes.forEach(n => {
         if (n.type === node.type) {
@@ -113,6 +109,37 @@ export default function NodeSettingsFormV2({ node }: NodeSettingsFormV2Props) {
       updateNodeAppearance(node.id, appearance);
     }
   }, [node.id, node.type, nodes, updateNodeAppearance, applyToAllOfType]);
+
+  // Cancel any unsaved changes when node changes
+  useEffect(() => {
+    if (node.id !== prevNodeIdRef.current) {
+      // If there were unsaved changes on the previous node, revert them
+      if (isDirty) {
+        // Revert all nodes of the previous type if that was the setting
+        const prevNode = nodes.find(n => n.id === prevNodeIdRef.current);
+        if (prevNode) {
+          if (applyToAllOfType) {
+            nodes.forEach(n => {
+              if (n.type === prevNode.type) {
+                updateNodeAppearance(n.id, originalAppearance);
+              }
+            });
+          } else {
+            updateNodeAppearance(prevNodeIdRef.current, originalAppearance);
+          }
+        }
+      }
+      
+      // Update the ref
+      prevNodeIdRef.current = node.id;
+      
+      // Set up for the new node
+      const newAppearance = { ...node.appearance } || {};
+      setOriginalAppearance(newAppearance);
+      setPreviewAppearance(newAppearance);
+      setIsDirty(false);
+    }
+  }, [node.id, nodes, isDirty, originalAppearance, applyToAllOfType, updateNodeAppearance]);
 
   const updateAppearance = useCallback((key: string, value: string | number | boolean | undefined) => {
     const newAppearance = { ...previewAppearance, [key]: value };
@@ -132,6 +159,7 @@ export default function NodeSettingsFormV2({ node }: NodeSettingsFormV2Props) {
       updateNodeAppearance(node.id, previewAppearance);
       toast.success("Node appearance saved!");
     }
+    setOriginalAppearance(previewAppearance);
     setIsDirty(false);
   };
 
@@ -277,25 +305,33 @@ export default function NodeSettingsFormV2({ node }: NodeSettingsFormV2Props) {
         )}
       </div>
 
-      {/* Save/Cancel Buttons */}
+      {/* Save/Cancel Buttons - Always visible */}
+      <div className="flex gap-2 pt-2 border-t">
+        <Button 
+          onClick={handleSave}
+          size="sm"
+          className="flex-1"
+          variant={isDirty ? "default" : "outline"}
+          disabled={!isDirty}
+        >
+          Save Changes
+        </Button>
+        <Button 
+          onClick={handleCancel}
+          size="sm"
+          variant="outline"
+          className="flex-1"
+          disabled={!isDirty}
+        >
+          Cancel
+        </Button>
+      </div>
+      
+      {/* Status indicator */}
       {isDirty && (
-        <div className="flex gap-2 pt-2 border-t">
-          <Button 
-            onClick={handleSave}
-            size="sm"
-            className="flex-1"
-          >
-            Save Changes
-          </Button>
-          <Button 
-            onClick={handleCancel}
-            size="sm"
-            variant="outline"
-            className="flex-1"
-          >
-            Cancel
-          </Button>
-        </div>
+        <p className="text-xs text-muted-foreground text-center">
+          You have unsaved changes
+        </p>
       )}
     </div>
   );

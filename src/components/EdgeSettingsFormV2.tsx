@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -72,21 +72,35 @@ export default function EdgeSettingsFormV2({ edge }: EdgeSettingsFormV2Props) {
   const { setEdgeAppearance } = useGraphStore();
   const { updateEdgeTypeAppearance } = useAppearanceManager();
 
-  // Store original appearance
-  const [originalAppearance] = useState(() => ({ ...edge.appearance } || {}));
+  // Store original appearance for the current edge
+  const [originalAppearance, setOriginalAppearance] = useState(() => ({ ...edge.appearance } || {}));
   
   // Local state for preview
   const [previewAppearance, setPreviewAppearance] = useState(() => ({ ...edge.appearance } || {}));
   const [isDirty, setIsDirty] = useState(false);
+  
+  // Keep track of the previous edge ID
+  const prevEdgeIdRef = useRef(edge.id);
 
-  // Reset when edge changes
+  // Cancel any unsaved changes when edge changes
   useEffect(() => {
-    if (edge.id) {
+    if (edge.id !== prevEdgeIdRef.current) {
+      // If there were unsaved changes on the previous edge, revert them
+      if (isDirty) {
+        // Revert the previous edge's appearance
+        setEdgeAppearance(prevEdgeIdRef.current, originalAppearance);
+      }
+      
+      // Update the ref
+      prevEdgeIdRef.current = edge.id;
+      
+      // Set up for the new edge
       const newAppearance = { ...edge.appearance } || {};
+      setOriginalAppearance(newAppearance);
       setPreviewAppearance(newAppearance);
       setIsDirty(false);
     }
-  }, [edge.id]);
+  }, [edge.id, isDirty, originalAppearance, setEdgeAppearance]);
 
   // Update preview on edge for real-time visualization
   const applyPreview = useCallback((appearance: typeof previewAppearance) => {
@@ -106,6 +120,7 @@ export default function EdgeSettingsFormV2({ edge }: EdgeSettingsFormV2Props) {
     if (edge.type) {
       updateEdgeTypeAppearance(edge.type, previewAppearance);
     }
+    setOriginalAppearance(previewAppearance);
     setIsDirty(false);
     toast.success("Edge appearance saved!");
   };
@@ -201,25 +216,33 @@ export default function EdgeSettingsFormV2({ edge }: EdgeSettingsFormV2Props) {
         />
       </div>
 
-      {/* Save/Cancel Buttons */}
+      {/* Save/Cancel Buttons - Always visible */}
+      <div className="flex gap-2 pt-2 border-t">
+        <Button 
+          onClick={handleSave}
+          size="sm"
+          className="flex-1"
+          variant={isDirty ? "default" : "outline"}
+          disabled={!isDirty}
+        >
+          Save Changes
+        </Button>
+        <Button 
+          onClick={handleCancel}
+          size="sm"
+          variant="outline"
+          className="flex-1"
+          disabled={!isDirty}
+        >
+          Cancel
+        </Button>
+      </div>
+      
+      {/* Status indicator */}
       {isDirty && (
-        <div className="flex gap-2 pt-2 border-t">
-          <Button 
-            onClick={handleSave}
-            size="sm"
-            className="flex-1"
-          >
-            Save Changes
-          </Button>
-          <Button 
-            onClick={handleCancel}
-            size="sm"
-            variant="outline"
-            className="flex-1"
-          >
-            Cancel
-          </Button>
-        </div>
+        <p className="text-xs text-muted-foreground text-center">
+          You have unsaved changes
+        </p>
       )}
     </div>
   );
