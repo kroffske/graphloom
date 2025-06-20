@@ -57,9 +57,11 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
   const borderColor = appearance.borderColor || '#e5e7eb';
   const borderWidth = appearance.borderWidth ?? 1.5;
   
-  // Size setting
+  // Size settings
   const nodeSize = appearance.size ?? 38; // Default 38px diameter
   const radius = nodeSize / 2;
+  const iconSize = appearance.iconSize ?? 70; // Default 70% of node size
+  const iconScale = iconSize / 100; // Convert percentage to scale factor
   
   // Use prop override for label visibility
   const shouldShowLabel = showLabel && transform.k > 0.6;
@@ -206,7 +208,7 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
             <text
               textAnchor="middle"
               dominantBaseline="middle"
-              fontSize={radius * 0.65}
+              fontSize={radius * iconScale}
               fill={iconColor}
               pointerEvents="none"
               style={{ userSelect: 'none' }}
@@ -220,10 +222,10 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
               if (IconComponent) {
                 return (
                   <foreignObject
-                    x={-radius * 0.5}
-                    y={-radius * 0.5}
-                    width={radius}
-                    height={radius}
+                    x={-radius * iconScale * 0.5}
+                    y={-radius * iconScale * 0.5}
+                    width={radius * iconScale}
+                    height={radius * iconScale}
                     pointerEvents="none"
                     style={{ overflow: 'visible' }}
                   >
@@ -235,8 +237,8 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
                       justifyContent: 'center' 
                     }}>
                       <IconComponent 
-                        width={radius * 0.6}
-                        height={radius * 0.6}
+                        width={radius * iconScale * 0.8}
+                        height={radius * iconScale * 0.8}
                         filled={false}
                         aria-label={icon}
                         color={iconColor}
@@ -250,7 +252,7 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
                 <text
                   textAnchor="middle"
                   dominantBaseline="middle"
-                  fontSize={radius * 0.5}
+                  fontSize={radius * iconScale * 0.7}
                   fill={iconColor}
                   pointerEvents="none"
                   style={{ userSelect: 'none' }}

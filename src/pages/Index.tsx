@@ -25,9 +25,9 @@ const Index = () => {
   const sidebarSections = [
     // Only show details section when something is selected
     ...(hasSelection ? [{
-      id: 'appearance',
-      title: 'Appearance',
-      icon: <Palette className="h-4 w-4" />,
+      id: 'details',
+      title: 'Details & Appearance',
+      icon: <Info className="h-4 w-4" />,
       content: <DetailsSection />,
       defaultOpen: true
     }] : []),

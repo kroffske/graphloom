@@ -9,7 +9,8 @@ import { toast } from "sonner";
 import { useIconRegistry } from "./IconRegistry";
 import { useGraphStore } from "@/state/useGraphStore";
 import { useAppearanceManager } from "@/hooks/appearance/useAppearanceManager";
-import type { GraphNode } from "@/types/graph.types";
+import type { GraphNode } from "@/types/graph";
+import { Users, User } from "lucide-react";
 
 // Helper to convert 8-digit hex to 6-digit hex
 function normalizeHexColor(color: string): string {
@@ -71,17 +72,23 @@ interface NodeSettingsFormV2Props {
 }
 
 export default function NodeSettingsFormV2({ node }: NodeSettingsFormV2Props) {
-  const { updateNodeAppearance } = useGraphStore();
+  const { nodes, updateNodeAppearance } = useGraphStore();
   const { updateNodeTypeAppearance } = useAppearanceManager();
   const iconRegistry = useIconRegistry();
   const allIconKeys = Object.keys(iconRegistry);
 
+  // Toggle state for single node vs all nodes of type
+  const [applyToAllOfType, setApplyToAllOfType] = useState(true);
+  
   // Store original appearance
   const [originalAppearance] = useState(() => ({ ...node.appearance } || {}));
   
   // Local state for preview
   const [previewAppearance, setPreviewAppearance] = useState(() => ({ ...node.appearance } || {}));
   const [isDirty, setIsDirty] = useState(false);
+
+  // Count nodes of same type
+  const nodesOfSameType = nodes.filter(n => n.type === node.type).length;
 
   // Reset when node changes (different node selected)
   useEffect(() => {
@@ -92,10 +99,20 @@ export default function NodeSettingsFormV2({ node }: NodeSettingsFormV2Props) {
     }
   }, [node.id]);
 
-  // Update preview on node for real-time visualization
+  // Update preview on node(s) for real-time visualization
   const applyPreview = useCallback((appearance: typeof previewAppearance) => {
-    updateNodeAppearance(node.id, appearance);
-  }, [node.id, updateNodeAppearance]);
+    if (applyToAllOfType) {
+      // Update all nodes of the same type
+      nodes.forEach(n => {
+        if (n.type === node.type) {
+          updateNodeAppearance(n.id, appearance);
+        }
+      });
+    } else {
+      // Update only this node
+      updateNodeAppearance(node.id, appearance);
+    }
+  }, [node.id, node.type, nodes, updateNodeAppearance, applyToAllOfType]);
 
   const updateAppearance = useCallback((key: string, value: string | number | boolean | undefined) => {
     const newAppearance = { ...previewAppearance, [key]: value };
@@ -106,10 +123,16 @@ export default function NodeSettingsFormV2({ node }: NodeSettingsFormV2Props) {
   }, [previewAppearance, applyPreview]);
 
   const handleSave = () => {
-    // Save to node type appearance
-    updateNodeTypeAppearance(node.type, previewAppearance);
+    if (applyToAllOfType) {
+      // Save to node type appearance
+      updateNodeTypeAppearance(node.type, previewAppearance);
+      toast.success(`Appearance saved for all ${node.type} nodes!`);
+    } else {
+      // Save only to this specific node
+      updateNodeAppearance(node.id, previewAppearance);
+      toast.success("Node appearance saved!");
+    }
     setIsDirty(false);
-    toast.success("Appearance saved!");
   };
 
   const handleCancel = () => {
@@ -121,6 +144,30 @@ export default function NodeSettingsFormV2({ node }: NodeSettingsFormV2Props) {
 
   return (
     <div className="flex flex-col gap-4">
+      {/* Apply to all toggle */}
+      <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+        <div className="flex items-center gap-2">
+          <Label htmlFor="apply-to-all" className="text-sm font-medium cursor-pointer flex items-center gap-2">
+            {applyToAllOfType ? (
+              <>
+                <Users className="h-4 w-4" />
+                Apply to all {node.type} nodes ({nodesOfSameType})
+              </>
+            ) : (
+              <>
+                <User className="h-4 w-4" />
+                Apply to this node only
+              </>
+            )}
+          </Label>
+        </div>
+        <Switch
+          id="apply-to-all"
+          checked={applyToAllOfType}
+          onCheckedChange={setApplyToAllOfType}
+        />
+      </div>
+
       {/* Icon Selection */}
       <div>
         <Label className="text-sm font-medium mb-2 block">Icon</Label>
@@ -155,10 +202,10 @@ export default function NodeSettingsFormV2({ node }: NodeSettingsFormV2Props) {
         </ScrollArea>
       </div>
 
-      {/* Size Slider */}
+      {/* Node Size Slider */}
       <div>
         <Label className="text-sm font-medium mb-2 block">
-          Size ({previewAppearance.size || 38}px)
+          Node Size ({previewAppearance.size || 38}px)
         </Label>
         <Slider
           min={20}
@@ -168,6 +215,24 @@ export default function NodeSettingsFormV2({ node }: NodeSettingsFormV2Props) {
           onValueChange={([size]) => updateAppearance('size', size)}
           className="w-full"
         />
+      </div>
+
+      {/* Icon Size Slider */}
+      <div>
+        <Label className="text-sm font-medium mb-2 block">
+          Icon Size ({previewAppearance.iconSize || 70}%)
+        </Label>
+        <Slider
+          min={40}
+          max={120}
+          step={5}
+          value={[previewAppearance.iconSize || 70]}
+          onValueChange={([iconSize]) => updateAppearance('iconSize', iconSize)}
+          className="w-full"
+        />
+        <p className="text-xs text-muted-foreground mt-1">
+          Adjusts icon size within the node circle
+        </p>
       </div>
 
       {/* Colors */}
