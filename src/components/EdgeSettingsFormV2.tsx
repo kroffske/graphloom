@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -69,30 +69,37 @@ interface EdgeSettingsFormV2Props {
 }
 
 export default function EdgeSettingsFormV2({ edge }: EdgeSettingsFormV2Props) {
-  const { edges, setEdges } = useGraphStore();
+  const { setEdgeAppearance } = useGraphStore();
   const { updateEdgeTypeAppearance } = useAppearanceManager();
 
+  // Store original appearance
+  const [originalAppearance] = useState(() => ({ ...edge.appearance } || {}));
+  
   // Local state for preview
-  const [previewAppearance, setPreviewAppearance] = useState(edge.appearance || {});
+  const [previewAppearance, setPreviewAppearance] = useState(() => ({ ...edge.appearance } || {}));
   const [isDirty, setIsDirty] = useState(false);
 
   // Reset when edge changes
   useEffect(() => {
-    setPreviewAppearance(edge.appearance || {});
-    setIsDirty(false);
-  }, [edge.id, edge.appearance]);
-
-  // Apply preview changes immediately to the edge for real-time preview
-  useEffect(() => {
-    if (isDirty) {
-      const updatedEdges = edges.map(e => 
-        e.id === edge.id 
-          ? { ...e, appearance: previewAppearance }
-          : e
-      );
-      setEdges(updatedEdges);
+    if (edge.id) {
+      const newAppearance = { ...edge.appearance } || {};
+      setPreviewAppearance(newAppearance);
+      setIsDirty(false);
     }
-  }, [previewAppearance, isDirty, edge.id, edges, setEdges]);
+  }, [edge.id]);
+
+  // Update preview on edge for real-time visualization
+  const applyPreview = useCallback((appearance: typeof previewAppearance) => {
+    setEdgeAppearance(edge.id, appearance);
+  }, [edge.id, setEdgeAppearance]);
+
+  const updateAppearance = useCallback((key: string, value: string | number | boolean | undefined) => {
+    const newAppearance = { ...previewAppearance, [key]: value };
+    setPreviewAppearance(newAppearance);
+    setIsDirty(true);
+    // Apply preview immediately
+    applyPreview(newAppearance);
+  }, [previewAppearance, applyPreview]);
 
   const handleSave = () => {
     // Save to edge type appearance
@@ -105,19 +112,9 @@ export default function EdgeSettingsFormV2({ edge }: EdgeSettingsFormV2Props) {
 
   const handleCancel = () => {
     // Revert to original appearance
-    setPreviewAppearance(edge.appearance || {});
-    const updatedEdges = edges.map(e => 
-      e.id === edge.id 
-        ? { ...e, appearance: edge.appearance || {} }
-        : e
-    );
-    setEdges(updatedEdges);
+    setPreviewAppearance(originalAppearance);
+    applyPreview(originalAppearance);
     setIsDirty(false);
-  };
-
-  const updateAppearance = (key: string, value: string | number | boolean | undefined) => {
-    setPreviewAppearance(prev => ({ ...prev, [key]: value }));
-    setIsDirty(true);
   };
 
   return (

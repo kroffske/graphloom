@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -71,32 +71,39 @@ interface NodeSettingsFormV2Props {
 }
 
 export default function NodeSettingsFormV2({ node }: NodeSettingsFormV2Props) {
-  const { nodes, setNodes } = useGraphStore();
+  const { updateNodeAppearance } = useGraphStore();
   const { updateNodeTypeAppearance } = useAppearanceManager();
   const iconRegistry = useIconRegistry();
   const allIconKeys = Object.keys(iconRegistry);
 
+  // Store original appearance
+  const [originalAppearance] = useState(() => ({ ...node.appearance } || {}));
+  
   // Local state for preview
-  const [previewAppearance, setPreviewAppearance] = useState(node.appearance || {});
+  const [previewAppearance, setPreviewAppearance] = useState(() => ({ ...node.appearance } || {}));
   const [isDirty, setIsDirty] = useState(false);
 
-  // Reset when node changes
+  // Reset when node changes (different node selected)
   useEffect(() => {
-    setPreviewAppearance(node.appearance || {});
-    setIsDirty(false);
-  }, [node.id, node.appearance]);
-
-  // Apply preview changes immediately to the node for real-time preview
-  useEffect(() => {
-    if (isDirty) {
-      const updatedNodes = nodes.map(n => 
-        n.id === node.id 
-          ? { ...n, appearance: previewAppearance }
-          : n
-      );
-      setNodes(updatedNodes);
+    if (node.id) {
+      const newAppearance = { ...node.appearance } || {};
+      setPreviewAppearance(newAppearance);
+      setIsDirty(false);
     }
-  }, [previewAppearance, isDirty, node.id, nodes, setNodes]);
+  }, [node.id]);
+
+  // Update preview on node for real-time visualization
+  const applyPreview = useCallback((appearance: typeof previewAppearance) => {
+    updateNodeAppearance(node.id, appearance);
+  }, [node.id, updateNodeAppearance]);
+
+  const updateAppearance = useCallback((key: string, value: string | number | boolean | undefined) => {
+    const newAppearance = { ...previewAppearance, [key]: value };
+    setPreviewAppearance(newAppearance);
+    setIsDirty(true);
+    // Apply preview immediately
+    applyPreview(newAppearance);
+  }, [previewAppearance, applyPreview]);
 
   const handleSave = () => {
     // Save to node type appearance
@@ -107,19 +114,9 @@ export default function NodeSettingsFormV2({ node }: NodeSettingsFormV2Props) {
 
   const handleCancel = () => {
     // Revert to original appearance
-    setPreviewAppearance(node.appearance || {});
-    const updatedNodes = nodes.map(n => 
-      n.id === node.id 
-        ? { ...n, appearance: node.appearance || {} }
-        : n
-    );
-    setNodes(updatedNodes);
+    setPreviewAppearance(originalAppearance);
+    applyPreview(originalAppearance);
     setIsDirty(false);
-  };
-
-  const updateAppearance = (key: string, value: string | number | boolean | undefined) => {
-    setPreviewAppearance(prev => ({ ...prev, [key]: value }));
-    setIsDirty(true);
   };
 
   return (
