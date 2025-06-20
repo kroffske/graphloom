@@ -12,7 +12,7 @@ import { TestDataSection } from "@/components/sidebar/TestDataSection";
 import { DetailsSection } from "@/components/sidebar/DetailsSection";
 import { SettingsPage } from "@/components/SettingsPage";
 import { useGraphStore } from "@/state/useGraphStore";
-import { Layout, Database, Palette } from "lucide-react";
+import { Layout, Database, Info } from "lucide-react";
 
 const Index = () => {
   const [uploadOpen, setUploadOpen] = useState(false);
