@@ -22,6 +22,10 @@ export type EdgeTypeAppearance = {
   width?: number;
   labelTemplate?: string;
   icon?: string; // for future use
+  opacity?: number;
+  strokeDasharray?: string;
+  label?: string;
+  showArrows?: boolean;
 };
 
 export type NodeTypeAppearanceMap = Record<string, NodeTypeAppearance>;

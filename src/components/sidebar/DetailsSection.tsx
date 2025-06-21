@@ -46,29 +46,44 @@ export const DetailsSection: React.FC = () => {
         </TabsList>
         
         <TabsContent value="details" className="space-y-4 mt-4">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 mb-4">
             {Icon && (
               <Icon filled className="w-8 h-8" aria-label={node.type} />
             )}
             <div>
-              <h3 className="font-semibold text-lg">{node.label}</h3>
-              <p className="text-sm text-muted-foreground">Type: {node.type}</p>
+              <h3 className="font-semibold text-lg select-text">{node.label}</h3>
             </div>
           </div>
           
-          {Object.keys(node.attributes).length > 0 && (
-            <div>
-              <h4 className="text-sm font-medium text-muted-foreground mb-2">Attributes</h4>
-              <div className="space-y-1">
-                {Object.entries(node.attributes).map(([key, value]) => (
-                  <div key={key} className="flex justify-between text-sm">
-                    <span className="font-medium text-muted-foreground">{key}:</span>
-                    <span className="text-foreground truncate max-w-[60%]">{String(value)}</span>
-                  </div>
-                ))}
+          <div>
+            <h4 className="text-sm font-medium text-muted-foreground mb-2">Details</h4>
+            <div className="space-y-1">
+              {/* Core properties */}
+              <div className="flex justify-between text-sm">
+                <span className="font-medium text-muted-foreground select-text">id:</span>
+                <span className="text-foreground truncate max-w-[60%] select-text cursor-text" title={node.id}>{node.id}</span>
               </div>
+              <div className="flex justify-between text-sm">
+                <span className="font-medium text-muted-foreground select-text">type:</span>
+                <span className="text-foreground truncate max-w-[60%] select-text cursor-text" title={node.type}>{node.type}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="font-medium text-muted-foreground select-text">label:</span>
+                <span className="text-foreground truncate max-w-[60%] select-text cursor-text" title={node.label}>{node.label}</span>
+              </div>
+              
+              {/* Visual separator */}
+              {Object.keys(node.attributes).length > 0 && <div className="my-2 border-t" />}
+              
+              {/* Custom attributes */}
+              {Object.entries(node.attributes).map(([key, value]) => (
+                <div key={key} className="flex justify-between text-sm">
+                  <span className="font-medium text-muted-foreground select-text">{key}:</span>
+                  <span className="text-foreground truncate max-w-[60%] select-text cursor-text" title={String(value)}>{String(value)}</span>
+                </div>
+              ))}
             </div>
-          )}
+          </div>
         </TabsContent>
         
         <TabsContent value="appearance" className="mt-4">

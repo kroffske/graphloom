@@ -3,6 +3,7 @@ import { GraphNode } from '@/types/graph.types';
 import { useGraphStore } from '@/state/useGraphStore';
 import { useIconRegistry } from '@/components/IconRegistry';
 import { isEmoji } from '@/config/emojiIcons';
+import { resolveLabelTemplate } from '@/utils/labelTemplate';
 
 interface GraphNodeV2Props {
   node: GraphNode;
@@ -266,19 +267,39 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
       )}
       
       {/* Label (hidden when zoomed out) */}
-      {shouldShowLabel && (
-        <text
-          y={radius + 16}
-          textAnchor="middle"
-          fontSize={12}
-          fill="#6b7280"
-          className="dark:fill-slate-400"
-          pointerEvents="none"
-          style={{ userSelect: 'none' }}
-        >
-          {node.label}
-        </text>
-      )}
+      {shouldShowLabel && (() => {
+        let label = node.label;
+        
+        // Check if we should use a template
+        if (appearance.labelTemplate) {
+          const context = {
+            ...node,
+            ...node.attributes,
+            node_type: node.type,
+            id: node.id,
+            label: node.label
+          };
+          label = resolveLabelTemplate(appearance.labelTemplate, context, node.label);
+        }
+        
+        return (
+          <text
+            y={radius + 16}
+            textAnchor="middle"
+            fontSize={12}
+            fill="#6b7280"
+            className="dark:fill-slate-400"
+            pointerEvents="none"
+            style={{ userSelect: 'none' }}
+          >
+            {label.split('\n').map((line, i) => (
+              <tspan key={i} x={0} dy={i === 0 ? 0 : 14}>
+                {line}
+              </tspan>
+            ))}
+          </text>
+        );
+      })()}
       
       {/* Selection indicator (shown when right-clicked) */}
       {isSelected && (

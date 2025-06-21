@@ -13,10 +13,6 @@ export default function EdgeDetailsDisplay({ edge }: Props) {
   const appearance = edge.appearance || {};
   const typeAppearance = edgeTypeAppearances[edge.type || "default"] || {};
 
-  // Show merged details: edge appearance overrides > type default > code default
-  const color = appearance.color || typeAppearance.color || "#64748b";
-  const width = appearance.width || typeAppearance.width || 2;
-
   // Compute label shown
   let label: string | undefined = appearance.label;
   if (label === undefined || label === "") {
@@ -37,56 +33,47 @@ export default function EdgeDetailsDisplay({ edge }: Props) {
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="space-y-4">
       <div>
-        <div className="text-xs uppercase font-semibold text-muted-foreground mb-2">
-          Edge Info
-        </div>
-        <dl className="grid grid-cols-2 gap-x-2 gap-y-1">
-          <dt className="font-semibold text-xs text-muted-foreground">ID</dt>
-          <dd className="text-xs text-foreground truncate">{edge.id}</dd>
-          <dt className="font-semibold text-xs text-muted-foreground">Source</dt>
-          <dd className="text-xs text-foreground truncate">{edge.source}</dd>
-          <dt className="font-semibold text-xs text-muted-foreground">Target</dt>
-          <dd className="text-xs text-foreground truncate">{edge.target}</dd>
-          {label && (
-            <>
-              <dt className="font-semibold text-xs text-muted-foreground">Label</dt>
-              <dd className="text-xs text-foreground truncate">{label}</dd>
-            </>
+        <h4 className="text-sm font-medium text-muted-foreground mb-2">Details</h4>
+        <div className="space-y-1">
+          {/* Core properties */}
+          <div className="flex justify-between text-sm">
+            <span className="font-medium text-muted-foreground select-text">id:</span>
+            <span className="text-foreground truncate max-w-[60%] select-text cursor-text" title={edge.id}>{edge.id}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="font-medium text-muted-foreground select-text">source:</span>
+            <span className="text-foreground truncate max-w-[60%] select-text cursor-text" title={edge.source}>{edge.source}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="font-medium text-muted-foreground select-text">target:</span>
+            <span className="text-foreground truncate max-w-[60%] select-text cursor-text" title={edge.target}>{edge.target}</span>
+          </div>
+          {edge.type && (
+            <div className="flex justify-between text-sm">
+              <span className="font-medium text-muted-foreground select-text">type:</span>
+              <span className="text-foreground truncate max-w-[60%] select-text cursor-text" title={edge.type}>{edge.type}</span>
+            </div>
           )}
-        </dl>
-      </div>
-      {/* Edge attributes */}
-      {edge.attributes && Object.keys(edge.attributes).length > 0 && (
-        <div>
-          <div className="text-xs uppercase font-semibold text-muted-foreground mb-2">Attributes</div>
-          <dl className="grid grid-cols-2 gap-x-2 gap-y-1">
-            {Object.entries(edge.attributes).map(([k, v]) => (
-              <React.Fragment key={k}>
-                <dt className="font-semibold text-xs text-muted-foreground">{k}</dt>
-                <dd className="text-xs text-foreground truncate">{String(v)}</dd>
-              </React.Fragment>
-            ))}
-          </dl>
+          {label && (
+            <div className="flex justify-between text-sm">
+              <span className="font-medium text-muted-foreground select-text">label:</span>
+              <span className="text-foreground truncate max-w-[60%] select-text cursor-text" title={label}>{label}</span>
+            </div>
+          )}
+          
+          {/* Visual separator */}
+          {edge.attributes && Object.keys(edge.attributes).length > 0 && <div className="my-2 border-t" />}
+          
+          {/* Custom attributes */}
+          {edge.attributes && Object.entries(edge.attributes).map(([k, v]) => (
+            <div key={k} className="flex justify-between text-sm">
+              <span className="font-medium text-muted-foreground select-text">{k}:</span>
+              <span className="text-foreground truncate max-w-[60%] select-text cursor-text" title={String(v)}>{String(v)}</span>
+            </div>
+          ))}
         </div>
-      )}
-      {/* Appearance details */}
-      <div>
-        <div className="text-xs uppercase font-semibold text-muted-foreground mb-2">
-          Appearance (Effective)
-        </div>
-        <dl className="grid grid-cols-2 gap-x-2 gap-y-1">
-          <dt className="font-semibold text-xs text-muted-foreground">Type</dt>
-          <dd className="text-xs text-foreground">{edge.type || "default"}</dd>
-          <dt className="font-semibold text-xs text-muted-foreground">Color</dt>
-          <dd className="text-xs text-foreground">
-            <span className="inline-block w-4 h-4 mr-1 rounded-full align-middle" style={{ background: color }} />
-            {color}
-          </dd>
-          <dt className="font-semibold text-xs text-muted-foreground">Width</dt>
-          <dd className="text-xs text-foreground">{width}px</dd>
-        </dl>
       </div>
     </div>
   );

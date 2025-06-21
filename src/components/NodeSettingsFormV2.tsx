@@ -81,10 +81,10 @@ export default function NodeSettingsFormV2({ node }: NodeSettingsFormV2Props) {
   const [applyToAllOfType, setApplyToAllOfType] = useState(true);
   
   // Store original appearance for the current node
-  const [originalAppearance, setOriginalAppearance] = useState(() => ({ ...node.appearance } || {}));
+  const [originalAppearance, setOriginalAppearance] = useState(() => node.appearance ? { ...node.appearance } : {});
   
   // Local state for preview
-  const [previewAppearance, setPreviewAppearance] = useState(() => ({ ...node.appearance } || {}));
+  const [previewAppearance, setPreviewAppearance] = useState(() => node.appearance ? { ...node.appearance } : {});
   const [isDirty, setIsDirty] = useState(false);
 
   // Keep track of the previous node ID
@@ -93,9 +93,15 @@ export default function NodeSettingsFormV2({ node }: NodeSettingsFormV2Props) {
   // Count nodes of same type
   const nodesOfSameType = nodes.filter(n => n.type === node.type).length;
 
+  // Store applyToAllOfType in a ref to avoid stale closure issues
+  const applyToAllOfTypeRef = useRef(applyToAllOfType);
+  useEffect(() => {
+    applyToAllOfTypeRef.current = applyToAllOfType;
+  }, [applyToAllOfType]);
+
   // Update preview on node(s) for real-time visualization
   const applyPreview = useCallback((appearance: typeof previewAppearance, useCurrentSettings = true) => {
-    const applyToAll = useCurrentSettings ? applyToAllOfType : true; // When reverting, apply to all if that was the setting
+    const applyToAll = useCurrentSettings ? applyToAllOfTypeRef.current : true; // When reverting, apply to all if that was the setting
     
     if (applyToAll) {
       // Update all nodes of the same type
@@ -108,7 +114,7 @@ export default function NodeSettingsFormV2({ node }: NodeSettingsFormV2Props) {
       // Update only this node
       updateNodeAppearance(node.id, appearance);
     }
-  }, [node.id, node.type, nodes, updateNodeAppearance, applyToAllOfType]);
+  }, [node.id, node.type, nodes, updateNodeAppearance]);
 
   // Cancel any unsaved changes when node changes
   useEffect(() => {
@@ -118,7 +124,7 @@ export default function NodeSettingsFormV2({ node }: NodeSettingsFormV2Props) {
         // Revert all nodes of the previous type if that was the setting
         const prevNode = nodes.find(n => n.id === prevNodeIdRef.current);
         if (prevNode) {
-          if (applyToAllOfType) {
+          if (applyToAllOfTypeRef.current) {
             nodes.forEach(n => {
               if (n.type === prevNode.type) {
                 updateNodeAppearance(n.id, originalAppearance);
@@ -134,12 +140,12 @@ export default function NodeSettingsFormV2({ node }: NodeSettingsFormV2Props) {
       prevNodeIdRef.current = node.id;
       
       // Set up for the new node
-      const newAppearance = { ...node.appearance } || {};
+      const newAppearance = node.appearance ? { ...node.appearance } : {};
       setOriginalAppearance(newAppearance);
       setPreviewAppearance(newAppearance);
       setIsDirty(false);
     }
-  }, [node.id, nodes, isDirty, originalAppearance, applyToAllOfType, updateNodeAppearance]);
+  }, [node.id, nodes, isDirty, originalAppearance, updateNodeAppearance]);
 
   const updateAppearance = useCallback((key: string, value: string | number | boolean | undefined) => {
     const newAppearance = { ...previewAppearance, [key]: value };
@@ -341,6 +347,23 @@ export default function NodeSettingsFormV2({ node }: NodeSettingsFormV2Props) {
             />
           </div>
         )}
+      </div>
+
+      {/* Label Template */}
+      <div>
+        <Label htmlFor="node-label-template" className="text-sm font-medium mb-1 block">
+          Label Template
+        </Label>
+        <Input
+          id="node-label-template"
+          value={previewAppearance.labelTemplate || ''}
+          onChange={(e) => updateAppearance('labelTemplate', e.target.value)}
+          placeholder="{label}\n{node_type}"
+          className="h-8"
+        />
+        <p className="text-xs text-muted-foreground mt-1">
+          Use {'{property}'} to insert values. Use \n for new lines.
+        </p>
       </div>
 
       {/* Save/Cancel Buttons - Always visible */}

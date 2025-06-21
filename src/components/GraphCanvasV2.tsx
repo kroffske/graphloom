@@ -6,6 +6,7 @@ import { graphEventBus } from '@/lib/graphEventBus';
 import { PerformanceIndicator } from './PerformanceIndicator';
 import { TimeRangeSlider } from './TimeRangeSlider';
 import { isEdgeInTimeRange } from '@/utils/timestampUtils';
+import { resolveLabelTemplate } from '@/utils/labelTemplate';
 import { VisibilitySettings } from './VisibilitySettings';
 import GraphTooltipManager from './GraphTooltipManager';
 import { 
@@ -63,6 +64,7 @@ export const GraphCanvasV2: React.FC = () => {
   
   // Visibility settings
   const showIsolatedNodes = useGraphStore(state => state.showIsolatedNodes);
+  const showEdgeLabels = useGraphStore(state => state.showEdgeLabels);
   
   // Filter edges based on time range
   const filteredEdges = React.useMemo(() => {
@@ -532,9 +534,10 @@ export const GraphCanvasV2: React.FC = () => {
   
   // console.log('[GraphCanvasV2] Rendering', visibleNodes.length, 'of', filteredNodes.length, 'nodes (zoom:', transform.k.toFixed(2), ')');
   
-  // Get hovered items
+  // Get hovered and selected items
   const hoveredNode = hoveredNodeId ? nodes.find(n => n.id === hoveredNodeId) : null;
   const hoveredEdge = hoveredEdgeId ? edges.find(e => e.id === hoveredEdgeId) : null;
+  const { selectedEdgeId } = useGraphStore.getState();
   
   return (
     <div className="h-full w-full relative" onMouseMove={handleMouseMove}>
@@ -548,6 +551,48 @@ export const GraphCanvasV2: React.FC = () => {
           style={{ cursor: 'default', touchAction: 'none' }}
           onContextMenu={(e) => e.preventDefault()}
         >
+          {/* Arrow marker definitions */}
+          <defs>
+            {/* Create unique markers for each edge color */}
+            {Array.from(new Set(filteredEdges.map(edge => {
+              const typeAppearance = edgeTypeAppearances?.[edge.type || ''] ?? {};
+              const appearance = { ...typeAppearance, ...edge.appearance };
+              return appearance.color || '#64748b';
+            }))).map(color => {
+              const colorId = color.replace(/[^a-zA-Z0-9]/g, '');
+              return (
+                <marker
+                  key={colorId}
+                  id={`arrowhead-${colorId}`}
+                  viewBox="0 0 10 10"
+                  refX="9"
+                  refY="5"
+                  markerWidth="6"
+                  markerHeight="6"
+                  orient="auto"
+                >
+                  <path
+                    d="M 0 0 L 10 5 L 0 10 z"
+                    fill={color}
+                  />
+                </marker>
+              );
+            })}
+            <marker
+              id="arrowhead-selected"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="6"
+              markerHeight="6"
+              orient="auto"
+            >
+              <path
+                d="M 0 0 L 10 5 L 0 10 z"
+                fill="#3b82f6"
+              />
+            </marker>
+          </defs>
       <g 
         ref={gRef}
         transform={`translate(${transform.x},${transform.y}) scale(${transform.k})`}
@@ -586,43 +631,123 @@ export const GraphCanvasV2: React.FC = () => {
             
             // Get edge appearance with fallback to type appearance
             const typeAppearance = edgeTypeAppearances?.[edge.type || ''] ?? {};
-            const appearance = edge.appearance && Object.keys(edge.appearance).length > 0
-              ? edge.appearance
-              : typeAppearance;
+            const appearance = { ...typeAppearance, ...edge.appearance };
             
             const color = appearance.color || '#64748b';
             const width = appearance.width || 2;
             const opacity = appearance.opacity ?? 0.6;
             const strokeDasharray = appearance.strokeDasharray;
+            const showArrows = appearance.showArrows || false;
+            const isSelected = selectedEdgeId === edge.id;
+            const colorId = color.replace(/[^a-zA-Z0-9]/g, '');
+            
+            // Parse direction from attributes
+            const direction = edge.attributes?.direction as string | undefined;
+            const isRightArrow = direction === 'right' || direction === 'double';
+            const isLeftArrow = direction === 'left' || direction === 'double';
+            
+            // Calculate adjusted positions for arrows (accounting for node radius)
+            const nodeRadius = 20; // Approximate default node radius
+            const dx = target.x - source.x;
+            const dy = target.y - source.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const unitX = dx / distance;
+            const unitY = dy / distance;
+            
+            // Adjust start and end points to account for node radius
+            const adjustedX1 = source.x + unitX * nodeRadius;
+            const adjustedY1 = source.y + unitY * nodeRadius;
+            const adjustedX2 = target.x - unitX * nodeRadius;
+            const adjustedY2 = target.y - unitY * nodeRadius;
             
             return (
               <g key={edge.id}>
                 {/* Invisible wider line for easier hovering */}
                 <line
-                  x1={source.x}
-                  y1={source.y}
-                  x2={target.x}
-                  y2={target.y}
+                  x1={showArrows ? adjustedX1 : source.x}
+                  y1={showArrows ? adjustedY1 : source.y}
+                  x2={showArrows ? adjustedX2 : target.x}
+                  y2={showArrows ? adjustedY2 : target.y}
                   stroke="transparent"
                   strokeWidth={Math.max(10, width * 2)}
                   className="cursor-pointer"
                   onMouseEnter={() => setHoveredEdgeId(edge.id)}
                   onMouseLeave={() => setHoveredEdgeId(null)}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    useGraphStore.getState().selectEdge(edge.id);
+                  }}
                   style={{ pointerEvents: 'stroke' }}
                 />
                 {/* Visible line */}
                 <line
-                  x1={source.x}
-                  y1={source.y}
-                  x2={target.x}
-                  y2={target.y}
-                  stroke={hoveredEdgeId === edge.id ? '#3b82f6' : color}
-                  strokeWidth={hoveredEdgeId === edge.id ? (width + 1) : (simplifiedRendering ? 1 : width)}
+                  x1={showArrows ? adjustedX1 : source.x}
+                  y1={showArrows ? adjustedY1 : source.y}
+                  x2={showArrows ? adjustedX2 : target.x}
+                  y2={showArrows ? adjustedY2 : target.y}
+                  stroke={isSelected ? '#3b82f6' : (hoveredEdgeId === edge.id ? '#3b82f6' : color)}
+                  strokeWidth={isSelected ? (width + 2) : (hoveredEdgeId === edge.id ? (width + 1) : (simplifiedRendering ? 1 : width))}
                   opacity={simplifiedRendering ? 0.3 : opacity}
                   strokeDasharray={strokeDasharray}
-                  className="dark:stroke-slate-500"
-                  style={{ pointerEvents: 'none' }}
+                  markerEnd={showArrows && isRightArrow ? `url(#${isSelected ? 'arrowhead-selected' : `arrowhead-${colorId}`})` : undefined}
+                  markerStart={showArrows && isLeftArrow ? `url(#${isSelected ? 'arrowhead-selected' : `arrowhead-${colorId}`})` : undefined}
+                  style={{ 
+                    pointerEvents: 'stroke'
+                  }}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    useGraphStore.getState().selectEdge(edge.id);
+                  }}
                 />
+                {/* Edge label */}
+                {showEdgeLabels && transform.k > 0.5 && (() => {
+                  // Calculate label from template or use default
+                  let label = appearance.label || '';
+                  
+                  if (!label && appearance.labelTemplate) {
+                    // Create context for template resolution
+                    const sourceNode = nodes.find(n => n.id === edge.source);
+                    const targetNode = nodes.find(n => n.id === edge.target);
+                    const context = {
+                      ...edge,
+                      ...edge.attributes,
+                      edge_type: edge.type,
+                      source: edge.source,
+                      target: edge.target,
+                      source_label: sourceNode?.label,
+                      target_label: targetNode?.label,
+                      source_node: sourceNode,
+                      target_node: targetNode
+                    };
+                    label = resolveLabelTemplate(appearance.labelTemplate, context, '');
+                  }
+                  
+                  if (label) {
+                    const midX = (source.x + target.x) / 2;
+                    const midY = (source.y + target.y) / 2;
+                    
+                    return (
+                      <text
+                        x={midX}
+                        y={midY - 8}
+                        textAnchor="middle"
+                        fontSize={12}
+                        fill="#6b7280"
+                        className="dark:fill-slate-400 pointer-events-none select-none"
+                        style={{ userSelect: 'none' }}
+                      >
+                        {label.split('\n').map((line, i) => (
+                          <tspan key={i} x={midX} dy={i === 0 ? 0 : 14}>
+                            {line}
+                          </tspan>
+                        ))}
+                      </text>
+                    );
+                  }
+                  return null;
+                })()}
               </g>
             );
           })}

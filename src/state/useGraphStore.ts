@@ -82,8 +82,8 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       nodes: typeof updater === "function" ? updater(state.nodes) : updater,
     })),
   setEdges: (edges) => set({ edges }),
-  selectNode: (id) => set({ selectedNodeId: id }),
-  selectEdge: (id) => set({ selectedEdgeId: id }),
+  selectNode: (id) => set({ selectedNodeId: id, selectedEdgeId: null }),
+  selectEdge: (id) => set({ selectedEdgeId: id, selectedNodeId: null }),
   setHoveredNodeId: (id) => set({ hoveredNodeId: id }),
   setHoveredEdgeId: (id) => set({ hoveredEdgeId: id }),
   hideNode: (id) => {

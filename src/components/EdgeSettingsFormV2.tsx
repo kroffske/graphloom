@@ -5,7 +5,8 @@ import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Download } from "lucide-react";
+import { Download, Users, User } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { useGraphStore } from "@/state/useGraphStore";
 import { useAppearanceManager } from "@/hooks/appearance/useAppearanceManager";
 import type { GraphEdge } from "@/types/graph.types";
@@ -70,43 +71,78 @@ interface EdgeSettingsFormV2Props {
 }
 
 export default function EdgeSettingsFormV2({ edge }: EdgeSettingsFormV2Props) {
-  const { setEdgeAppearance } = useGraphStore();
+  const { edges, setEdgeAppearance } = useGraphStore();
   const { updateEdgeTypeAppearance } = useAppearanceManager();
 
+  // Toggle state for single edge vs all edges of type
+  const [applyToAllOfType, setApplyToAllOfType] = useState(true);
+  
   // Store original appearance for the current edge
-  const [originalAppearance, setOriginalAppearance] = useState(() => ({ ...edge.appearance } || {}));
+  const [originalAppearance, setOriginalAppearance] = useState(() => edge.appearance ? { ...edge.appearance } : {});
   
   // Local state for preview
-  const [previewAppearance, setPreviewAppearance] = useState(() => ({ ...edge.appearance } || {}));
+  const [previewAppearance, setPreviewAppearance] = useState(() => edge.appearance ? { ...edge.appearance } : {});
   const [isDirty, setIsDirty] = useState(false);
   
   // Keep track of the previous edge ID
   const prevEdgeIdRef = useRef(edge.id);
+  
+  // Count edges of same type
+  const edgesOfSameType = edges.filter(e => e.type === edge.type).length;
 
   // Cancel any unsaved changes when edge changes
   useEffect(() => {
     if (edge.id !== prevEdgeIdRef.current) {
       // If there were unsaved changes on the previous edge, revert them
       if (isDirty) {
-        // Revert the previous edge's appearance
-        setEdgeAppearance(prevEdgeIdRef.current, originalAppearance);
+        // Revert all edges of the previous type if that was the setting
+        const prevEdge = edges.find(e => e.id === prevEdgeIdRef.current);
+        if (prevEdge) {
+          if (applyToAllOfTypeRef.current) {
+            edges.forEach(e => {
+              if (e.type === prevEdge.type) {
+                setEdgeAppearance(e.id, originalAppearance);
+              }
+            });
+          } else {
+            setEdgeAppearance(prevEdgeIdRef.current, originalAppearance);
+          }
+        }
       }
       
       // Update the ref
       prevEdgeIdRef.current = edge.id;
       
       // Set up for the new edge
-      const newAppearance = { ...edge.appearance } || {};
+      const newAppearance = edge.appearance ? { ...edge.appearance } : {};
       setOriginalAppearance(newAppearance);
       setPreviewAppearance(newAppearance);
       setIsDirty(false);
     }
-  }, [edge.id, isDirty, originalAppearance, setEdgeAppearance]);
+  }, [edge.id, edge.appearance, edges, isDirty, originalAppearance, setEdgeAppearance]);
 
-  // Update preview on edge for real-time visualization
-  const applyPreview = useCallback((appearance: typeof previewAppearance) => {
-    setEdgeAppearance(edge.id, appearance);
-  }, [edge.id, setEdgeAppearance]);
+  // Store applyToAllOfType in a ref to avoid stale closure issues
+  const applyToAllOfTypeRef = useRef(applyToAllOfType);
+  useEffect(() => {
+    applyToAllOfTypeRef.current = applyToAllOfType;
+  }, [applyToAllOfType]);
+
+  // Update preview on edge(s) for real-time visualization
+  const applyPreview = useCallback((appearance: typeof previewAppearance, useCurrentSettings = true) => {
+    const applyToAll = useCurrentSettings ? applyToAllOfTypeRef.current : true;
+    
+    if (applyToAll) {
+      // Update all edges of the same type
+      edges.forEach(e => {
+        if (e.type === edge.type) {
+          setEdgeAppearance(e.id, appearance);
+        }
+      });
+    } else {
+      // Update only this edge
+      setEdgeAppearance(edge.id, appearance);
+    }
+  }, [edge.id, edge.type, edges, setEdgeAppearance]);
 
   const updateAppearance = useCallback((key: string, value: string | number | boolean | undefined) => {
     const newAppearance = { ...previewAppearance, [key]: value };
@@ -117,13 +153,17 @@ export default function EdgeSettingsFormV2({ edge }: EdgeSettingsFormV2Props) {
   }, [previewAppearance, applyPreview]);
 
   const handleSave = () => {
-    // Save to edge type appearance
-    if (edge.type) {
+    if (applyToAllOfType && edge.type) {
+      // Save to edge type appearance
       updateEdgeTypeAppearance(edge.type, previewAppearance);
+      toast.success(`Appearance saved for all ${edge.type} edges!`);
+    } else {
+      // Save only to this specific edge
+      setEdgeAppearance(edge.id, previewAppearance);
+      toast.success("Edge appearance saved!");
     }
     setOriginalAppearance(previewAppearance);
     setIsDirty(false);
-    toast.success("Edge appearance saved!");
   };
 
   const handleCancel = () => {
@@ -182,6 +222,30 @@ export default function EdgeSettingsFormV2({ edge }: EdgeSettingsFormV2Props) {
         >
           <Download className="h-4 w-4" />
         </Button>
+      </div>
+
+      {/* Apply to all toggle */}
+      <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+        <div className="flex items-center gap-2 flex-1">
+          <Label htmlFor="apply-to-all" className="text-sm font-medium cursor-pointer flex items-center gap-2">
+            {applyToAllOfType ? (
+              <>
+                <Users className="h-4 w-4" />
+                Apply to all {edge.type || 'default'} edges ({edgesOfSameType})
+              </>
+            ) : (
+              <>
+                <User className="h-4 w-4" />
+                Apply to this edge only
+              </>
+            )}
+          </Label>
+        </div>
+        <Switch
+          id="apply-to-all"
+          checked={applyToAllOfType}
+          onCheckedChange={setApplyToAllOfType}
+        />
       </div>
 
       {/* Color */}
@@ -245,6 +309,22 @@ export default function EdgeSettingsFormV2({ edge }: EdgeSettingsFormV2Props) {
         </Select>
       </div>
 
+      {/* Arrow Toggle */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <Label className="text-sm font-medium">Show Arrows</Label>
+          <Switch
+            checked={previewAppearance.showArrows ?? false}
+            onCheckedChange={v => updateAppearance('showArrows', v)}
+          />
+        </div>
+        {previewAppearance.showArrows && edge.attributes?.direction && (
+          <p className="text-xs text-muted-foreground">
+            Direction: {edge.attributes.direction as string}
+          </p>
+        )}
+      </div>
+
       {/* Label */}
       <div>
         <Label htmlFor="edge-label" className="text-sm font-medium mb-1 block">
@@ -257,6 +337,23 @@ export default function EdgeSettingsFormV2({ edge }: EdgeSettingsFormV2Props) {
           placeholder="Edge label"
           className="h-8"
         />
+      </div>
+
+      {/* Label Template */}
+      <div>
+        <Label htmlFor="edge-label-template" className="text-sm font-medium mb-1 block">
+          Label Template
+        </Label>
+        <Input
+          id="edge-label-template"
+          value={previewAppearance.labelTemplate || ''}
+          onChange={(e) => updateAppearance('labelTemplate', e.target.value)}
+          placeholder="{edge_type}\n{source} -> {target}"
+          className="h-8"
+        />
+        <p className="text-xs text-muted-foreground mt-1">
+          Use {'{property}'} to insert values. Use \n for new lines.
+        </p>
       </div>
 
       {/* Save/Cancel Buttons - Always visible */}
