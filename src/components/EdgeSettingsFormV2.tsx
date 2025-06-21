@@ -5,6 +5,7 @@ import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { Download } from "lucide-react";
 import { useGraphStore } from "@/state/useGraphStore";
 import { useAppearanceManager } from "@/hooks/appearance/useAppearanceManager";
 import type { GraphEdge } from "@/types/graph.types";
@@ -132,13 +133,55 @@ export default function EdgeSettingsFormV2({ edge }: EdgeSettingsFormV2Props) {
     setIsDirty(false);
   };
 
+  const handleDownload = () => {
+    // Create appearance preset object
+    const preset = {
+      name: `Edge ${edge.type || 'Default'} Appearance`,
+      type: edge.type || 'default',
+      timestamp: new Date().toISOString(),
+      appearance: previewAppearance,
+      modified: isDirty,
+      edge: {
+        source: edge.source,
+        target: edge.target
+      }
+    };
+
+    // Convert to JSON
+    const json = JSON.stringify(preset, null, 2);
+    
+    // Create blob and download
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `appearance-edge-${edge.type || 'default'}-${Date.now()}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    toast.success('Edge appearance settings downloaded!');
+  };
+
   return (
     <div className="flex flex-col gap-4">
-      {/* Edge Info */}
-      <div className="text-sm text-muted-foreground">
-        <div>From: <span className="font-medium text-foreground">{edge.source}</span></div>
-        <div>To: <span className="font-medium text-foreground">{edge.target}</span></div>
-        {edge.type && <div>Type: <span className="font-medium text-foreground">{edge.type}</span></div>}
+      {/* Edge Info with download button */}
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-muted-foreground">
+          <div>From: <span className="font-medium text-foreground">{edge.source}</span></div>
+          <div>To: <span className="font-medium text-foreground">{edge.target}</span></div>
+          {edge.type && <div>Type: <span className="font-medium text-foreground">{edge.type}</span></div>}
+        </div>
+        <Button
+          onClick={handleDownload}
+          size="icon"
+          variant="ghost"
+          className="h-8 w-8"
+          title="Download appearance settings"
+        >
+          <Download className="h-4 w-4" />
+        </Button>
       </div>
 
       {/* Color */}

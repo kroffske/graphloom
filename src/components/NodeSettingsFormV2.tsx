@@ -10,7 +10,7 @@ import { useIconRegistry } from "./IconRegistry";
 import { useGraphStore } from "@/state/useGraphStore";
 import { useAppearanceManager } from "@/hooks/appearance/useAppearanceManager";
 import type { GraphNode } from "@/types/graph";
-import { Users, User } from "lucide-react";
+import { Users, User, Download } from "lucide-react";
 
 // Helper to convert 8-digit hex to 6-digit hex
 function normalizeHexColor(color: string): string {
@@ -170,11 +170,38 @@ export default function NodeSettingsFormV2({ node }: NodeSettingsFormV2Props) {
     setIsDirty(false);
   };
 
+  const handleDownload = () => {
+    // Create appearance preset object
+    const preset = {
+      name: `${node.type} Appearance`,
+      type: node.type,
+      timestamp: new Date().toISOString(),
+      appearance: previewAppearance,
+      modified: isDirty
+    };
+
+    // Convert to JSON
+    const json = JSON.stringify(preset, null, 2);
+    
+    // Create blob and download
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `appearance-${node.type}-${Date.now()}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    toast.success('Appearance settings downloaded!');
+  };
+
   return (
     <div className="flex flex-col gap-4">
-      {/* Apply to all toggle */}
+      {/* Apply to all toggle with download button */}
       <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-1">
           <Label htmlFor="apply-to-all" className="text-sm font-medium cursor-pointer flex items-center gap-2">
             {applyToAllOfType ? (
               <>
@@ -189,11 +216,22 @@ export default function NodeSettingsFormV2({ node }: NodeSettingsFormV2Props) {
             )}
           </Label>
         </div>
-        <Switch
-          id="apply-to-all"
-          checked={applyToAllOfType}
-          onCheckedChange={setApplyToAllOfType}
-        />
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={handleDownload}
+            size="icon"
+            variant="ghost"
+            className="h-8 w-8"
+            title="Download appearance settings"
+          >
+            <Download className="h-4 w-4" />
+          </Button>
+          <Switch
+            id="apply-to-all"
+            checked={applyToAllOfType}
+            onCheckedChange={setApplyToAllOfType}
+          />
+        </div>
       </div>
 
       {/* Icon Selection */}
