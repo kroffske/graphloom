@@ -26,7 +26,7 @@ const Index = () => {
     // Only show details section when something is selected
     ...(hasSelection ? [{
       id: 'details',
-      title: 'Details & Settings',
+      title: 'Details & Appearance',
       icon: <Info className="h-4 w-4" />,
       content: <DetailsSection />,
       defaultOpen: true

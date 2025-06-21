@@ -8,6 +8,7 @@ export type NodeTypeAppearance = {
   iconOrder?: string[];
   // New unified properties
   iconColor?: string;
+  iconSize?: number; // Size of icon within the node
   borderEnabled?: boolean;
   borderColor?: string;
   borderWidth?: number;
@@ -21,6 +22,10 @@ export type EdgeTypeAppearance = {
   width?: number;
   labelTemplate?: string;
   icon?: string; // for future use
+  opacity?: number;
+  strokeDasharray?: string;
+  label?: string;
+  showArrows?: boolean;
 };
 
 export type NodeTypeAppearanceMap = Record<string, NodeTypeAppearance>;

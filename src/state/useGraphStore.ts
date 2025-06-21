@@ -27,6 +27,7 @@ export type GraphStore = {
   showNode: (id: string) => void;
   showAllHiddenNodes: () => void;
   setManualPosition: (id: string, pos: { x: number; y: number }) => void;
+  updateNodeAppearance: (id: string, appearance: Partial<GraphNode['appearance']>) => void;
   incrementalUpdateNodes: (changedNodes: GraphNode[]) => void;
   incrementalUpdateEdges: (changedEdges: GraphEdge[]) => void;
   nodeTypeAppearances: NodeTypeAppearanceMap;
@@ -81,8 +82,8 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       nodes: typeof updater === "function" ? updater(state.nodes) : updater,
     })),
   setEdges: (edges) => set({ edges }),
-  selectNode: (id) => set({ selectedNodeId: id }),
-  selectEdge: (id) => set({ selectedEdgeId: id }),
+  selectNode: (id) => set({ selectedNodeId: id, selectedEdgeId: null }),
+  selectEdge: (id) => set({ selectedEdgeId: id, selectedNodeId: null }),
   setHoveredNodeId: (id) => set({ hoveredNodeId: id }),
   setHoveredEdgeId: (id) => set({ hoveredEdgeId: id }),
   hideNode: (id) => {
@@ -103,6 +104,12 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   setManualPosition: (id, pos) =>
     set((state) => ({
       manualPositions: { ...state.manualPositions, [id]: pos },
+    })),
+  updateNodeAppearance: (id, appearance) =>
+    set((state) => ({
+      nodes: state.nodes.map((n) =>
+        n.id === id ? { ...n, appearance: { ...(n.appearance || {}), ...appearance } } : n
+      ),
     })),
   incrementalUpdateNodes: (changedNodes) => {
     set((state) => {

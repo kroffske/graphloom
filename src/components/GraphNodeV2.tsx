@@ -3,6 +3,7 @@ import { GraphNode } from '@/types/graph.types';
 import { useGraphStore } from '@/state/useGraphStore';
 import { useIconRegistry } from '@/components/IconRegistry';
 import { isEmoji } from '@/config/emojiIcons';
+import { resolveLabelTemplate } from '@/utils/labelTemplate';
 
 interface GraphNodeV2Props {
   node: GraphNode;
@@ -57,9 +58,11 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
   const borderColor = appearance.borderColor || '#e5e7eb';
   const borderWidth = appearance.borderWidth ?? 1.5;
   
-  // Size setting
+  // Size settings
   const nodeSize = appearance.size ?? 38; // Default 38px diameter
   const radius = nodeSize / 2;
+  const iconSize = appearance.iconSize ?? 70; // Default 70% of node size
+  const iconScale = iconSize / 100; // Convert percentage to scale factor
   
   // Use prop override for label visibility
   const shouldShowLabel = showLabel && transform.k > 0.6;
@@ -206,7 +209,7 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
             <text
               textAnchor="middle"
               dominantBaseline="middle"
-              fontSize={radius * 0.65}
+              fontSize={radius * iconScale}
               fill={iconColor}
               pointerEvents="none"
               style={{ userSelect: 'none' }}
@@ -220,10 +223,10 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
               if (IconComponent) {
                 return (
                   <foreignObject
-                    x={-radius * 0.5}
-                    y={-radius * 0.5}
-                    width={radius}
-                    height={radius}
+                    x={-radius * iconScale * 0.5}
+                    y={-radius * iconScale * 0.5}
+                    width={radius * iconScale}
+                    height={radius * iconScale}
                     pointerEvents="none"
                     style={{ overflow: 'visible' }}
                   >
@@ -235,8 +238,8 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
                       justifyContent: 'center' 
                     }}>
                       <IconComponent 
-                        width={radius * 0.6}
-                        height={radius * 0.6}
+                        width={radius * iconScale * 0.8}
+                        height={radius * iconScale * 0.8}
                         filled={false}
                         aria-label={icon}
                         color={iconColor}
@@ -250,7 +253,7 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
                 <text
                   textAnchor="middle"
                   dominantBaseline="middle"
-                  fontSize={radius * 0.5}
+                  fontSize={radius * iconScale * 0.7}
                   fill={iconColor}
                   pointerEvents="none"
                   style={{ userSelect: 'none' }}
@@ -264,19 +267,39 @@ export const GraphNodeV2 = React.memo<GraphNodeV2Props>(({
       )}
       
       {/* Label (hidden when zoomed out) */}
-      {shouldShowLabel && (
-        <text
-          y={radius + 16}
-          textAnchor="middle"
-          fontSize={12}
-          fill="#6b7280"
-          className="dark:fill-slate-400"
-          pointerEvents="none"
-          style={{ userSelect: 'none' }}
-        >
-          {node.label}
-        </text>
-      )}
+      {shouldShowLabel && (() => {
+        let label = node.label;
+        
+        // Check if we should use a template
+        if (appearance.labelTemplate) {
+          const context = {
+            ...node,
+            ...node.attributes,
+            node_type: node.type,
+            id: node.id,
+            label: node.label
+          };
+          label = resolveLabelTemplate(appearance.labelTemplate, context, node.label);
+        }
+        
+        return (
+          <text
+            y={radius + 16}
+            textAnchor="middle"
+            fontSize={12}
+            fill="#6b7280"
+            className="dark:fill-slate-400"
+            pointerEvents="none"
+            style={{ userSelect: 'none' }}
+          >
+            {label.split('\n').map((line, i) => (
+              <tspan key={i} x={0} dy={i === 0 ? 0 : 14}>
+                {line}
+              </tspan>
+            ))}
+          </text>
+        );
+      })()}
       
       {/* Selection indicator (shown when right-clicked) */}
       {isSelected && (

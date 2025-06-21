@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useGraphStore } from '@/state/useGraphStore';
 import { useIconRegistry } from '@/components/IconRegistry';
-import NodeSettingsForm from '@/components/NodeSettingsForm';
+import NodeSettingsFormV2 from '@/components/NodeSettingsFormV2';
+import EdgeSettingsFormV2 from '@/components/EdgeSettingsFormV2';
 import EdgeDetailsDisplay from '@/components/EdgeDetailsDisplay';
-import EdgeSettingsForm from '@/components/EdgeSettingsForm';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Info, Settings } from 'lucide-react';
+import { Info, Palette } from 'lucide-react';
 
 export const DetailsSection: React.FC = () => {
   const {
@@ -15,12 +15,13 @@ export const DetailsSection: React.FC = () => {
     edges,
   } = useGraphStore();
   const iconRegistry = useIconRegistry();
+  const [activeTab, setActiveTab] = useState<string>('details');
 
   // Show nothing if nothing is selected
   if (!selectedNodeId && !selectedEdgeId) {
     return (
       <div className="flex flex-col items-center justify-center py-8 text-center">
-        <p className="text-muted-foreground">Select a node or edge to see details</p>
+        <p className="text-muted-foreground">Select a node or edge to view details</p>
       </div>
     );
   }
@@ -32,41 +33,61 @@ export const DetailsSection: React.FC = () => {
     const Icon = iconRegistry[node.appearance?.icon || node.type] || iconRegistry[node.type];
 
     return (
-      <Tabs defaultValue="details" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="details" className="flex items-center gap-1">
             <Info className="h-3 w-3" />
             Details
           </TabsTrigger>
-          <TabsTrigger value="settings" className="flex items-center gap-1">
-            <Settings className="h-3 w-3" />
-            Settings
+          <TabsTrigger value="appearance" className="flex items-center gap-1">
+            <Palette className="h-3 w-3" />
+            Appearance
           </TabsTrigger>
         </TabsList>
         
-        <TabsContent value="details" className="space-y-4">
-          <div className="flex items-center gap-3">
+        <TabsContent value="details" className="space-y-4 mt-4">
+          <div className="flex items-center gap-3 mb-4">
             {Icon && (
               <Icon filled className="w-8 h-8" aria-label={node.type} />
             )}
-            <span className="font-bold text-lg">{node.label}</span>
+            <div>
+              <h3 className="font-semibold text-lg select-text">{node.label}</h3>
+            </div>
           </div>
           
           <div>
-            <div className="text-xs uppercase font-semibold text-muted-foreground mb-2">Attributes</div>
-            <dl className="grid grid-cols-2 gap-x-2 gap-y-1">
-              {Object.entries(node.attributes).map(([k, v]) => (
-                <React.Fragment key={k}>
-                  <dt className="font-semibold text-xs text-muted-foreground">{k}</dt>
-                  <dd className="text-xs text-foreground truncate">{String(v)}</dd>
-                </React.Fragment>
+            <h4 className="text-sm font-medium text-muted-foreground mb-2">Details</h4>
+            <div className="space-y-1">
+              {/* Core properties */}
+              <div className="flex justify-between text-sm">
+                <span className="font-medium text-muted-foreground select-text">id:</span>
+                <span className="text-foreground truncate max-w-[60%] select-text cursor-text" title={node.id}>{node.id}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="font-medium text-muted-foreground select-text">type:</span>
+                <span className="text-foreground truncate max-w-[60%] select-text cursor-text" title={node.type}>{node.type}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="font-medium text-muted-foreground select-text">label:</span>
+                <span className="text-foreground truncate max-w-[60%] select-text cursor-text" title={node.label}>{node.label}</span>
+              </div>
+              
+              {/* Visual separator */}
+              {Object.keys(node.attributes).length > 0 && <div className="my-2 border-t" />}
+              
+              {/* Custom attributes */}
+              {Object.entries(node.attributes).map(([key, value]) => (
+                <div key={key} className="flex justify-between text-sm">
+                  <span className="font-medium text-muted-foreground select-text">{key}:</span>
+                  <span className="text-foreground truncate max-w-[60%] select-text cursor-text" title={String(value)}>{String(value)}</span>
+                </div>
               ))}
-            </dl>
+            </div>
           </div>
         </TabsContent>
         
-        <TabsContent value="settings" className="space-y-4">
-          <NodeSettingsForm node={node} />
+        <TabsContent value="appearance" className="mt-4">
+          <NodeSettingsFormV2 node={node} />
         </TabsContent>
       </Tabs>
     );
@@ -78,24 +99,24 @@ export const DetailsSection: React.FC = () => {
     if (!edge) return null;
 
     return (
-      <Tabs defaultValue="details" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="details" className="flex items-center gap-1">
             <Info className="h-3 w-3" />
             Details
           </TabsTrigger>
-          <TabsTrigger value="settings" className="flex items-center gap-1">
-            <Settings className="h-3 w-3" />
-            Settings
+          <TabsTrigger value="appearance" className="flex items-center gap-1">
+            <Palette className="h-3 w-3" />
+            Appearance
           </TabsTrigger>
         </TabsList>
         
-        <TabsContent value="details" className="space-y-4">
+        <TabsContent value="details" className="mt-4">
           <EdgeDetailsDisplay edge={edge} />
         </TabsContent>
         
-        <TabsContent value="settings" className="space-y-4">
-          <EdgeSettingsForm edge={edge} />
+        <TabsContent value="appearance" className="mt-4">
+          <EdgeSettingsFormV2 edge={edge} />
         </TabsContent>
       </Tabs>
     );
